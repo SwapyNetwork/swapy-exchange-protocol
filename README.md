@@ -4,13 +4,9 @@
 
 ## Table of Contents
 
-* [Project Usage](#project-usage)
 * [Architecture](#architecture)
 * [Contracts](#contracts)
-
-## Project Usage
-
-In construction...
+* [Setup](#setup)
 
 ## Architecture
 
@@ -26,3 +22,25 @@ InvestmentOffer defines a fund raising contract with its payback period and gros
 
 ### [InvestmentAsset.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/protocol/InvestmentAsset.sol)
 InvestmentAsset defines a fund raising asset with its value, investor and agreement terms hash. It provides methods to interact with the asset contract and agree the investment. These methods are only accessible by the investor or the credit company, according to its functionalities.
+
+## Setup
+
+Install [Node v6.11.2](https://nodejs.org/en/download/releases/)
+
+[Truffle](http://truffleframework.com/) is used for deployment. So, install it globally:
+```
+$ npm install -g truffle
+```
+Install project dependencies:
+```
+$ npm install
+```
+For setup your wallet configuration, addresses and blockchain node provider to deploy, an environment file is necessary. Follow the example and create your own file:
+
+.env
+```
+export WALLET_ADDRESS="0x43...F0932X"
+export INFURA_KEY="I9823...8323LK3"
+export WALLET_MNEMONIC="twelve words mnemonic ... potato bread coconut pencil" 
+```
+
