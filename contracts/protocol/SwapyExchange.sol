@@ -5,7 +5,7 @@ import './InvestmentOffer.sol';
 contract SwapyExchange {
 
   // Protocol version 
-  string constant VERSION = "1.0.0";  
+  string constant public VERSION = "1.0.0";  
 
   event Offers(address from, string protocolVersion, address offerAddress, uint256 paybackMonths, uint256 grossReturn);
 

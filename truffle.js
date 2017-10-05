@@ -18,14 +18,17 @@ var engine = new ProviderEngine();
 const FilterSubprovider = require('web3-provider-engine/subproviders/filters.js')
 engine.addProvider(new FilterSubprovider())
 engine.addProvider(new WalletSubprovider(wallet, {}));
-var providerUrl = `https://ropsten.infura.io/${process.env.INFURA_KEY}`;
+var providerUrl = process.env.PROVIDER_URL;
 engine.addProvider(new Web3Subprovider(new Web3.providers.HttpProvider(providerUrl)));
 engine.start(); // Required by the provider engine.
 
+
+const network_id = process.env.NETWORK_ID;
+
 module.exports = {
   networks: {
-    ropsten : {
-      network_id: 3,    // Official ropsten network id
+    custom : {
+      network_id: network_id, // custom network id
       provider: engine, // Use our custom provider
       from: address     // Use the address we derived
     }    
