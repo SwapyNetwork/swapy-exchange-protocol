@@ -9,7 +9,7 @@ let SwapyExchange   = artifacts.require("./protocol/SwapyExchange.sol");
 /* Example of an agreement terms hash 
  * that represents a document signed by the asset owner and buyer  
  **/ 
-const terms = "1234673459578563453";
+const terms = "111111";
 const investor = process.env.WALLET_ADDRESS;
 const payback = 24;
 const grossReturn = 5;
@@ -44,7 +44,7 @@ module.exports = function(deployer, network, accounts) {
                           console.log(response.args);
                         }
                       });
-                      asset.transferFunds(terms,{from: investor, value: assetValue});
+                      asset.transferFunds(terms,{value: assetValue});
                     }
                   });
                   asset.agreeInvestment(investor, terms, assetValue);

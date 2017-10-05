@@ -9,17 +9,17 @@ contract InvestmentAsset {
     using SafeMath for uint256;
     
     // Reference to the investment offer
-    address offerAddress;
+    address public offerAddress;
     // Asset owner
-    address owner; 
+    address public owner; 
     // Asset buyer
-    address investor;
+    address public investor;
     // Asset value
-    uint256 value;
+    uint256 public value;
     // Protocol version
-    string protocolVersion;
+    string public protocolVersion;
     // The hash of agreement terms 
-    bytes agreementTermsHash;
+    bytes public agreementTermsHash;
     
     // possible stages of an asset
     enum Status { Open, Agreed, Invested }
