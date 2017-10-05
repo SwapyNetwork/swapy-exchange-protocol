@@ -27,8 +27,8 @@ const network_id = process.env.NETWORK_ID;
 
 module.exports = {
   networks: {
-    ropsten : {
-      network_id: network_id, // Official ropsten network id
+    custom : {
+      network_id: network_id, // custom network id
       provider: engine, // Use our custom provider
       from: address     // Use the address we derived
     }    
