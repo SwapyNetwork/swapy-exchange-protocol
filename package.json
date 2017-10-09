@@ -4,12 +4,15 @@
   "description": "Swapy Exchange smart contracts",
   "main": "truffle.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate --network custom"
   },
   "dependencies": {
     "bip39": "^2.4.0",
     "ethereumjs-wallet": "^0.6.0",
     "python": "0.0.4",
+    "truffle": "^3.4.11",
     "truffle-hdwallet-provider": "0.0.3",
     "web3": "^0.18.4",
     "web3-provider-engine": "^8.6.1",
