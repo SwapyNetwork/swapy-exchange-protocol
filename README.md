@@ -17,10 +17,10 @@ In construction...
 ## Contracts
 
 ### [SwapyExchange.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/protocol/SwapyExchange.sol)
-Credit companies can order investment by using the SwapyExchange contract. It works as a factory of InvestmentOffer contract and organizes the protocol versioning. 
+Credit companies can order investment by using the SwapyExchange contract. It works as a factory of InvestmentOffer contract and organizes the protocol versioning.
 
 ### [InvestmentOffer.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/protocol/InvestmentOffer.sol)
-InvestmentOffer defines a fundraising contract with its payback period and gross return of investment. Its owner can create investment assets associated to the fundraising and sell it to investors. 
+InvestmentOffer defines a fundraising contract with its payback period and gross return of investment. Its owner can create investment assets associated to the fundraising and sell it to investors.
 
 ### [InvestmentAsset.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/protocol/InvestmentAsset.sol)
 InvestmentAsset defines a fundraising asset with its value, investor and agreement terms hash. It provides methods to interact with the asset contract and agree the investment. These methods are only accessible by the investor or the credit company, according to its functionalities.
@@ -29,22 +29,23 @@ InvestmentAsset defines a fundraising asset with its value, investor and agreeme
 
 Install [Node v6.11.2](https://nodejs.org/en/download/releases/)
 
-[Truffle](http://truffleframework.com/) is used for deployment. So, install it globally:
+[Truffle](http://truffleframework.com/) is used for deployment. We run the version installed from our dependencies using npm scripts, but if you prefer to install it globally you can do:
 ```
 $ npm install -g truffle
 ```
+
 Install project dependencies:
 ```
 $ npm install
 ```
-For setup your wallet configuration, addresses and blockchain node provider to deploy, an environment file is necessary. Follow the example and create your own file:
+For setup your wallet configuration, addresses and blockchain node provider to deploy, an environment file is necessary. We provide a `sample.env` file. We recommend that you set up your own variables and rename the file to `.env`.
 
-.env
+sample.env
 ```
 export WALLET_ADDRESS="0x43...F0932X"
 export NETWORK_ID=...
 export PROVIDER_URL="https://yourfavoriteprovider.../..."
-export WALLET_MNEMONIC="twelve words mnemonic ... potato bread coconut pencil" 
+export WALLET_MNEMONIC="twelve words mnemonic ... potato bread coconut pencil"
 ```
 Use your own provider. Some known networks below:
 #### NOTE: the current protocol version is not intended to be used on mainnet.
@@ -77,40 +78,24 @@ After that, make available your environment file inside the bash context:
 $ source .env
 ```
 
-By using a local network, this lecture may be useful: [Connecting to the network](https://github.com/ethereum/go-ethereum/wiki/Connecting-to-the-network) 
+By using a local network, this lecture may be useful: [Connecting to the network](https://github.com/ethereum/go-ethereum/wiki/Connecting-to-the-network)
 
 Compile the contracts with truffle:
 ```
-$ truffle compile
+$ npm run compile
 ```
 Run our migrations:
 ```
-$ truffle migrate
+$ npm run migrate
 ```
-Or specifying a custom network:
-```
-$ truffle migrate --network custom
-```
-
-The "custom" connection is defined in [truffle.js](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/truffle.js).
+We're running the contracts in a custom network defined in  [truffle.js](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/truffle.js).
 
 After the transaction mining, the protocol is disponible for usage.
 
 [Truffle console](https://truffle.readthedocs.io/en/beta/getting_started/console/) can be used to interact with protocol. For example:
 ```
-$ truffle console --network custom 
+$ truffle console --network custom
 ```
 ```
 truffle(custom)> SwapyExchange.deployed().VERSION.call(); // "1.0.0"
 ```
-
-
-
-
-
-
-
-
-
-
-
