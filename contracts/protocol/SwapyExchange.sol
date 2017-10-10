@@ -8,11 +8,11 @@ contract SwapyExchange {
   // Protocol version 
   string constant public VERSION = "1.0.0";  
 
-  event Offers(address _from, string _protocolVersion, address _offerAddress, uint256 _paybackMonths, uint256 _grossReturn, address[] _assets);
+  event Offers(string _id, address _from, string _protocolVersion, address _offerAddress, uint256 _paybackMonths, uint256 _grossReturn, address[] _assets);
 
 
   // Creates a new investment offer
-  function createOffer(uint256 _paybackMonths, uint256 _grossReturn, uint256[] _assets) 
+  function createOffer(string _id, uint256 _paybackMonths, uint256 _grossReturn, uint256[] _assets) 
     returns(bool) 
   {
     address newOffer = address(new InvestmentOffer(msg.sender, VERSION, _paybackMonths, _grossReturn));
@@ -20,7 +20,7 @@ contract SwapyExchange {
     for (uint index = 0; index < _assets.length; index++) {
       newAssets.push(address(new InvestmentAsset(msg.sender, VERSION, newOffer)));
     }
-    Offers(msg.sender, VERSION, newOffer, _paybackMonths, _grossReturn, newAssets);    
+    Offers(_id, msg.sender, VERSION, newOffer, _paybackMonths, _grossReturn, newAssets);    
     return true;
   }
         
