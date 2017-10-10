@@ -11,8 +11,8 @@
 * [Setup](#setup)
 
 ## Architecture
-
-In construction...
+The diagram below describes the flow of fundraising provided by [Swapy Exchange](https://www.swapy.network/) protocol.
+![architecture-diagram-1](https://www.swapy.network/images/diagrams/1-investment-flow.png)
 
 ## Contracts
 
