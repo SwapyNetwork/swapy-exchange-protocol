@@ -18,7 +18,7 @@ contract InvestmentOffer {
   // Offer owner
   address public owner;
 
-  event Assets(address _from, string _protocolVersion, address _assetAddress);
+  event Assets(string _id, address _from, string _protocolVersion, address _assetAddress);
 
   function InvestmentOffer(address _owner, string _protocolVersion, uint256 _paybackMonths, uint256 _grossReturn) {
     owner = _owner;
@@ -28,12 +28,12 @@ contract InvestmentOffer {
   }
 
   // Creates a new investment asset
-  function createAsset() 
+  function createAsset(string _id) 
     onlyOwner 
     returns(bool) 
   {
     address newAsset = address(new InvestmentAsset(owner, protocolVersion, this));
-    Assets(owner, protocolVersion, newAsset);    
+    Assets(_id, owner, protocolVersion, newAsset);    
     return true;
   }
 

@@ -16,6 +16,9 @@ const grossReturn = 5;
 const assetValue = 10;
 const assets = [10,10,10,10,10];
 
+// Example of an event uuid 
+const eventId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
+
 module.exports = function(deployer, network, accounts) {
   deployer.deploy(SwapyExchange)
     .then(() => {
@@ -41,13 +44,13 @@ module.exports = function(deployer, network, accounts) {
                       console.log(response.args);
                     }
                   });
-                  asset.transferFunds(terms,{value: assetValue});
+                  asset.transferFunds(eventId,terms,{value: assetValue});
                 }
               });
-              asset.agreeInvestment(investor, terms, assetValue);
+              asset.agreeInvestment(eventId,investor, terms, assetValue);
             }
           });
-          protocol.createOffer(payback, grossReturn, assets);  
+          protocol.createOffer(eventId, payback, grossReturn, assets);  
         });
     });
 };

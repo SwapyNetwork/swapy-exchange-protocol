@@ -25,9 +25,9 @@ contract InvestmentAsset {
     enum Status { Open, Agreed, Invested }
     Status public status;
     
-    event Transferred(address _from, address _to, uint256 _value);
+    event Transferred(string _id, address _from, address _to, uint256 _value);
 
-    event Agreements(address _owner, address _investor, uint256 _value, bytes _terms);
+    event Agreements(string _id, address _owner, address _investor, uint256 _value, bytes _terms);
 
     function InvestmentAsset(address _owner, string _protocolVersion, address _offerAddress) {   
         owner = _owner;
@@ -37,7 +37,7 @@ contract InvestmentAsset {
     }   
     
     // Transfer funds from investor to the offer owner
-    function transferFunds(bytes _agreementTermsHash) payable
+    function transferFunds(string _id, bytes _agreementTermsHash) payable
          onlyInvestor
          hasStatus(Status.Agreed) 
          isValidValue(value)
@@ -47,13 +47,13 @@ contract InvestmentAsset {
         if (sha3(agreementTermsHash) == sha3(_agreementTermsHash)) {
             owner.transfer(msg.value);
             status = Status.Invested;
-            Transferred(investor, owner, msg.value);
+            Transferred(_id, investor, owner, msg.value);
             return true;
         }
     }
     
     // Agrees an investor as the asset buyer and sets the contract terms and value
-    function agreeInvestment(address _investor, bytes _agreementTermsHash, uint256 _value)  
+    function agreeInvestment(string _id, address _investor, bytes _agreementTermsHash, uint256 _value)  
         onlyOwner
         hasStatus(Status.Open)
         returns(bool)
@@ -62,7 +62,7 @@ contract InvestmentAsset {
         agreementTermsHash = _agreementTermsHash;
         value = _value;
         status = Status.Agreed;
-        Agreements(owner, investor, value, agreementTermsHash);   
+        Agreements(_id, owner, investor, value, agreementTermsHash);   
         return true;
     }
 
