@@ -25,14 +25,14 @@ contract InvestmentAsset {
     enum Status { Open, Agreed, Invested }
     Status public status;
     
-    event Transferred(address from, address to, uint256 value);
-    event Agreements(address owner, address investor, uint256 value, bytes terms);
+    event Transferred(address _from, address _to, uint256 _value);
 
-    function InvestmentAsset(address _owner, string _protocolVersion) {   
+    event Agreements(address _owner, address _investor, uint256 _value, bytes _terms);
+
+    function InvestmentAsset(address _owner, string _protocolVersion, address _offerAddress) {   
         owner = _owner;
         protocolVersion = _protocolVersion;
-        // the message sender is the investment offer contract 
-        offerAddress = msg.sender;    
+        offerAddress = _offerAddress;    
         status = Status.Open;
     }   
     
