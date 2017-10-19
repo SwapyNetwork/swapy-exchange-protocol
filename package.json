@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "truffle compile",
-    "migrate": "truffle migrate --network custom"
+    "migrate": "truffle migrate --network custom",
+    "migrate.hard": "truffle migrate --network custom --reset"
   },
   "dependencies": {
     "bip39": "^2.4.0",
