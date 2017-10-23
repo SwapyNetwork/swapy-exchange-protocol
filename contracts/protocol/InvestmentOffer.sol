@@ -16,21 +16,26 @@ contract InvestmentOffer {
   // fixed currency symbol
   string public currency;
   // fixed fundraising value
-  string public value;
+  string public fixedValue;
   // Protocol version 
   string public protocolVersion;
   // Offer owner
   address public owner;
 
-  event Assets(string _id, address _from, string _protocolVersion, address _assetAddress);
+  event Assets(
+    string _id,
+    address _from,
+    string _protocolVersion,
+    address _assetAddress
+  );
 
-  function InvestmentOffer(address _owner, string _protocolVersion, uint256 _paybackMonths, uint256 _grossReturn, string _currency, uint256 _value) {
+  function InvestmentOffer(address _owner, string _protocolVersion, uint256 _paybackMonths, uint256 _grossReturn, string _currency, uint256 _fixedValue) {
     owner = _owner;
     protocolVersion = _protocolVersion;
     paybackMonths = _paybackMonths;
     grossReturn = _grossReturn;
     currency = _currency;
-    value = _value;
+    fixedValue = _fixedValue;
   }
 
   // Creates a new investment asset
