@@ -78,12 +78,6 @@ contract InvestmentAsset {
         _;
     }
 
-    // Checks if the value is valid
-    modifier isValidValue() {
-        require(msg.value != 0);
-        _;
-    }
-
     function InvestmentAsset(address _owner, string _protocolVersion, address _offerAddress, string _currency, uint256 _fixedValue) {
         owner = _owner;
         protocolVersion = _protocolVersion;
@@ -117,6 +111,7 @@ contract InvestmentAsset {
         return true;
     }
 
+    // Cancel the pending investment and refund the investor
     function cancelInvestment(string _id)
         onlyInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
