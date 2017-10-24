@@ -47,7 +47,7 @@ contract InvestmentAsset {
         uint256 _value
     );
 
-    event Agreements(
+    event Withdrawal(
         string _id,
         address _owner,
         address _investor,
@@ -64,7 +64,7 @@ contract InvestmentAsset {
 
     // Checks the current asset's status
     modifier hasStatus(Status _status) {
-        require(status == _status);
+        assert(status == _status);
         _;
     }
 
@@ -85,7 +85,8 @@ contract InvestmentAsset {
         string _protocolVersion,
         address _offerAddress,
         string _currency,
-        uint256 _fixedValue)
+        uint256 _fixedValue,
+        bytes _assetTermsHash)
         public
     {
         owner = _owner;
@@ -93,6 +94,7 @@ contract InvestmentAsset {
         offerAddress = _offerAddress;
         currency = _currency;
         fixedValue = _fixedValue;
+        assetTermsHash = _assetTermsHash;
         status = Status.AVAILABLE;
     }
 
@@ -106,18 +108,19 @@ contract InvestmentAsset {
         investor.transfer(invested);
         address currentInvestor = investor;
         investor = address(0);
+        agreementHash = "";
         status = Status.AVAILABLE;
         return (currentInvestor, investedValue);
     }
 
     // Add investment interest in this asset and retain the funds within the smart contract 
-    function invest(string _id, bytes _agreementTermsHash) payable
+    function invest(string _id, bytes _agreementHash) payable
          hasStatus(Status.AVAILABLE)
          public
          returns(bool)
     {
         investor = msg.sender;
-        agreementTermsHash = _agreementTermsHash;
+        agreementHash = _agreementHash;
         status = Status.PENDING_OWNER_AGREEMENT;
         Transferred(_id, investor, owner, this.balance);
         return true;
@@ -135,19 +138,19 @@ contract InvestmentAsset {
         return true;
     }    
 
-    // Agree the investor as the asset buyer and withdraw funds
-    function acceptInvestment(string _id, bytes _agreementTermsHash)
+    // Accept the investor as the asset buyer and withdraw funds
+    function withdrawFunds(string _id, bytes _agreementHash)
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         public
         returns(bool)
     {
         // compare the document signed by the offer owner and investor
-        if (sha3(agreementTermsHash) == sha3(_agreementTermsHash)) {
-            // @todo check how to transfer all the funds 
-            owner.transfer();
+        if (sha3(agreementHash) == sha3(_agreementHash)) {
+            uint256 value = this.balance;            
+            owner.transfer(value);
             status = Status.INVESTED;
-            Agreements(_id, owner, investor, agreementTermsHash);
+            Withdrawal(_id, owner, investor, value, agreementHash);
             return true;
         }
     }
@@ -160,10 +163,8 @@ contract InvestmentAsset {
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
-        Disagreements(_id, owner, currentInvestor, investedValue);
+        Refused(_id, owner, currentInvestor, investedValue);
         return true;
     }
-
-
 
 }

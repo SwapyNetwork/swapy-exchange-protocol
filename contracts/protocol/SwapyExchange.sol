@@ -17,6 +17,7 @@ contract SwapyExchange {
     uint256 _grossReturn,
     string _currency,
     uint256 _fixedValue,
+    bytes _offerTermsHash,
     address[] _assets
   );
 
@@ -28,15 +29,16 @@ contract SwapyExchange {
       uint256 _grossReturn,
       string _currency,
       uint256 _fixedValue,
+      bytes _offerTermsHash,
       uint256[] _assets)
     returns(bool)
   {
-    address newOffer = address(new InvestmentOffer(msg.sender, VERSION, _paybackMonths, _grossReturn, _currency, _fixedValue));
+    address newOffer = address(new InvestmentOffer(msg.sender, VERSION, _paybackMonths, _grossReturn, _currency, _fixedValue, _offerTermsHash));
     address[] memory newAssets = new address[](_assets.length);
     for (uint index = 0; index < _assets.length; index++) {
-      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, newOffer, _currency, _assets[index]));
+      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, newOffer, _currency, _assets[index], _offerTermsHash));
     }
-    Offers(_id, msg.sender, VERSION, newOffer, _paybackMonths, _grossReturn, _currency, _fixedValue, newAssets);
+    Offers(_id, msg.sender, VERSION, newOffer, _paybackMonths, _grossReturn, _currency, _fixedValue, _offerTermsHash, newAssets);
     return true;
   }
 

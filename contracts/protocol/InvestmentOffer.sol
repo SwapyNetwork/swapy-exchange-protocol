@@ -21,12 +21,17 @@ contract InvestmentOffer {
   string public protocolVersion;
   // Offer owner
   address public owner;
+  // Contractual terms hash of investment
+  bytes public offerTermsHash;
 
   event Assets(
     string _id,
     address _from,
     string _protocolVersion,
-    address _assetAddress
+    address _assetAddress,
+    string _currency,
+    uint256 _fixedValue,
+    bytes _assetTermsHash
   );
   
   // Checks if the owner is the caller
@@ -41,7 +46,8 @@ contract InvestmentOffer {
     uint256 _paybackMonths,
     uint256 _grossReturn,
     string _currency,
-    uint256 _fixedValue)
+    uint256 _fixedValue,
+    bytes _offerTermsHash)
     public
   {
     owner = _owner;
@@ -50,16 +56,17 @@ contract InvestmentOffer {
     grossReturn = _grossReturn;
     currency = _currency;
     fixedValue = _fixedValue;
+    offerTermsHash = _offerTermsHash;
   }
 
   // Creates a new investment asset
-  function createAsset(string _id) 
+  function createAsset(string _id, uint256 _fixedValue) 
     onlyOwner 
     public
     returns(bool) 
   {
-    address newAsset = address(new InvestmentAsset(owner, protocolVersion, this));
-    Assets(_id, owner, protocolVersion, newAsset);    
+    address newAsset = address(new InvestmentAsset(owner, protocolVersion, this, currency, _fixedValue, offerTermsHash));
+    Assets(_id, owner, protocolVersion, newAsset, currency, _fixedValue, offerTermsHash);    
     return true;
   }
 
