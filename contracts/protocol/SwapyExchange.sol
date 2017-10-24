@@ -22,7 +22,13 @@ contract SwapyExchange {
 
 
   // Creates a new investment offer
-  function createOffer(string _id, uint256 _paybackMonths, uint256 _grossReturn, string _currency, uint256 _fixedValue,  uint256[] _assets)
+  function createOffer(
+      string _id,
+      uint256 _paybackMonths,
+      uint256 _grossReturn,
+      string _currency,
+      uint256 _fixedValue,
+      uint256[] _assets)
     returns(bool)
   {
     address newOffer = address(new InvestmentOffer(msg.sender, VERSION, _paybackMonths, _grossReturn, _currency, _fixedValue));

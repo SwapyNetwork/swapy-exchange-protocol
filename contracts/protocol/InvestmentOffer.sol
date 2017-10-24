@@ -28,8 +28,22 @@ contract InvestmentOffer {
     string _protocolVersion,
     address _assetAddress
   );
-
-  function InvestmentOffer(address _owner, string _protocolVersion, uint256 _paybackMonths, uint256 _grossReturn, string _currency, uint256 _fixedValue) {
+  
+  // Checks if the owner is the caller
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  
+  function InvestmentOffer(
+    address _owner,
+    string _protocolVersion,
+    uint256 _paybackMonths,
+    uint256 _grossReturn,
+    string _currency,
+    uint256 _fixedValue)
+    public
+  {
     owner = _owner;
     protocolVersion = _protocolVersion;
     paybackMonths = _paybackMonths;
@@ -41,6 +55,7 @@ contract InvestmentOffer {
   // Creates a new investment asset
   function createAsset(string _id) 
     onlyOwner 
+    public
     returns(bool) 
   {
     address newAsset = address(new InvestmentAsset(owner, protocolVersion, this));
@@ -48,10 +63,4 @@ contract InvestmentOffer {
     return true;
   }
 
-  // Checks if the owner is the caller
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-        
 }

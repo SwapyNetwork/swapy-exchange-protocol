@@ -20,8 +20,10 @@ contract InvestmentAsset {
     address public investor;
     // Protocol version
     string public protocolVersion;
-    // The hash of agreement terms
-    bytes public agreementTermsHash;
+    // Contractual terms hash of investment
+    bytes public assetTermsHash;
+    // Document hash agreeing the contractual terms      
+    bytes public agreementHash;
 
     // possible stages of an asset
     enum Status { 
@@ -53,7 +55,7 @@ contract InvestmentAsset {
         bytes _terms
     );
 
-    event Disagreements(
+    event Refused(
         string _id,
         address _owner,
         address _investor,
@@ -78,7 +80,14 @@ contract InvestmentAsset {
         _;
     }
 
-    function InvestmentAsset(address _owner, string _protocolVersion, address _offerAddress, string _currency, uint256 _fixedValue) {
+    function InvestmentAsset(
+        address _owner,
+        string _protocolVersion,
+        address _offerAddress,
+        string _currency,
+        uint256 _fixedValue)
+        public
+    {
         owner = _owner;
         protocolVersion = _protocolVersion;
         offerAddress = _offerAddress;
@@ -89,8 +98,8 @@ contract InvestmentAsset {
 
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable() 
-        private
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
+        private
         returns(address, uint256) 
     {   
         uint256 investedValue = this.balance;
@@ -104,6 +113,7 @@ contract InvestmentAsset {
     // Add investment interest in this asset and retain the funds within the smart contract 
     function invest(string _id, bytes _agreementTermsHash) payable
          hasStatus(Status.AVAILABLE)
+         public
          returns(bool)
     {
         investor = msg.sender;
@@ -117,6 +127,7 @@ contract InvestmentAsset {
     function cancelInvestment(string _id)
         onlyInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
+        public
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
@@ -125,9 +136,10 @@ contract InvestmentAsset {
     }    
 
     // Agree the investor as the asset buyer and withdraw funds
-    function agreeInvestment(string _id, bytes _agreementTermsHash)
+    function acceptInvestment(string _id, bytes _agreementTermsHash)
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
+        public
         returns(bool)
     {
         // compare the document signed by the offer owner and investor
@@ -140,10 +152,11 @@ contract InvestmentAsset {
         }
     }
 
-    // Disagree the pending investment
-    function disagreeInvestment(string _id)
+    // Refuse the pending investment
+    function refuseInvestment(string _id)
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
+        public
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
