@@ -87,8 +87,10 @@ contract InvestmentAsset {
         status = Status.AVAILABLE;
     }
 
+    // Refund and remove the current investor and make the asset available for investments
     function makeAvailable() 
         private
+        hasStatus(Status.PENDING_OWNER_AGREEMENT)
         returns(address, uint256) 
     {   
         uint256 investedValue = this.balance;
@@ -111,7 +113,7 @@ contract InvestmentAsset {
         return true;
     }
 
-    // Cancel the pending investment and refund the investor
+    // Cancel the pending investment
     function cancelInvestment(string _id)
         onlyInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -138,7 +140,7 @@ contract InvestmentAsset {
         }
     }
 
-    // Disagree the pending investment and refund the investor
+    // Disagree the pending investment
     function disagreeInvestment(string _id)
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
