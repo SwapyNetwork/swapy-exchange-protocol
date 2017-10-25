@@ -1,4 +1,4 @@
-pragma solidity ^0.4.14;
+pragma solidity ^0.4.15;
 
 import './InvestmentOffer.sol';
 import './InvestmentAsset.sol';
@@ -13,11 +13,6 @@ contract SwapyExchange {
     address _from,
     string _protocolVersion,
     address _offerAddress,
-    uint256 _paybackMonths,
-    uint256 _grossReturn,
-    string _currency,
-    uint256 _fixedValue,
-    bytes _offerTermsHash,
     address[] _assets
   );
 
@@ -31,15 +26,28 @@ contract SwapyExchange {
       uint256 _fixedValue,
       bytes _offerTermsHash,
       uint256[] _assets)
+    public
     returns(bool)
   {
     address newOffer = address(new InvestmentOffer(msg.sender, VERSION, _paybackMonths, _grossReturn, _currency, _fixedValue, _offerTermsHash));
-    address[] memory newAssets = new address[](_assets.length);
-    for (uint index = 0; index < _assets.length; index++) {
-      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, newOffer, _currency, _assets[index], _offerTermsHash));
-    }
-    Offers(_id, msg.sender, VERSION, newOffer, _paybackMonths, _grossReturn, _currency, _fixedValue, _offerTermsHash, newAssets);
+    address[] memory newAssets = createOfferAssets(_assets,newOffer,_currency,_offerTermsHash);
+    Offers(_id, msg.sender, VERSION, newOffer, newAssets);
     return true;
   }
+
+  function createOfferAssets(
+      uint256[] _assets,
+      address _offerAddress,
+      string _currency,
+      bytes _offerTermsHash)
+    internal  
+    returns (address[])
+  {
+    address[] memory newAssets = new address[](_assets.length);
+    for (uint index = 0; index < _assets.length; index++) {
+      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, _offerAddress, _currency, _assets[index], _offerTermsHash));
+    }
+    return newAssets;
+  }  
 
 }

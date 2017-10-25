@@ -1,13 +1,10 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.15;
 
-import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 import './InvestmentAsset.sol';
 
 // Defines a fund raising contract 
 
 contract InvestmentOffer {
-
-  using SafeMath for uint256;
 
   // period to return the investment   
   uint256 public paybackMonths;
@@ -16,7 +13,7 @@ contract InvestmentOffer {
   // fixed currency symbol
   string public currency;
   // fixed fundraising value
-  string public fixedValue;
+  uint256 public fixedValue;
   // Protocol version 
   string public protocolVersion;
   // Offer owner

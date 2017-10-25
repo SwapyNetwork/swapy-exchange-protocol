@@ -1,12 +1,9 @@
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.15;
 
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 // Defines a fund raising asset contract
 
 contract InvestmentAsset {
-
-    using SafeMath for uint256;
 
     // Reference to the investment offer
     address public offerAddress;
@@ -105,7 +102,7 @@ contract InvestmentAsset {
         returns(address, uint256) 
     {   
         uint256 investedValue = this.balance;
-        investor.transfer(invested);
+        investor.transfer(investedValue);
         address currentInvestor = investor;
         investor = address(0);
         agreementHash = "";
@@ -146,7 +143,7 @@ contract InvestmentAsset {
         returns(bool)
     {
         // compare the document signed by the offer owner and investor
-        if (sha3(agreementHash) == sha3(_agreementHash)) {
+        if (keccak256(agreementHash) == keccak256(_agreementHash)) {
             uint256 value = this.balance;            
             owner.transfer(value);
             status = Status.INVESTED;

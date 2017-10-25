@@ -9,12 +9,15 @@ let SwapyExchange   = artifacts.require("./protocol/SwapyExchange.sol");
 /* Example of an agreement terms hash 
  * that represents a document signed by the asset owner and buyer  
  **/ 
-const terms = "111111";
+const agreementTerms = "222222";
 const investor = process.env.WALLET_ADDRESS;
 const payback = 24;
 const grossReturn = 5;
 const assetValue = 10;
 const assets = [10,10,10,10,10];
+const currency = "USD";
+const offerFixedValue = 50;
+const offerTerms = "111111";
 
 // Example of an event uuid 
 const eventId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
@@ -34,23 +37,38 @@ module.exports = function(deployer, network, accounts) {
               let deployedAssets = response.args._assets;
               let assetAddress = deployedAssets[0];
               let asset = InvestmentAsset.at(assetAddress);
-              let agreeInvestment = asset.Agreements().watch((err,response) => {
+              asset.Transferred().watch((err,response) => {
                 if(!err){
-                  console.log('Investment Agreed...');
+                  console.log('Funds transferred by investor...');
                   console.log(response.args);
-                  asset.Transferred().watch((err,response) => {
+                  asset.Withdrawal().watch((err,response) => {
                     if(!err){
-                      console.log('Asset invested...');
+                      console.log('Investment agreed and funds withdrawal by credit co. ...');
                       console.log(response.args);
                     }
                   });
-                  asset.transferFunds(eventId,terms,{value: assetValue});
+                  asset.withdrawFunds(
+                    eventId,
+                    agreementTerms
+                  );
                 }
               });
-              asset.agreeInvestment(eventId,investor, terms, assetValue);
+              asset.invest(
+                eventId,
+                agreementTerms,
+                {value: assetValue}
+              );
             }
           });
-          protocol.createOffer(eventId, payback, grossReturn, assets);  
+          protocol.createOffer(
+            eventId,
+            payback,
+            grossReturn,
+            currency,
+            offerFixedValue,
+            offerTerms,
+            assets
+          );  
         });
     });
 };
