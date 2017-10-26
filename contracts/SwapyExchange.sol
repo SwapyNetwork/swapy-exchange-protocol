@@ -1,7 +1,7 @@
 pragma solidity ^0.4.15;
 
-import './InvestmentOffer.sol';
-import './InvestmentAsset.sol';
+import './investment/InvestmentOffer.sol';
+import './investment/InvestmentAsset.sol';
 
 contract SwapyExchange {
 
