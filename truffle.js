@@ -31,6 +31,7 @@ module.exports = {
       network_id: network_id, // custom network id
       provider: engine, // Use our custom provider
       from: address,     // Use the address we derived
+      gas: 4670000
     }    
   },
   rpc: {

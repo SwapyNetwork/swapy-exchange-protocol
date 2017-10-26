@@ -1,4 +1,4 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.14;
 
 import './investment/InvestmentOffer.sol';
 import './investment/InvestmentAsset.sol';
