@@ -1,3 +1,7 @@
+const should = require('chai')
+    .use(require('chai-as-promised'))
+    .should()
+
 const SwapyExchange = artifacts.require("./SwapyExchange.sol");
 
 const currentVersion = "1.0.0";
@@ -22,8 +26,8 @@ contract('SwapyExchange', accounts => {
     assert.equal(version, currentVersion, "the protocol is not versioned")
   });
 
-  it("should create an investment offer", async () => {
-    protocol.createOffer(
+  it("should create an investment offer", async (done) => {
+    return await protocol.createOffer(
         eventId,
         payback,
         grossReturn,
@@ -31,13 +35,26 @@ contract('SwapyExchange', accounts => {
         offerFixedValue,
         offerTerms,
         assets
-    ).then(() => {
-        let event = protocol.Offers().watch((err,response) =>{
-            assert.equal(err, null, "An error ocurred")
-            console.log(response);
-        });     
-    });
+    )
+    .then(result => {
+       should.exist(result.tx);
+    }, error => {
+       console.log(error);
+    })
+    .catch(done);
   });
+
+  it('should log investment offer creation', async  () =>  {
+    const event = await protocol.Offers().watch((err,event) => {
+        return event;
+    });  
+    should.exist(event);
+    console.log(event);
+    event.args._id.should.equal(eventId)
+    const createdAssets = event.args._assets;
+    createdAssets.length.should.equal(assets.length);
+ 
+  })
 
   
 

@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "bip39": "^2.4.0",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^2.0.1",
     "ethereumjs-wallet": "^0.6.0",
     "python": "0.0.4",
     "truffle": "^3.4.11",
