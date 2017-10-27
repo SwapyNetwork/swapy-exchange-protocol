@@ -20,14 +20,16 @@ const eventId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
 // ... more code
 contract('SwapyExchange', accounts => {
   let protocol = null;
+
   it("should has a version", async () => {
     protocol = await SwapyExchange.deployed();
     let version = await protocol.VERSION.call();
     assert.equal(version, currentVersion, "the protocol is not versioned")
   });
 
-  it("should create an investment offer", async (done) => {
-    return await protocol.createOffer(
+  it("should create an investment offer", async () => {
+    console.log(accounts);
+    const creation = await protocol.createOffer(
         eventId,
         payback,
         grossReturn,
@@ -40,12 +42,19 @@ contract('SwapyExchange', accounts => {
        should.exist(result.tx);
     }, error => {
        console.log(error);
-    })
-    .catch(done);
+    });
+    const event = await protocol.Offers({_id: eventId}).watch((err,event) => {
+      return event;
+    });  
+    should.exist(event);
+    console.log(event);
+    event.args._id.should.equal(eventId)
+    const createdAssets = event.args._assets;
+    createdAssets.length.should.equal(assets.length);
   });
 
-  it('should log investment offer creation', async  () =>  {
-    const event = await protocol.Offers().watch((err,event) => {
+  it('should log investment offer creation', async () =>  {
+    const event = await protocol.Offers({_id: eventId}).watch((err,event) => {
         return event;
     });  
     should.exist(event);
