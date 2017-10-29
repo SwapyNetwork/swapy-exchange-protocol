@@ -3,6 +3,7 @@ const should = require('chai')
     .should()
 
 const SwapyExchange = artifacts.require("./SwapyExchange.sol");
+const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
 
 const currentVersion = "1.0.0";
 const agreementTerms = "222222";
@@ -11,6 +12,7 @@ const payback = 24;
 const grossReturn = 5;
 const assetValue = 10;
 const assets = [10,10,10,10,10];
+let assetAddress = [];
 const currency = "USD";
 const offerFixedValue = 50;
 const offerTerms = "111111";
@@ -19,16 +21,16 @@ const offerTerms = "111111";
 const eventId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
 // ... more code
 contract('SwapyExchange', accounts => {
-  let protocol = null;
+  
+    let protocol = null;
 
   it("should has a version", async () => {
     protocol = await SwapyExchange.deployed();
     let version = await protocol.VERSION.call();
     assert.equal(version, currentVersion, "the protocol is not versioned")
-  });
+  })
 
   it("should create an investment offer", async () => {
-    console.log(accounts);
     const creation = await protocol.createOffer(
         eventId,
         payback,
@@ -38,31 +40,57 @@ contract('SwapyExchange', accounts => {
         offerTerms,
         assets
     )
-    .then(result => {
-       should.exist(result.tx);
+    .then(async result => {
+       should.exist(result.tx)
+       return true;
     }, error => {
        console.log(error);
+    })
+    .then(async () => {
+        const filter = await protocol.Offers();
+        const event = await filter.get((err, result) => {
+            // @todo log assets
+            console.log(err);
+            console.log(result);
+        });
+        console.log(event);
     });
-    const event = await protocol.Offers({_id: eventId}).watch((err,event) => {
-      return event;
-    });  
-    should.exist(event);
-    console.log(event);
-    event.args._id.should.equal(eventId)
-    const createdAssets = event.args._assets;
-    createdAssets.length.should.equal(assets.length);
-  });
+  })
 
   it('should log investment offer creation', async () =>  {
-    const event = await protocol.Offers({_id: eventId}).watch((err,event) => {
-        return event;
-    });  
-    should.exist(event);
-    console.log(event);
-    event.args._id.should.equal(eventId)
-    const createdAssets = event.args._assets;
-    createdAssets.length.should.equal(assets.length);
+    let offers = await protocol.Offers()
+    await offers.get((error, logs) => {
+      // we have the logs, now print them
+      return logs.forEach(log => console.log(log.args))
+    });
  
+  })
+
+
+  it('should add an investment', async () => {
+    let assetContract = await InvestmentAsset.at(assetAddress[0]);
+    const investment = await assetContract.invest(eventId, agreementTerms)
+        .then(async result => {
+            should.exist(result.tx)
+            return true;
+        }, error => {
+            console.log(error);
+        })
+        .then(async () => {
+            const filter = await assetContract.Transferred();
+            const event = await filter.get((err,result) => {
+                console.log(err);
+                console.log(result);
+            });
+        });
+  })
+
+  it('should log when add investment', async () => {
+    let assetContract = await InvestmentAsset.at(assetAddress[0]);
+    let investment = await assetContract.Transferred()
+    await  investment.get((err, logs) => {
+        return logs.forEach(logs => console.log(log.args))
+    });
   })
 
   
