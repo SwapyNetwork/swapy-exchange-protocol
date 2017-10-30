@@ -11,10 +11,10 @@ const investor = process.env.WALLET_ADDRESS;
 const payback = 24;
 const grossReturn = 5;
 const assetValue = 10;
-const assets = [10,10,10,10,10];
+const assets = [10];
 let assetAddress = [];
 const currency = "USD";
-const offerFixedValue = 50;
+const offerFixedValue = 10;
 const offerTerms = "111111";
 
 // Example of an event uuid 
@@ -30,8 +30,12 @@ contract('SwapyExchange', accounts => {
     assert.equal(version, currentVersion, "the protocol is not versioned")
   })
 
-  it("should create an investment offer", async () => {
-    const creation = await protocol.createOffer(
+  it("should create an investment offer and log it", done => {
+    protocol.Offers({_id: eventId}).watch((err,log) => {
+        // @todo treat event
+        done();
+    });
+    const transaction = protocol.createOffer(
         eventId,
         payback,
         grossReturn,
@@ -39,33 +43,10 @@ contract('SwapyExchange', accounts => {
         offerFixedValue,
         offerTerms,
         assets
-    )
-    .then(async result => {
-       should.exist(result.tx)
-       return true;
-    }, error => {
-       console.log(error);
-    })
-    .then(async () => {
-        const filter = await protocol.Offers();
-        const event = await filter.get((err, result) => {
-            // @todo log assets
-            console.log(err);
-            console.log(result);
-        });
-        console.log(event);
+    ).then(transaction => {
+        should.exist(transaction.tx);
     });
   })
-
-  it('should log investment offer creation', async () =>  {
-    let offers = await protocol.Offers()
-    await offers.get((error, logs) => {
-      // we have the logs, now print them
-      return logs.forEach(log => console.log(log.args))
-    });
- 
-  })
-
 
   it('should add an investment', async () => {
     let assetContract = await InvestmentAsset.at(assetAddress[0]);
