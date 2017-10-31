@@ -12,11 +12,13 @@ const investor = process.env.WALLET_ADDRESS;
 const payback = 24;
 const grossReturn = 5;
 const assetValue = 10;
-const assets = [10,10];
-let assetAddress = [];
+const assets = [10];
+let assetsAddress = [];
+let offerAddress = null;
 const currency = "USD";
 const offerFixedValue = 10;
 const offerTerms = "111111";
+
 
 // Example of an event uuid 
 const eventId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
@@ -57,7 +59,7 @@ contract('SwapyExchange', accounts => {
         });
     })
 
-    it('should add an investment', done => {
+    it('should add an investment - first', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
             assetContract.Transferred({_id: eventId}).watch((err,log) => {
                 const event = log.args;
@@ -79,7 +81,94 @@ contract('SwapyExchange', accounts => {
         });
     })
 
-    it('should accept the pending investment', done => {
+    it('should cancel a pending investment', done => {
+        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
+            assetContract.Canceled({_id: eventId}).watch((err,log) => {
+                const event = log.args;
+                expect(event).to.include.all.keys([
+                    '_id',
+                    '_owner',
+                    '_investor',
+                    '_value',
+                ]);
+                done();
+            });
+            assetContract.cancelInvestment(eventId)
+                .then(transaction => {
+                    should.exist(transaction.tx)
+                }, error => {
+                    console.log(error);
+            });
+        });
+    })
+
+    it('should add an investment - second', done => {
+        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
+            assetContract.Transferred({_id: eventId}).watch((err,log) => {
+                const event = log.args;
+                expect(event).to.include.all.keys([
+                    '_id',
+                    '_from',
+                    '_to',
+                    '_value',
+                ]);
+                assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
+                done();
+            });
+            assetContract.invest(eventId, agreementTerms, {value: assetValue})
+                .then(transaction => {
+                    should.exist(transaction.tx)
+                }, error => {
+                    console.log(error);
+            });
+        });
+    })
+    
+    it('should refuse a pending investment', done => {
+        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
+            assetContract.Refused({_id: eventId}).watch((err,log) => {
+                const event = log.args;
+                expect(event).to.include.all.keys([
+                    '_id',
+                    '_owner',
+                    '_investor',
+                    '_value',
+                ]);
+                done();
+            });
+            assetContract.refuseInvestment(eventId)
+                .then(transaction => {
+                    should.exist(transaction.tx)
+                }, error => {
+                    console.log(error);
+            });
+        });
+    })
+
+
+    it('should add an investment - third', done => {
+        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
+            assetContract.Transferred({_id: eventId}).watch((err,log) => {
+                const event = log.args;
+                expect(event).to.include.all.keys([
+                    '_id',
+                    '_from',
+                    '_to',
+                    '_value',
+                ]);
+                assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
+                done();
+            });
+            assetContract.invest(eventId, agreementTerms, {value: assetValue})
+                .then(transaction => {
+                    should.exist(transaction.tx)
+                }, error => {
+                    console.log(error);
+            });
+        });
+    })
+
+    it('should accept a pending investment and withdraw funds', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
             assetContract.Withdrawal({_id: eventId}).watch((err,log) => {
                 const event = log.args;
