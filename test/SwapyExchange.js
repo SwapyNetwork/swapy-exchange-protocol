@@ -3,9 +3,13 @@ const should = require('chai')
     .should()
 const expect = require('chai').expect;
 
+
+// --- Handled contracts
 const SwapyExchange = artifacts.require("./SwapyExchange.sol");
+const InvestmentOffer = artifacts.require("./investment/InvestmentOffer.sol");
 const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
 
+// --- Test values 
 const currentVersion = "1.0.0";
 const agreementTerms = "222222";
 const investor = process.env.WALLET_ADDRESS;
@@ -13,28 +17,40 @@ const payback = 24;
 const grossReturn = 5;
 const assetValue = 10;
 const assets = [10];
-let assetsAddress = [];
-let offerAddress = null;
 const currency = "USD";
 const offerFixedValue = 10;
 const offerTerms = "111111";
+let assetsAddress = [];
+let offerAddress = null;
 
+// --- Identify events
+const createOfferId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
+const createAssetId = '18bcd316-bf02-11e7-abc4-cec278b6b50a';
+const firstAddInvestmentId = '18bcd94c-bf02-11e7-abc4-cec278b6b50a';
+const secondAddInvestmentId = '18bcdb90-bf02-11e7-abc4-cec278b6b50a';
+const thirdAddInvestmentId = '18bcdd70-bf02-11e7-abc4-cec278b6b50a';
+const cancelInvestmentId = '18bcdf46-bf02-11e7-abc4-cec278b6b50a';
+const refuseInvestmentId = '18bce108-bf02-11e7-abc4-cec278b6b50a';
+const withdrawFundsId = '18bce2ac-bf02-11e7-abc4-cec278b6b50a';
 
-// Example of an event uuid 
-const eventId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
-// ... more code
 contract('SwapyExchange', accounts => {
-  
+ 
     let protocol = null;
 
-    it("should has a version", async () => {
-        protocol = await SwapyExchange.deployed();
-        let version = await protocol.VERSION.call();
-        assert.equal(version, currentVersion, "the protocol is not versioned")
+    it("should has a version", done => {
+        SwapyExchange.deployed()
+            .then(deployed => {
+                protocol = deployed;
+                protocol.VERSION.call()
+                    .then(version => {
+                        assert.equal(version, currentVersion, "the protocol is not versioned")
+                        done();
+                    });
+            });
     })
 
-    it("should create an investment offer and log it", done => {
-        protocol.Offers({_id: eventId}).watch((err,log) => {
+    it("should create an investment offer", done => {
+        protocol.Offers({_id: createOfferId}).watch((err,log) => {
             const event = log.args;
             expect(event).to.include.all.keys([
                 '_id',
@@ -47,7 +63,7 @@ contract('SwapyExchange', accounts => {
             done();        
         });
         const transaction = protocol.createOffer(
-            eventId,
+            createOfferId,
             payback,
             grossReturn,
             currency,
@@ -61,7 +77,7 @@ contract('SwapyExchange', accounts => {
 
     it('should add an investment - first', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Transferred({_id: eventId}).watch((err,log) => {
+            assetContract.Transferred({_id: firstAddInvestmentId}).watch((err,log) => {
                 const event = log.args;
                 expect(event).to.include.all.keys([
                     '_id',
@@ -70,9 +86,8 @@ contract('SwapyExchange', accounts => {
                     '_value',
                 ]);
                 assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
-                done();
             });
-            assetContract.invest(eventId, agreementTerms, {value: assetValue})
+            assetContract.invest(firstAddInvestmentId, agreementTerms, {value: assetValue})
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -83,7 +98,7 @@ contract('SwapyExchange', accounts => {
 
     it('should cancel a pending investment', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Canceled({_id: eventId}).watch((err,log) => {
+            assetContract.Canceled({_id: cancelInvestmentId}).watch((err,log) => {
                 const event = log.args;
                 expect(event).to.include.all.keys([
                     '_id',
@@ -93,7 +108,7 @@ contract('SwapyExchange', accounts => {
                 ]);
                 done();
             });
-            assetContract.cancelInvestment(eventId)
+            assetContract.cancelInvestment(cancelInvestmentId)
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -104,7 +119,7 @@ contract('SwapyExchange', accounts => {
 
     it('should add an investment - second', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Transferred({_id: eventId}).watch((err,log) => {
+            assetContract.Transferred({_id: secondAddInvestmentId}).watch((err,log) => {
                 const event = log.args;
                 expect(event).to.include.all.keys([
                     '_id',
@@ -113,9 +128,8 @@ contract('SwapyExchange', accounts => {
                     '_value',
                 ]);
                 assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
-                done();
             });
-            assetContract.invest(eventId, agreementTerms, {value: assetValue})
+            assetContract.invest(secondAddInvestmentId, agreementTerms, {value: assetValue})
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -126,7 +140,7 @@ contract('SwapyExchange', accounts => {
     
     it('should refuse a pending investment', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Refused({_id: eventId}).watch((err,log) => {
+            assetContract.Refused({_id: refuseInvestmentId}).watch((err,log) => {
                 const event = log.args;
                 expect(event).to.include.all.keys([
                     '_id',
@@ -136,7 +150,7 @@ contract('SwapyExchange', accounts => {
                 ]);
                 done();
             });
-            assetContract.refuseInvestment(eventId)
+            assetContract.refuseInvestment(refuseInvestmentId)
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -148,7 +162,7 @@ contract('SwapyExchange', accounts => {
 
     it('should add an investment - third', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Transferred({_id: eventId}).watch((err,log) => {
+            assetContract.Transferred({_id: thirdAddInvestmentId}).watch((err,log) => {
                 const event = log.args;
                 expect(event).to.include.all.keys([
                     '_id',
@@ -159,7 +173,7 @@ contract('SwapyExchange', accounts => {
                 assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
                 done();
             });
-            assetContract.invest(eventId, agreementTerms, {value: assetValue})
+            assetContract.invest(thirdAddInvestmentId, agreementTerms, {value: assetValue})
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -170,7 +184,7 @@ contract('SwapyExchange', accounts => {
 
     it('should accept a pending investment and withdraw funds', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Withdrawal({_id: eventId}).watch((err,log) => {
+            assetContract.Withdrawal({_id: withdrawFundsId}).watch((err,log) => {
                 const event = log.args;
                 expect(event).to.include.all.keys([
                     '_id',
@@ -181,7 +195,7 @@ contract('SwapyExchange', accounts => {
                 ]);
                 done();
             });
-            assetContract.withdrawFunds(eventId, agreementTerms)
+            assetContract.withdrawFunds(withdrawFundsId, agreementTerms)
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
