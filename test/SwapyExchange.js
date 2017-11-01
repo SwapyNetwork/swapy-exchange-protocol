@@ -75,6 +75,32 @@ contract('SwapyExchange', accounts => {
         });
     })
 
+    it("should create an investment offer", done => {
+        protocol.Offers({_id: createOfferId}).watch((err,log) => {
+            const event = log.args;
+            expect(event).to.include.all.keys([
+                '_id',
+                '_from',
+                '_protocolVersion',
+                '_offerAddress',
+                '_assets'
+            ]);
+            assetAddress = event._assets;
+            done();        
+        });
+        const transaction = protocol.createOffer(
+            createOfferId,
+            payback,
+            grossReturn,
+            currency,
+            offerFixedValue,
+            offerTerms,
+            assets
+        ).then(transaction => {
+            should.exist(transaction.tx);
+        });
+    })
+    
     it('should add an investment - first', done => {
         InvestmentAsset.at(assetAddress[0]).then(assetContract => {
             assetContract.Transferred({_id: firstAddInvestmentId}).watch((err,log) => {
