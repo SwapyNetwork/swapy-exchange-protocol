@@ -9,10 +9,8 @@ const SwapyExchange = artifacts.require("./SwapyExchange.sol");
 const InvestmentOffer = artifacts.require("./investment/InvestmentOffer.sol");
 const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
 
-// --- Test values 
-const currentVersion = "1.0.0";
+// --- Test constants 
 const agreementTerms = "222222";
-const investor = process.env.WALLET_ADDRESS;
 const payback = 24;
 const grossReturn = 5;
 const assetValue = 10;
@@ -20,8 +18,11 @@ const assets = [10];
 const currency = "USD";
 const offerFixedValue = 10;
 const offerTerms = "111111";
+
+// --- Test variables 
 let assetsAddress = [];
 let offerAddress = null;
+let investor = null;
 
 // --- Identify events
 const createOfferId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
@@ -34,19 +35,15 @@ const refuseInvestmentId = '18bce108-bf02-11e7-abc4-cec278b6b50a';
 const withdrawFundsId = '18bce2ac-bf02-11e7-abc4-cec278b6b50a';
 
 contract('SwapyExchange', accounts => {
- 
+    
     let protocol = null;
+    investor = accounts[1];
 
-    it("should has a version", done => {
-        SwapyExchange.deployed()
-            .then(deployed => {
-                protocol = deployed;
-                protocol.VERSION.call()
-                    .then(version => {
-                        assert.equal(version, currentVersion, "the protocol is not versioned")
-                        done();
-                    });
-            });
+
+    it("should has a version", async () => {
+        protocol = await SwapyExchange.new();
+        const version = await protocol.VERSION.call()
+        console.log(version);
     })
 
     it("should create an investment offer", done => {
@@ -113,7 +110,7 @@ contract('SwapyExchange', accounts => {
                 ]);
                 assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
             });
-            assetContract.invest(firstAddInvestmentId, agreementTerms, {value: assetValue})
+            assetContract.invest(firstAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -134,7 +131,7 @@ contract('SwapyExchange', accounts => {
                 ]);
                 done();
             });
-            assetContract.cancelInvestment(cancelInvestmentId)
+            assetContract.cancelInvestment(cancelInvestmentId, {from: investor})
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -155,7 +152,7 @@ contract('SwapyExchange', accounts => {
                 ]);
                 assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
             });
-            assetContract.invest(secondAddInvestmentId, agreementTerms, {value: assetValue})
+            assetContract.invest(secondAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
@@ -199,7 +196,7 @@ contract('SwapyExchange', accounts => {
                 assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
                 done();
             });
-            assetContract.invest(thirdAddInvestmentId, agreementTerms, {value: assetValue})
+            assetContract.invest(thirdAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
                 .then(transaction => {
                     should.exist(transaction.tx)
                 }, error => {
