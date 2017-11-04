@@ -21,6 +21,7 @@ const offerTerms = "111111";
 
 // --- Test variables 
 let assetsAddress = [];
+let asset = null;
 let offerAddress = null;
 let investor = null;
 
@@ -47,19 +48,7 @@ contract('SwapyExchange', accounts => {
     })
 
     it("should create an investment offer", done => {
-        protocol.Offers({_id: createOfferId}).watch((err,log) => {
-            const event = log.args;
-            expect(event).to.include.all.keys([
-                '_id',
-                '_from',
-                '_protocolVersion',
-                '_offerAddress',
-                '_assets'
-            ]);
-            assetAddress = event._assets;
-            done();        
-        });
-        const transaction = protocol.createOffer(
+        protocol.createOffer(
             createOfferId,
             payback,
             grossReturn,
@@ -69,95 +58,70 @@ contract('SwapyExchange', accounts => {
             assets
         ).then(transaction => {
             should.exist(transaction.tx);
-        });
-    })
-
-    it("should create an investment offer", done => {
-        protocol.Offers({_id: createOfferId}).watch((err,log) => {
-            const event = log.args;
-            expect(event).to.include.all.keys([
-                '_id',
-                '_from',
-                '_protocolVersion',
-                '_offerAddress',
-                '_assets'
-            ]);
-            assetAddress = event._assets;
-            done();        
-        });
-        const transaction = protocol.createOffer(
-            createOfferId,
-            payback,
-            grossReturn,
-            currency,
-            offerFixedValue,
-            offerTerms,
-            assets
-        ).then(transaction => {
-            should.exist(transaction.tx);
-        });
-    })
-    
-    it('should add an investment - first', done => {
-        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Transferred({_id: firstAddInvestmentId}).watch((err,log) => {
+            protocol.Offers({_id: createOfferId}).watch((err,log) => {
                 const event = log.args;
                 expect(event).to.include.all.keys([
                     '_id',
                     '_from',
-                    '_to',
-                    '_value',
+                    '_protocolVersion',
+                    '_offerAddress',
+                    '_assets'
                 ]);
-                assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
+                assetAddress = event._assets;
+                done();        
             });
+        });
+    })
+
+    it('should add an investment - first', done => {
+        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
+            asset = assetContract;
             assetContract.invest(firstAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
                 .then(transaction => {
-                    should.exist(transaction.tx)
+                    assetContract.Transferred({_id: firstAddInvestmentId}).watch((err,log) => {
+                        const event = log.args;
+                        expect(event).to.include.all.keys([
+                            '_id',
+                            '_from',
+                            '_to',
+                            '_value',
+                        ]);
+                        assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
+                    });
+                    done();
                 }, error => {
                     console.log(error);
+                    done();
             });
         });
     })
 
     it('should cancel a pending investment', done => {
-        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Canceled({_id: cancelInvestmentId}).watch((err,log) => {
-                const event = log.args;
-                expect(event).to.include.all.keys([
-                    '_id',
-                    '_owner',
-                    '_investor',
-                    '_value',
-                ]);
-                done();
-            });
-            assetContract.cancelInvestment(cancelInvestmentId, {from: investor})
-                .then(transaction => {
-                    should.exist(transaction.tx)
-                }, error => {
-                    console.log(error);
-            });
+        asset.cancelInvestment(cancelInvestmentId, {from: investor})
+            .then(transaction => {
+                should.exist(transaction.tx)
+                asset.Canceled({_id: cancelInvestmentId}).watch((err,log) => {
+                    const event = log.args;
+                    expect(event).to.include.all.keys([
+                        '_id',
+                        '_owner',
+                        '_investor',
+                        '_value',
+                    ]);
+                    done();
+                });
+            }, error => {
+                console.log(error);
         });
     })
 
     it('should add an investment - second', done => {
-        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Transferred({_id: secondAddInvestmentId}).watch((err,log) => {
-                const event = log.args;
-                expect(event).to.include.all.keys([
-                    '_id',
-                    '_from',
-                    '_to',
-                    '_value',
-                ]);
-                assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
-            });
-            assetContract.invest(secondAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
-                .then(transaction => {
-                    should.exist(transaction.tx)
-                }, error => {
-                    console.log(error);
-            });
+        asset.invest(secondAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
+            .then(transaction => {
+                should.exist(transaction.tx)
+                done();
+            }, error => {
+                console.log(error);
         });
     })
     
@@ -184,24 +148,12 @@ contract('SwapyExchange', accounts => {
 
 
     it('should add an investment - third', done => {
-        InvestmentAsset.at(assetAddress[0]).then(assetContract => {
-            assetContract.Transferred({_id: thirdAddInvestmentId}).watch((err,log) => {
-                const event = log.args;
-                expect(event).to.include.all.keys([
-                    '_id',
-                    '_from',
-                    '_to',
-                    '_value',
-                ]);
-                assert.equal(event._value, assetValue, "The invested value must be equal the sent value");
+        asset.invest(thirdAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
+            .then(transaction => {
+                should.exist(transaction.tx)
                 done();
-            });
-            assetContract.invest(thirdAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
-                .then(transaction => {
-                    should.exist(transaction.tx)
-                }, error => {
-                    console.log(error);
-            });
+            }, error => {
+                console.log(error);
         });
     })
 
