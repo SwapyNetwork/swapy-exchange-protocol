@@ -4,13 +4,16 @@
   "description": "Swapy Exchange smart contracts",
   "main": "truffle.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "sh scripts/test.sh",
     "compile": "truffle compile",
     "migrate": "truffle migrate --network custom",
     "migrate.hard": "truffle migrate --network custom --reset"
   },
   "dependencies": {
     "bip39": "^2.4.0",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "chai-bignumber": "^2.0.2",
     "ethereumjs-wallet": "^0.6.0",
     "python": "0.0.4",
     "truffle": "^3.4.11",

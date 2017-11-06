@@ -30,7 +30,15 @@ module.exports = {
     custom : {
       network_id: network_id, // custom network id
       provider: engine, // Use our custom provider
-      from: address     // Use the address we derived
+      from: address,     // Use the address we derived
+      gas: 4670000
+    },
+    test : {
+      host: "localhost",
+      network_id: "*",
+      port: 8545,
+      gas: 0xfffffffffff,
+      gasPrice: 0x01
     }    
   },
   rpc: {

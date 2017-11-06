@@ -16,13 +16,13 @@ The diagram below describes the flow of fundraising provided by [Swapy Exchange]
 
 ## Contracts
 
-### [SwapyExchange.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/protocol/SwapyExchange.sol)
+### [SwapyExchange.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/SwapyExchange.sol)
 Credit companies can order investment by using the SwapyExchange contract. It works as a factory of InvestmentOffer contract and organizes the protocol versioning.
 
-### [InvestmentOffer.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/protocol/InvestmentOffer.sol)
+### [InvestmentOffer.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/investment/InvestmentOffer.sol)
 InvestmentOffer defines a fundraising contract with its payback period and gross return of investment. Its owner can create investment assets associated to the fundraising and sell it to investors.
 
-### [InvestmentAsset.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/protocol/InvestmentAsset.sol)
+### [InvestmentAsset.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/investment/InvestmentAsset.sol)
 InvestmentAsset defines a fundraising asset with its value, investor and agreement terms hash. It provides methods to interact with the asset contract and agree the investment. These methods are only accessible by the investor or the credit company, according to its functionalities.
 
 ## Setup
@@ -91,6 +91,14 @@ $ npm run migrate
 We're running the contracts in a custom network defined in  [truffle.js](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/truffle.js).
 
 After the transaction mining, the protocol is disponible for usage.
+
+We're using Truffle's test support. The script scripts/test.sh creates a local network and call the unit tests.
+
+Type 
+```
+$ npm test
+```
+and run our tests.
 
 [Truffle console](https://truffle.readthedocs.io/en/beta/getting_started/console/) can be used to interact with protocol. For example:
 ```
