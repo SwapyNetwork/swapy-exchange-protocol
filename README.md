@@ -92,7 +92,7 @@ We're running the contracts in a custom network defined in  [truffle.js](https:/
 
 After the transaction mining, the protocol is disponible for usage.
 
-We're using Truffle's test support. The script scripts/test.sh creates a local network and call the unit tests.
+We're using Truffle's test support. The script scripts/test.sh creates a local network and calls the unit tests.
 
 Type 
 ```
