@@ -26,7 +26,8 @@ contract InvestmentAsset {
     enum Status { 
         AVAILABLE,
         PENDING_OWNER_AGREEMENT,
-        INVESTED 
+        INVESTED,
+        RETURNED 
     }
     Status public status;
 
@@ -55,6 +56,13 @@ contract InvestmentAsset {
     event Refused(
         string _id,
         address _owner,
+        address _investor,
+        uint256 _value
+    );
+
+    event Returned(
+        string _id,
+        address _owner, 
         address _investor,
         uint256 _value
     );
@@ -162,6 +170,19 @@ contract InvestmentAsset {
         var (currentInvestor, investedValue) = makeAvailable();
         Refused(_id, owner, currentInvestor, investedValue);
         return true;
+    }
+
+    // Return investment
+    function returnInvestment(string _id) payable
+        onlyOwner
+        hasStatus(Status.INVESTED)
+        public 
+        returns(bool)
+    {   
+        investor.transfer(msg.value);
+        status = Status.RETURNED;
+        Returned(_id, owner, investor, msg.value);
+        return true;     
     }
 
 }
