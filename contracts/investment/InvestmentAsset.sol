@@ -172,7 +172,6 @@ contract InvestmentAsset {
         return true;
     }
 
-    // Return investment
     function returnInvestment(string _id) payable
         onlyOwner
         hasStatus(Status.INVESTED)

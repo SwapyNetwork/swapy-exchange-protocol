@@ -4,7 +4,7 @@
   "description": "Swapy Exchange smart contracts",
   "main": "truffle.js",
   "scripts": {
-    "test": "sh scripts/test.sh",
+    "test": "scripts/test.sh",
     "compile": "truffle compile",
     "migrate": "truffle migrate --network custom",
     "migrate.hard": "truffle migrate --network custom --reset"
