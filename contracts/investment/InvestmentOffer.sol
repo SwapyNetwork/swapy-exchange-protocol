@@ -7,7 +7,7 @@ import './InvestmentAsset.sol';
 contract InvestmentOffer {
 
   // period to return the investment   
-  uint256 public paybackMonths;
+  uint256 public paybackDays;
   // Gross return of investment 
   uint256 public grossReturn;
   // fixed currency symbol

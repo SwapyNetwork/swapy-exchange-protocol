@@ -229,7 +229,6 @@ contract('SwapyExchange', accounts => {
     })
 
     it('should return investment value', done => {
-        const oldBalance = web3.eth.getBalance(investor)
         secondAsset.returnInvestment(returnInvestmentId, {from: creditCompany, value: (1 + grossReturn/10000) * assetValue })
             .then(transaction => {
                 should.exist(transaction.tx)
@@ -241,8 +240,6 @@ contract('SwapyExchange', accounts => {
                         '_investor',
                         '_value'
                     ]);
-                    const newBalance = web3.eth.getBalance(investor);
-                    //assert.equal(newBalance, oldBalance + (1 + grossReturn/10000) * assetValue, "The new investor's balance must be the sum of the old balance and return on investment" );
                     done();
                 })
             }, error => {
