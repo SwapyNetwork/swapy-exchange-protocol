@@ -40,7 +40,7 @@ contract InvestmentOffer {
   function InvestmentOffer(
     address _owner,
     string _protocolVersion,
-    uint256 _paybackMonths,
+    uint256 _paybackDays,
     uint256 _grossReturn,
     string _currency,
     uint256 _fixedValue,
@@ -49,7 +49,7 @@ contract InvestmentOffer {
   {
     owner = _owner;
     protocolVersion = _protocolVersion;
-    paybackMonths = _paybackMonths;
+    paybackDays = _paybackDays;
     grossReturn = _grossReturn;
     currency = _currency;
     fixedValue = _fixedValue;
@@ -62,7 +62,7 @@ contract InvestmentOffer {
     public
     returns(bool) 
   {
-    address newAsset = address(new InvestmentAsset(owner, protocolVersion, this, currency, _fixedValue, offerTermsHash));
+    address newAsset = address(new InvestmentAsset(owner, protocolVersion, this, currency, _fixedValue, offerTermsHash, paybackDays));
     Assets(_id, owner, protocolVersion, newAsset, currency, _fixedValue, offerTermsHash);    
     return true;
   }

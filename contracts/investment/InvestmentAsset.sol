@@ -13,6 +13,8 @@ contract InvestmentAsset {
     string public currency;
     // Asset fixed value
     uint256 public fixedValue;
+    // period to return the investment   
+    uint256 public paybackDays;
     // Asset buyer
     address public investor;
     // Protocol version
@@ -21,13 +23,17 @@ contract InvestmentAsset {
     bytes public assetTermsHash;
     // Document hash agreeing the contractual terms      
     bytes public agreementHash;
+    // investment timestamp
+    uint public investedAt;
+
 
     // possible stages of an asset
     enum Status { 
         AVAILABLE,
         PENDING_OWNER_AGREEMENT,
         INVESTED,
-        RETURNED 
+        RETURNED,
+        DELAYED_RETURN
     }
     Status public status;
 
@@ -64,7 +70,8 @@ contract InvestmentAsset {
         string _id,
         address _owner, 
         address _investor,
-        uint256 _value
+        uint256 _value,
+        Status _status
     );
 
     // Checks the current asset's status
@@ -91,7 +98,8 @@ contract InvestmentAsset {
         address _offerAddress,
         string _currency,
         uint256 _fixedValue,
-        bytes _assetTermsHash)
+        bytes _assetTermsHash,
+        uint _paybackDays)
         public
     {
         owner = _owner;
@@ -100,6 +108,7 @@ contract InvestmentAsset {
         currency = _currency;
         fixedValue = _fixedValue;
         assetTermsHash = _assetTermsHash;
+        paybackDays = _paybackDays;
         status = Status.AVAILABLE;
     }
 
@@ -115,6 +124,7 @@ contract InvestmentAsset {
         investor = address(0);
         agreementHash = "";
         status = Status.AVAILABLE;
+        investedAt = uint(0);
         return (currentInvestor, investedValue);
     }
 
@@ -126,6 +136,7 @@ contract InvestmentAsset {
     {
         investor = msg.sender;
         agreementHash = _agreementHash;
+        investedAt = now;
         status = Status.PENDING_OWNER_AGREEMENT;
         Transferred(_id, investor, owner, this.balance);
         return true;
@@ -179,8 +190,12 @@ contract InvestmentAsset {
         returns(bool)
     {   
         investor.transfer(msg.value);
-        status = Status.RETURNED;
-        Returned(_id, owner, investor, msg.value);
+        if (now > investedAt + paybackDays * 1 days) {
+            status = Status.DELAYED_RETURN;
+        } else {
+            status = Status.RETURNED;
+        }
+        Returned(_id, owner, investor, msg.value, status);
         return true;     
     }
 

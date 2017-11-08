@@ -20,7 +20,7 @@ contract SwapyExchange {
   // Creates a new investment offer
   function createOffer(
       string _id,
-      uint256 _paybackMonths,
+      uint256 _paybackDays,
       uint256 _grossReturn,
       string _currency,
       uint256 _fixedValue,
@@ -29,8 +29,8 @@ contract SwapyExchange {
     public
     returns(bool)
   {
-    address newOffer = address(new InvestmentOffer(msg.sender, VERSION, _paybackMonths, _grossReturn, _currency, _fixedValue, _offerTermsHash));
-    address[] memory newAssets = createOfferAssets(_assets,newOffer,_currency,_offerTermsHash);
+    address newOffer = address(new InvestmentOffer(msg.sender, VERSION, _paybackDays, _grossReturn, _currency, _fixedValue, _offerTermsHash));
+    address[] memory newAssets = createOfferAssets(_assets,newOffer,_currency,_offerTermsHash, _paybackDays);
     Offers(_id, msg.sender, VERSION, newOffer, newAssets);
     return true;
   }
@@ -39,13 +39,14 @@ contract SwapyExchange {
       uint256[] _assets,
       address _offerAddress,
       string _currency,
-      bytes _offerTermsHash)
+      bytes _offerTermsHash,
+      uint _paybackDays)
     internal  
     returns (address[])
   {
     address[] memory newAssets = new address[](_assets.length);
     for (uint index = 0; index < _assets.length; index++) {
-      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, _offerAddress, _currency, _assets[index], _offerTermsHash));
+      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, _offerAddress, _currency, _assets[index], _offerTermsHash, _paybackDays));
     }
     return newAssets;
   }  

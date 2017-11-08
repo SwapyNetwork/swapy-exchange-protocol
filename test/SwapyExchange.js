@@ -238,7 +238,8 @@ contract('SwapyExchange', accounts => {
                         '_id',
                         '_owner',
                         '_investor',
-                        '_value'
+                        '_value',
+                        '_status'
                     ]);
                     done();
                 })
