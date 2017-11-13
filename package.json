@@ -5,9 +5,12 @@
   "main": "truffle.js",
   "scripts": {
     "test": "sh scripts/test.sh",
+    "testrpc": "sh scripts/start_testrpc.sh",
     "compile": "truffle compile",
     "migrate": "truffle migrate --network custom",
-    "migrate.hard": "truffle migrate --network custom --reset"
+    "migrate.hard": "truffle migrate --network custom --reset",
+    "migrate.test": "truffle migrate --network test",
+    "migrate.test.hard": "truffle migrate --network test --reset"
   },
   "dependencies": {
     "bip39": "^2.4.0",
