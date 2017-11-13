@@ -20,6 +20,7 @@ const offerFixedValue = 10;
 const offerTerms = "111111";
 
 // --- Test variables 
+let protocol = null;
 let offerAddress = null;
 let offer = null;
 let assetsAddress = [];
@@ -27,6 +28,7 @@ let firstAsset = null;
 let secondAsset = null;
 let investor = null;
 let creditCompany = null;
+
 
 // --- Identify events
 const createOfferId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
@@ -40,23 +42,23 @@ const withdrawFundsId = '18bce2ac-bf02-11e7-abc4-cec278b6b50a';
 const returnInvestmentId = '18bce4ab-bf02-11e7-abc4-cec278b6b50a';
 
 contract('SwapyExchange', accounts => {
-    
-    let protocol = null;
-    investor = accounts[1];
-    creditCompany = accounts[0];
 
+    before( done => {
+        creditCompany = accounts[0];
+        investor = accounts[1];
+        SwapyExchange.new().then(contract => {
+            protocol = contract;
+            done();
+        })
+    })
+    
 
     it("should has a version", done => {
-        SwapyExchange.new()
-            .then(contract => {
-                protocol = contract;
-                protocol.VERSION.call()
-                    .then(version => {
-                        should.exist(version);
-                        console.log(version);
-                        done();
-                    })
-            })
+        protocol.VERSION.call().then(version => {
+            should.exist(version);
+            console.log(version);
+            done();
+        })
     })
 
     it("should create an investment offer", done => {
