@@ -88,7 +88,39 @@ contract('SwapyExchange', accounts => {
             });
         });
     })
+})
 
+contract('InvestmentOffer', () => {
+
+    it("should create an investment asset", done => {
+        InvestmentOffer.at(offerAddress).then(offerContract => {
+            offer = offerContract;
+            offer.createAsset(
+                createAssetId,
+                assetValue
+            ).then(transaction => {
+                should.exist(transaction.tx);
+                offer.Assets({_id: createAssetId}).watch((err,log) => {
+                    const event = log.args;
+                    expect(event).to.include.all.keys([
+                        '_id',
+                        '_from',
+                        '_protocolVersion',
+                        '_assetAddress',
+                        '_currency',
+                        '_fixedValue',
+                        '_assetTermsHash'
+                    ]);
+                    assetsAddress.push(event._assetAddress);
+                    done();        
+                });
+            });
+        })
+    })
+
+})
+    
+contract('InvestmentAsset', () => {
     it('should add an investment - first', done => {
         InvestmentAsset.at(assetsAddress[0]).then(assetContract => {
             firstAsset = assetContract;
@@ -131,32 +163,7 @@ contract('SwapyExchange', accounts => {
         });
     })
 
-    it("should create an investment asset", done => {
-        InvestmentOffer.at(offerAddress).then(offerContract => {
-            offer = offerContract;
-            offer.createAsset(
-                createAssetId,
-                assetValue
-            ).then(transaction => {
-                should.exist(transaction.tx);
-                offer.Assets({_id: createAssetId}).watch((err,log) => {
-                    const event = log.args;
-                    expect(event).to.include.all.keys([
-                        '_id',
-                        '_from',
-                        '_protocolVersion',
-                        '_assetAddress',
-                        '_currency',
-                        '_fixedValue',
-                        '_assetTermsHash'
-                    ]);
-                    assetsAddress.push(event._assetAddress);
-                    done();        
-                });
-            });
-        })
-    })
-
+    
     it('should add an investment - second', done => {
         InvestmentAsset.at(assetsAddress[1]).then(assetContract => {
             secondAsset = assetContract;
@@ -231,7 +238,9 @@ contract('SwapyExchange', accounts => {
     })
 
     it('should return the investment with delay', done => {
+        // invested value + return on investment
         const returnValue = (1 + grossReturn/10000) * assetValue;
+        // simulate a long period after the funds transfer
         web3.currentProvider.send({jsonrpc: "2.0", method: "evm_increaseTime", params: [16416000], id: 123});
         secondAsset.returnInvestment(
             returnInvestmentId,
@@ -308,5 +317,6 @@ contract('SwapyExchange', accounts => {
             console.log(error);
         })
     })
-
 })
+
+    
