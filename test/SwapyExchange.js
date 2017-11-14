@@ -95,7 +95,7 @@ contract('SwapyExchange', accounts => {
 
 describe('Contract: InvestmentOffer', () => {
     
-    it("should deny an investment asset creation if the user isn't offer's owner", done => {
+    it("should deny an investment asset creation if the user isn't the offer owner", done => {
         InvestmentOffer.at(offerAddress).then(offerContract => {
             offer = offerContract;
             offer.createAsset(
@@ -287,13 +287,6 @@ describe('Contract: InvestmentAsset ', () => {
         });
     })
 
-    it("should deny a withdrawal if the user isn't the asset owner", done=> {
-        secondAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: investor }) 
-        .should.be.rejectedWith('VM Exception')
-        .then(() => {
-            done();
-        })
-    })
 
     it("should deny an investment return if the user isn't the asset owner", done=> {
         secondAsset.returnInvestment(
