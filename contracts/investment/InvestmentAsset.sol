@@ -92,6 +92,12 @@ contract InvestmentAsset {
         _;
     }
 
+    // Compares the agreement terms hash of investor and owner
+    modifier onlyAgreed(bytes _agreementHash) {
+        require(keccak256(agreementHash) == keccak256(_agreementHash));
+        _;
+    }
+
     function InvestmentAsset(
         address _owner,
         string _protocolVersion,
@@ -158,6 +164,7 @@ contract InvestmentAsset {
     function withdrawFunds(string _id, bytes _agreementHash)
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
+        onlyAgreed(_agreementHash)
         public
         returns(bool)
     {
@@ -168,6 +175,8 @@ contract InvestmentAsset {
             status = Status.INVESTED;
             Withdrawal(_id, owner, investor, value, agreementHash);
             return true;
+        }else {
+            revert();
         }
     }
 

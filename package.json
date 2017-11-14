@@ -5,7 +5,7 @@
   "main": "truffle.js",
   "scripts": {
     "test": "scripts/test.sh",
-    "test.win":"sh scripts/test.sh",
+    "test.win": "sh scripts/test.sh",
     "testrpc": "sh scripts/start_testrpc.sh",
     "compile": "truffle compile",
     "migrate": "truffle migrate --network custom",

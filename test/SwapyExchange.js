@@ -14,6 +14,8 @@ const agreementTerms = "222222";
 const payback = 12;
 const grossReturn = 500;
 const assetValue = 10;
+// invested value + return on investment
+const returnValue = (1 + grossReturn/10000) * assetValue;
 const assets = [10,10];
 const currency = "USD";
 const offerFixedValue = 10;
@@ -26,9 +28,9 @@ let offer = null;
 let assetsAddress = [];
 let firstAsset = null;
 let secondAsset = null;
+
 let investor = null;
 let creditCompany = null;
-
 
 // --- Identify events
 const createOfferId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
@@ -47,6 +49,7 @@ contract('SwapyExchange', accounts => {
     before( done => {
         creditCompany = accounts[0];
         investor = accounts[1];
+        anotherUser = accounts[2];
         SwapyExchange.new().then(contract => {
             protocol = contract;
             done();
@@ -57,7 +60,7 @@ contract('SwapyExchange', accounts => {
     it("should has a version", done => {
         protocol.VERSION.call().then(version => {
             should.exist(version);
-            console.log(version);
+            console.log(`Protocol version: ${version}`);
             done();
         })
     })
@@ -90,14 +93,29 @@ contract('SwapyExchange', accounts => {
     })
 })
 
-contract('InvestmentOffer', () => {
+describe('Contract: InvestmentOffer', () => {
+    
+    it("should deny an investment asset creation if the user isn't offer's owner", done => {
+        InvestmentOffer.at(offerAddress).then(offerContract => {
+            offer = offerContract;
+            offer.createAsset(
+                createAssetId,
+                assetValue,
+                { from: anotherUser }
+            ).should.be.rejectedWith('VM Exception')
+            .then(() => {
+                done();
+            })
+         })
+    })
 
     it("should create an investment asset", done => {
         InvestmentOffer.at(offerAddress).then(offerContract => {
             offer = offerContract;
             offer.createAsset(
                 createAssetId,
-                assetValue
+                assetValue,
+                { from: creditCompany}
             ).then(transaction => {
                 should.exist(transaction.tx);
                 offer.Assets({_id: createAssetId}).watch((err,log) => {
@@ -120,7 +138,8 @@ contract('InvestmentOffer', () => {
 
 })
     
-contract('InvestmentAsset', () => {
+describe('Contract: InvestmentAsset ', () => {
+    
     it('should add an investment - first', done => {
         InvestmentAsset.at(assetsAddress[0]).then(assetContract => {
             firstAsset = assetContract;
@@ -144,6 +163,22 @@ contract('InvestmentAsset', () => {
         });
     })
 
+    it("should deny an investment if the asset isn't available", done => {
+        firstAsset.invest(firstAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
+        .should.be.rejectedWith('VM Exception')
+        .then(() => {
+            done();
+        })
+    })
+    
+    it("should deny a cancelment if the user isn't the investor", done=> {
+        firstAsset.cancelInvestment(cancelInvestmentId, {from: creditCompany})
+        .should.be.rejectedWith('VM Exception')
+        .then(() => {
+            done();
+        })
+    })
+
     it('should cancel a pending investment', done => {
         firstAsset.cancelInvestment(cancelInvestmentId, {from: investor})
             .then(transaction => {
@@ -163,7 +198,6 @@ contract('InvestmentAsset', () => {
         });
     })
 
-    
     it('should add an investment - second', done => {
         InvestmentAsset.at(assetsAddress[1]).then(assetContract => {
             secondAsset = assetContract;
@@ -186,9 +220,17 @@ contract('InvestmentAsset', () => {
             });
         });
     })
+
+    it("should deny a refusement if the user isn't the asset owner", done=> {
+        secondAsset.refuseInvestment(refuseInvestmentId, { from: investor })
+        .should.be.rejectedWith('VM Exception')
+        .then(() => {
+            done();
+        })
+    })
     
     it('should refuse a pending investment', done => {
-        secondAsset.refuseInvestment(refuseInvestmentId)
+        secondAsset.refuseInvestment(refuseInvestmentId, { from: creditCompany })
             .then(transaction => {
                 should.exist(transaction.tx)
                 secondAsset.Refused({_id: refuseInvestmentId}).watch((err,log) => {
@@ -217,8 +259,16 @@ contract('InvestmentAsset', () => {
         });
     })
 
+    it("should deny a withdrawal if the user isn't the asset owner", done=> {
+        secondAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: investor }) 
+        .should.be.rejectedWith('VM Exception')
+        .then(() => {
+            done();
+        })
+    })
+    
     it('should accept a pending investment and withdraw funds', done => {
-        secondAsset.withdrawFunds(withdrawFundsId, agreementTerms)
+        secondAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: creditCompany })
             .then(transaction => {
                 should.exist(transaction.tx)
                 secondAsset.Withdrawal({_id: withdrawFundsId}).watch((err,log) => {
@@ -237,9 +287,26 @@ contract('InvestmentAsset', () => {
         });
     })
 
+    it("should deny a withdrawal if the user isn't the asset owner", done=> {
+        secondAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: investor }) 
+        .should.be.rejectedWith('VM Exception')
+        .then(() => {
+            done();
+        })
+    })
+
+    it("should deny an investment return if the user isn't the asset owner", done=> {
+        secondAsset.returnInvestment(
+            returnInvestmentId,
+            { from: investor, value: returnValue }
+        ) 
+        .should.be.rejectedWith('VM Exception')
+        .then(() => {
+            done();
+        })
+    })
+    
     it('should return the investment with delay', done => {
-        // invested value + return on investment
-        const returnValue = (1 + grossReturn/10000) * assetValue;
         // simulate a long period after the funds transfer
         web3.currentProvider.send({jsonrpc: "2.0", method: "evm_increaseTime", params: [16416000], id: 123});
         secondAsset.returnInvestment(
@@ -295,7 +362,6 @@ contract('InvestmentAsset', () => {
     })
 
     it('should return the investment correctly', done => {
-        const returnValue = (1 + grossReturn/10000) * assetValue;
         firstAsset.returnInvestment(
             returnInvestmentId,
             { from: creditCompany, value: returnValue }
