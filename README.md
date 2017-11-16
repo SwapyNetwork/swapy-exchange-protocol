@@ -44,6 +44,7 @@ sample.env
 ```
 export WALLET_ADDRESS="0x43...F0932X"
 export NETWORK_ID=...
+export TEST_NETWORK_ID=...
 export PROVIDER_URL="https://yourfavoriteprovider.../..."
 export WALLET_MNEMONIC="twelve words mnemonic ... potato bread coconut pencil"
 ```
@@ -94,7 +95,7 @@ After the transaction mining, the protocol is disponible for usage.
 
 We're using Truffle's test support. The script scripts/test.sh creates a local network and calls the unit tests.
 
-Type 
+Type
 ```
 $ npm test
 ```
