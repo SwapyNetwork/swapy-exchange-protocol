@@ -24,6 +24,7 @@ engine.start(); // Required by the provider engine.
 
 
 const network_id = process.env.NETWORK_ID;
+const test_network_id = process.env.TEST_NETWORK_ID;
 
 module.exports = {
   networks: {
@@ -35,11 +36,11 @@ module.exports = {
     },
     test : {
       host: "localhost",
-      network_id: "*",
+      network_id: test_network_id,
       port: 8545,
       gas: 0xfffffffffff,
       gasPrice: 0x01
-    }    
+    }
   },
   rpc: {
     // Use the default host and port when not using ropsten
