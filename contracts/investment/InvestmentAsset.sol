@@ -169,16 +169,11 @@ contract InvestmentAsset {
         public
         returns(bool)
     {
-        // compare the document signed by the offer owner and investor
-        if (keccak256(agreementHash) == keccak256(_agreementHash)) {
-            uint256 value = this.balance;
-            owner.transfer(value);
-            status = Status.INVESTED;
-            Withdrawal(_id, owner, investor, value, agreementHash);
-            return true;
-        }else {
-            revert();
-        }
+        uint256 value = this.balance;
+        owner.transfer(value);
+        status = Status.INVESTED;
+        Withdrawal(_id, owner, investor, value, agreementHash);
+        return true;
     }
 
     // Refuse the pending investment
