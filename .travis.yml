@@ -1,0 +1,11 @@
+dist: trusty
+sudo: required
+group: beta
+language: node_js
+node_js:
+  - "8"
+matrix:
+  fast_finish: true
+cache:
+  directories:
+    - "node_modules"
