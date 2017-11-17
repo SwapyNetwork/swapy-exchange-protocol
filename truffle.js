@@ -24,7 +24,7 @@ engine.start(); // Required by the provider engine.
 
 
 const network_id = process.env.NETWORK_ID;
-const test_network_id = process.env.TEST_NETWORK_ID;
+const dev_network_id = process.env.DEV_NETWORK_ID;
 
 module.exports = {
   networks: {
@@ -34,9 +34,16 @@ module.exports = {
       from: address,     // Use the address we derived
       gas: 4670000
     },
+    dev : {
+      host: "localhost",
+      network_id: dev_network_id,
+      port: 8545,
+      gas: 0xfffffffffff,
+      gasPrice: 0x01
+    },
     test : {
       host: "localhost",
-      network_id: test_network_id,
+      network_id: '*',
       port: 8545,
       gas: 0xfffffffffff,
       gasPrice: 0x01
