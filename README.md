@@ -2,7 +2,7 @@
 #### NOTE: The protocol was previously created on a private repository. Since the beginning, we have thought about open sourcing the protocol as the community has much to contribute to it as well as the protocol and the source code may be helpful to other projects too. As the protocol achieved a certain level of maturity we decided to move it to a public repository under Apache 2.0 License (without its history). We invite you all to join us in our dream of a world in which everyone has ACCESS TO CREDIT. The Swapy team is looking forward to your comments, issues, contributions, derivations, and so on.
 [![Join the chat at https://gitter.im/swapynetwork/general](https://badges.gitter.im/swapynetwork/general.svg)](https://gitter.im/swapynetwork/general?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
+[![Build Status](https://travis-ci.org/SwapyNetwork/swapy-exchange-protocol.svg?branch=master)](https://travis-ci.org/SwapyNetwork/swapy-exchange-protocol)
 
 ## Table of Contents
 
@@ -17,17 +17,14 @@ The diagram below describes the flow of fundraising provided by [Swapy Exchange]
 ## Contracts
 
 ### [SwapyExchange.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/SwapyExchange.sol)
-Credit companies can order investment by using the SwapyExchange contract. It works as a factory of InvestmentOffer contract and organizes the protocol versioning.
-
-### [InvestmentOffer.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/investment/InvestmentOffer.sol)
-InvestmentOffer defines a fundraising contract with its payback period and gross return of investment. Its owner can create investment assets associated to the fundraising and sell it to investors.
+Credit companies can order investment by using the SwapyExchange contract. It works as a factory of InvestmentAsset contract and organizes the protocol versioning.
 
 ### [InvestmentAsset.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/investment/InvestmentAsset.sol)
 InvestmentAsset defines a fundraising asset with its value, investor and agreement terms hash. It provides methods to interact with the asset contract and agree the investment. These methods are only accessible by the investor or the credit company, according to its functionalities.
 
 ## Setup
 
-Install [Node v6.11.2](https://nodejs.org/en/download/releases/)
+Install [Node v8.9.1](https://nodejs.org/en/download/releases/)
 
 [Truffle](http://truffleframework.com/) is used for deployment. We run the version installed from our dependencies using npm scripts, but if you prefer to install it globally you can do:
 ```
