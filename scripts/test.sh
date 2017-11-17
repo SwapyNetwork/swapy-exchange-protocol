@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Exit script as soon as a command fails.
+set -o errexit
+
 # Executes cleanup function at script exit.
 trap cleanup EXIT
 
@@ -11,10 +14,6 @@ cleanup() {
 }
 
 testrpc_port=8545
-
-testrpc_running() {
-  nc -z localhost "$testrpc_port"
-}
 
 start_testrpc() {
   # We define 10 accounts with balance 1M ether, needed for high-value tests.
@@ -30,15 +29,12 @@ start_testrpc() {
     --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501208,1000000000000000000000000"
     --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501209,1000000000000000000000000"
   )
-  testrpc --gasLimit 0xfffffffffff --port "$testrpc_port" "${accounts[@]}" > /dev/null &
+
+  node_modules/.bin/testrpc "${accounts[@]}" > /dev/null &
+ 
   testrpc_pid=$!
 }
 
-if testrpc_running; then
-  echo "Using existing testrpc instance"
-else
-  echo "Starting our own testrpc instance"
-  start_testrpc
-fi
+start_testrpc
 
 node_modules/.bin/truffle test --network test "$@"
