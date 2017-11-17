@@ -7,11 +7,8 @@ const should = require('chai')
     .should()
 const expect = require('chai').expect;
 
-
-
 // --- Handled contracts
 const SwapyExchange = artifacts.require("./SwapyExchange.sol");
-const InvestmentOffer = artifacts.require("./investment/InvestmentOffer.sol");
 const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
 
 // --- Test constants 
@@ -19,17 +16,14 @@ const agreementTerms = "222222";
 const payback = 12;
 const grossReturn = 500;
 const assetValue = 10;
-// invested value + return on investment
+// returned value =  invested value + return on investment
 const returnValue = (1 + grossReturn/10000) * assetValue;
 const assets = [10,10];
 const currency = "USD";
-const offerFixedValue = 10;
 const offerTerms = "111111";
 
 // --- Test variables 
 let protocol = null;
-let offerAddress = null;
-let offer = null;
 let assetsAddress = [];
 let firstAsset = null;
 let secondAsset = null;
@@ -54,7 +48,6 @@ contract('SwapyExchange', accounts => {
     before( async () => {
         creditCompany = accounts[0];
         investor = accounts[1];
-        anotherUser = accounts[2];
         protocol = await SwapyExchange.new();
     })
     
@@ -71,7 +64,6 @@ contract('SwapyExchange', accounts => {
             payback,
             grossReturn,
             currency,
-            offerFixedValue,
             offerTerms,
             assets
         );
@@ -81,37 +73,12 @@ contract('SwapyExchange', accounts => {
             '_id',
             '_from',
             '_protocolVersion',
-            '_offerAddress',
             '_assets'
         ]);
         assetsAddress = event.args._assets;
-        offerAddress = event.args._offerAddress;
     })
 })
 
-describe('Contract: InvestmentOffer', () => {
-    
-    it("should deny an investment asset creation if the user isn't the offer owner", async () => {
-        offer = await InvestmentOffer.at(offerAddress);
-        await offer.createAsset( createAssetId, assetValue, { from: anotherUser }).should.be.rejectedWith('VM Exception');
-    })
-
-    it("should create an investment asset", async () => {
-        const { logs } = await offer.createAsset( createAssetId, assetValue, { from: creditCompany})
-        const event = logs.find(e => e.event === 'Assets')
-        expect(event.args).to.include.all.keys([
-            '_id',
-            '_from',
-            '_protocolVersion',
-            '_assetAddress',
-            '_currency',
-            '_fixedValue',
-            '_assetTermsHash'
-        ]);
-        assetsAddress.push(event.args._assetAddress);
-    })
-})
-    
 describe('Contract: InvestmentAsset ', () => {
     
     it('should add an investment - first', async () => {
