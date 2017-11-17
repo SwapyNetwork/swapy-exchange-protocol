@@ -46,27 +46,22 @@ const returnInvestmentId = '18bce4ab-bf02-11e7-abc4-cec278b6b50a';
 
 contract('SwapyExchange', accounts => {
 
-    before( done => {
+    before( async () => {
         creditCompany = accounts[0];
         investor = accounts[1];
         anotherUser = accounts[2];
-        SwapyExchange.new().then(contract => {
-            protocol = contract;
-            done();
-        })
+        protocol = await SwapyExchange.new();
     })
     
 
-    it("should has a version", done => {
-        protocol.VERSION.call().then(version => {
-            should.exist(version);
-            console.log(`Protocol version: ${version}`);
-            done();
-        })
+    it("should has a version", async () => {
+        const version = await protocol.VERSION.call();
+        should.exist(version)
+        console.log(`Protocol version: ${version}`);
     })
 
-    it("should create an investment offer", done => {
-        protocol.createOffer(
+    it("should create an investment offer", async () => {
+        const {logs} = await protocol.createOffer(
             createOfferId,
             payback,
             grossReturn,
@@ -74,22 +69,18 @@ contract('SwapyExchange', accounts => {
             offerFixedValue,
             offerTerms,
             assets
-        ).then(transaction => {
-            should.exist(transaction.tx);
-            protocol.Offers({_id: createOfferId}).watch((err,log) => {
-                const event = log.args;
-                expect(event).to.include.all.keys([
-                    '_id',
-                    '_from',
-                    '_protocolVersion',
-                    '_offerAddress',
-                    '_assets'
-                ]);
-                assetsAddress = event._assets;
-                offerAddress = event._offerAddress;
-                done();        
-            });
-        });
+        );
+        const event = logs.find(e => e.event === 'Offers')
+        should.exist(event)
+        expect(event.args).to.include.all.keys([
+            '_id',
+            '_from',
+            '_protocolVersion',
+            '_offerAddress',
+            '_assets'
+        ]);
+        assetsAddress = event.args._assets;
+        offerAddress = event.args._offerAddress;
     })
 })
 
