@@ -3,9 +3,12 @@ sudo: required
 group: beta
 language: node_js
 node_js:
-  - "8"
+- '8'
 matrix:
   fast_finish: true
 cache:
   directories:
-    - "node_modules"
+  - node_modules
+notifications:
+  slack:
+    secure: tI8CXoHSocfo8tcsH2vNV4IcCAhpvxMF6Hz0rlwwkvHDUoYj9hiJOIaawYmT/Nj2A0Vn2QLUGyMzyGyruUKaau72mSPhCia2XIDAIJ21KoagOqFUrT2Hhv8m9TpmVoJq8dlnDhz7x/E1TtvDwdZq7IAjKyHdZFQ49eohR17Yf64ghaHiB/tJWPv4aBLeI5dtE7suF5/+DwKsMvUMQyY+4tI05qU7fdODk9jhnKWsYpKKYagPYH48VBIs7WNgHTqB/LUo1/jMXX7FKVV67bcKd62nzCFuyruuhcZCyLZlSWctcVZ0ngRzbFGj5SsERRdBpOGXq/YaGeSZG8p5sp+xcEWSGfaOQuFtIUzXLtCUanQoHApUgceVu05qtGOsYTLnnxXD0SNfKyiUuj7IuM7czQ+8Hk4xOXVRo+EPcg05QuLd/425WHI1mcEJaYhaNsqN2TBAdqo/onkKS4UpQxjY2wCVbArmaKinWEQNNHQQiurG7Q/pyAjCqJR/IbXQ5vdTZHi/OHHfMK53EGQDqk8ACIQNtN3205/aF0Rr2fto2b00QxQhEEXyj5/0caOXREBN/+W+df8RGMom+OmE6KwWHXE8J2SxU3s67OKFzOpyt+1R6X8TzrL/Y98payykiwVrRv+2Movz/U72WyTANWwQ97mBzjJjmvMrZeoOpH8cn0U=
