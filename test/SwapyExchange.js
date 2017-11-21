@@ -9,6 +9,7 @@ const expect = require('chai').expect;
 
 // --- Handled contracts
 const SwapyExchange = artifacts.require("./SwapyExchange.sol");
+const AssetLibrary = artifacts.require("./investment/AssetLibrary.sol");
 const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
 
 // --- Test constants 
@@ -26,10 +27,10 @@ const offerTerms = "111111";
 let protocol = null;
 let assetsAddress = [];
 let firstAsset = null;
-let secondAsset = null;
 
 let investor = null;
 let creditCompany = null;
+let Swapy = null;
 
 // --- Identify events
 const createOfferId = 'f6e6b40a-adea-11e7-abc4-cec278b6b50a';
@@ -46,9 +47,12 @@ const returnInvestmentId = '18bce4ab-bf02-11e7-abc4-cec278b6b50a';
 contract('SwapyExchange', accounts => {
 
     before( async () => {
-        creditCompany = accounts[0];
-        investor = accounts[1];
-        protocol = await SwapyExchange.new();
+        Swapy = accounts[0];
+        creditCompany = accounts[1];
+        investor = accounts[2];
+        library = await AssetLibrary.new({ from: Swapy });
+        protocol = await SwapyExchange.new(library.address, { from: Swapy });
+
     })
     
 
@@ -65,10 +69,10 @@ contract('SwapyExchange', accounts => {
             grossReturn,
             currency,
             offerTerms,
-            assets
+            assets,
+            {from: creditCompany}
         );
         const event = logs.find(e => e.event === 'Offers')
-        should.exist(event)
         expect(event.args).to.include.all.keys([
             '_id',
             '_from',
@@ -83,7 +87,8 @@ describe('Contract: InvestmentAsset ', () => {
     
     it('should add an investment - first', async () => {
         firstAsset = await InvestmentAsset.at(assetsAddress[0]);
-        const { logs } = await firstAsset.invest(firstAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
+        const owner = await firstAsset.owner.call();
+        const { logs } = await firstAsset.invest(firstAddInvestmentId, agreementTerms, { from: investor, value: assetValue })
         const event = logs.find(e => e.event === 'Transferred')
         expect(event.args).to.include.all.keys([
             '_id',
@@ -116,18 +121,17 @@ describe('Contract: InvestmentAsset ', () => {
     })
 
     it('should add an investment - second', async () => {
-        secondAsset = await InvestmentAsset.at(assetsAddress[1]);
-        await secondAsset.invest(secondAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(secondAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
     })
 
     it("should deny a refusement if the user isn't the asset owner", async () => {
-        await secondAsset.refuseInvestment(refuseInvestmentId, { from: investor })
+        await firstAsset.refuseInvestment(refuseInvestmentId, { from: investor })
         .should.be.rejectedWith('VM Exception')
     })
-    
+
     it('should refuse a pending investment', async () => {
-        const {logs} = await secondAsset.refuseInvestment(refuseInvestmentId, { from: creditCompany })
-        const event = logs.find(e => e.event === 'Refused')
+        const {logs} = await firstAsset.refuseInvestment(refuseInvestmentId, { from: creditCompany })
+        let event = logs.find(e => e.event === 'Refused')
         expect(event.args).to.include.all.keys([
             '_id',
             '_owner',
@@ -138,16 +142,16 @@ describe('Contract: InvestmentAsset ', () => {
 
 
     it('should add an investment - third', async () => {
-        await secondAsset.invest(thirdAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(thirdAddInvestmentId, agreementTerms, {from: investor, value: assetValue})
     })
 
     it("should deny a withdrawal if the user isn't the asset owner", async () => {
-        await secondAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: investor }) 
+        await firstAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: investor }) 
         .should.be.rejectedWith('VM Exception')
     })
     
     it('should accept a pending investment and withdraw funds', async () => {
-        const {logs} = await secondAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: creditCompany })
+        const {logs} = await firstAsset.withdrawFunds(withdrawFundsId, agreementTerms, { from: creditCompany })
         const event = logs.find(e => e.event === 'Withdrawal');
         expect(event.args).to.include.all.keys([
             '_id',
@@ -160,24 +164,23 @@ describe('Contract: InvestmentAsset ', () => {
 
 
     it("should deny an investment return if the user isn't the asset owner", async () => {
-        await secondAsset.returnInvestment( returnInvestmentId, { from: investor, value: returnValue }) 
+        await firstAsset.returnInvestment( returnInvestmentId, { from: investor, value: returnValue }) 
             .should.be.rejectedWith('VM Exception')
     })
     
     it('should return the investment with delay', async () => {
         // simulate a long period after the funds transfer
-        const id  = Date.now();
         await increaseTime(16416000);
-        const {logs} = await secondAsset.returnInvestment( returnInvestmentId, { from: creditCompany, value: returnValue })
+        const {logs} = await firstAsset.returnInvestment( returnInvestmentId, { from: creditCompany, value: returnValue })
         const event = logs.find(e => e.event === 'Returned');
         expect(event.args).to.include.all.keys([
             '_id',
             '_owner',
             '_investor',
             '_value',
-            '_status'
+            '_delayed'
         ]);
-        assert.equal(event.args._status.toNumber(),4,"The investment must be returned with delay");
+        assert.equal(event.args._delayed,true,"The investment must be returned with delay");
     })
 
     it('should add an investment - fourth', async () => {
@@ -204,9 +207,9 @@ describe('Contract: InvestmentAsset ', () => {
             '_owner',
             '_investor',
             '_value',
-            '_status'
+            '_delayed'
         ]);
-        assert.equal(event.args._status.toNumber(),3,"The investment must be returned without delay");
+        assert.equal(event.args._delayed,false,"The investment must be returned without delay");
     })
 })
 

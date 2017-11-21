@@ -37,4 +37,5 @@ start_testrpc() {
 
 start_testrpc
 
+node_modules/.bin/truffle migrate --network test --reset
 node_modules/.bin/truffle test --network test "$@"

@@ -37,6 +37,7 @@ contract AssetEvents {
         string _id,
         address _owner,
         address _investor,
-        uint256 _value
+        uint256 _value,
+        bool _delayed
     );
 }    

@@ -3,9 +3,8 @@ pragma solidity ^0.4.15;
 import './AssetEvents.sol';
 
 // Defines methods and control modifiers for an investment 
-contract AssetLib is AssetEvents {
-    // Reference to the investment offer
-    address public offerAddress;
+contract AssetLibrary is AssetEvents {
+
     // Asset owner
     address public owner;
     // Asset currency
@@ -61,25 +60,6 @@ contract AssetLib is AssetEvents {
         _;
     }
 
-    function InvestmentAsset(
-        address _owner,
-        string _protocolVersion,
-        string _currency,
-        uint256 _fixedValue,
-        bytes _assetTermsHash,
-        uint _paybackDays,
-        uint _grossReturn)
-        public
-    {
-        owner = _owner;
-        protocolVersion = _protocolVersion;
-        currency = _currency;
-        fixedValue = _fixedValue;
-        assetTermsHash = _assetTermsHash;
-        paybackDays = _paybackDays;
-        grossReturn = _grossReturn;
-        status = Status.AVAILABLE;
-    }
 
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable()
@@ -157,12 +137,15 @@ contract AssetLib is AssetEvents {
         returns(bool)
     {
         investor.transfer(msg.value);
+        bool delayed;
         if (now > investedAt + paybackDays * 1 days) {
             status = Status.DELAYED_RETURN;
+            delayed = true;
         } else {
             status = Status.RETURNED;
+            delayed = false;
         }
-        Returned(_id, owner, investor, msg.value);
+        Returned(_id, owner, investor, msg.value, delayed);
         return true;
     }
 

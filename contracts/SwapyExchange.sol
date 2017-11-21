@@ -1,4 +1,4 @@
-pragma solidity ^0.4.14;
+pragma solidity ^0.4.15;
 
 import './investment/InvestmentAsset.sol';
 
@@ -6,6 +6,7 @@ contract SwapyExchange {
 
   // Protocol version
   string constant public VERSION = "1.0.0";
+  address public assetLibrary;
 
   event Offers(
     string _id,
@@ -14,6 +15,9 @@ contract SwapyExchange {
     address[] _assets
   );
 
+  function SwapyExchange(address _assetLibrary) {
+    assetLibrary = _assetLibrary;
+  }
 
   // Creates a new investment offer
   function createOffer(
@@ -42,7 +46,7 @@ contract SwapyExchange {
   {
     address[] memory newAssets = new address[](_assets.length);
     for (uint index = 0; index < _assets.length; index++) {
-      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, _currency, _assets[index], _offerTermsHash, _paybackDays, _grossReturn));
+      newAssets[index] = address(new InvestmentAsset(assetLibrary, msg.sender, VERSION, _currency, _assets[index], _offerTermsHash, _paybackDays, _grossReturn));
     }
     return newAssets;
   }
