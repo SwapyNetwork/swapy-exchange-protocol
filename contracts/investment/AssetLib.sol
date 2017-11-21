@@ -1,10 +1,9 @@
 pragma solidity ^0.4.15;
 
+import './AssetEvents.sol';
 
-// Defines methods and control modifiers for an invesment 
-
-contract AssetLib {
-
+// Defines methods and control modifiers for an investment 
+contract AssetLib is AssetEvents {
     // Reference to the investment offer
     address public offerAddress;
     // Asset owner
@@ -37,43 +36,6 @@ contract AssetLib {
         DELAYED_RETURN
     }
     Status public status;
-
-    event Transferred(
-        string _id,
-        address _from,
-        address _to,
-        uint256 _value
-    );
-
-    event Canceled(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value
-    );
-
-    event Withdrawal(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value,
-        bytes _terms
-    );
-
-    event Refused(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value
-    );
-
-    event Returned(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value,
-        Status _status
-    );
 
     // Checks the current asset's status
     modifier hasStatus(Status _status) {
@@ -200,7 +162,7 @@ contract AssetLib {
         } else {
             status = Status.RETURNED;
         }
-        Returned(_id, owner, investor, msg.value, status);
+        Returned(_id, owner, investor, msg.value);
         return true;
     }
 
