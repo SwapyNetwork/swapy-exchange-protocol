@@ -5,8 +5,6 @@ pragma solidity ^0.4.15;
 
 contract InvestmentAsset {
 
-    // Reference to the investment offer
-    address public offerAddress;
     // Asset owner
     address public owner;
     // Asset currency
@@ -202,6 +200,14 @@ contract InvestmentAsset {
         }
         Returned(_id, owner, investor, msg.value, status);
         return true;
+    }
+
+    function getAsset()
+        public
+        constant
+        returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint)
+    {
+        return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
     }
 
 }
