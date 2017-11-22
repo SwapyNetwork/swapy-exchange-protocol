@@ -6,9 +6,6 @@ import './AssetEvents.sol';
 
 contract InvestmentAsset is AssetEvents {
 
-    //  Library to delegate calls
-    address public assetLibrary;
-
     // Asset owner
     address public owner;
     // Asset currency
@@ -40,6 +37,13 @@ contract InvestmentAsset is AssetEvents {
     }
     Status public status;
 
+    //  Library to delegate calls
+    address public assetLibrary;
+
+    event Created(
+        address _library,
+        address _owner
+    );
     
     function InvestmentAsset(
         address _library,
@@ -54,45 +58,48 @@ contract InvestmentAsset is AssetEvents {
     {
         // set the library to delegate methods 
         assetLibrary = _library;
-        owner =  _owner;    
-        protocolVersion =  _protocolVersion;    
-        currency =  _currency;  
-        fixedValue =  _fixedValue;  
-        assetTermsHash =  _assetTermsHash;  
-        paybackDays =  _paybackDays;    
+        owner = _owner;
+        protocolVersion = _protocolVersion;
+        currency = _currency;
+        fixedValue = _fixedValue;
+        assetTermsHash = _assetTermsHash;
+        paybackDays = _paybackDays;
         grossReturn = _grossReturn;
+        status = Status.AVAILABLE;
     }
 
-    function invest(string _id, bytes _agreementHash) payable 
+    function invest(bytes _agreementHash) payable 
         returns(bool)
     {
         require(assetLibrary.delegatecall(msg.data));
         return true;
     }
-    function cancelInvestment(string _id) 
+    function cancelInvestment() 
         returns(bool)
     {
         require(assetLibrary.delegatecall(msg.data));
         return true;
     }
-    function withdrawFunds(string _id, bytes _agreementHash)
+    function withdrawFunds(bytes _agreementHash)
         returns(bool)
     {
         require(assetLibrary.delegatecall(msg.data));
         return true;
     }
-    function refuseInvestment(string _id) 
+    function refuseInvestment() 
         returns(bool)
     {
         require(assetLibrary.delegatecall(msg.data));
         return true;
     }
-    function returnInvestment(string _id) payable 
+    function returnInvestment() payable 
         returns(bool)
     {
         require(assetLibrary.delegatecall(msg.data));
         return true;
     }
+
+
 
 
 }

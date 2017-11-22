@@ -78,7 +78,7 @@ contract AssetLibrary is AssetEvents {
     }
 
     // Add investment interest in this asset and retain the funds within the smart contract
-    function invest(string _id, bytes _agreementHash) payable
+    function invest(bytes _agreementHash) payable
          hasStatus(Status.AVAILABLE)
          public
          returns(bool)
@@ -87,24 +87,24 @@ contract AssetLibrary is AssetEvents {
         agreementHash = _agreementHash;
         investedAt = now;
         status = Status.PENDING_OWNER_AGREEMENT;
-        Transferred(_id, investor, owner, this.balance);
+        Transferred(investor, owner, this.balance);
         return true;
     }
 
     // Cancel the pending investment
-    function cancelInvestment(string _id)
+    function cancelInvestment()
         onlyInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         public
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
-        Canceled(_id, owner, currentInvestor, investedValue);
+        Canceled(owner, currentInvestor, investedValue);
         return true;
     }
 
     // Accept the investor as the asset buyer and withdraw funds
-    function withdrawFunds(string _id, bytes _agreementHash)
+    function withdrawFunds(bytes _agreementHash)
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         onlyAgreed(_agreementHash)
@@ -114,23 +114,23 @@ contract AssetLibrary is AssetEvents {
         uint256 value = this.balance;
         owner.transfer(value);
         status = Status.INVESTED;
-        Withdrawal(_id, owner, investor, value, agreementHash);
+        Withdrawal(owner, investor, value, agreementHash);
         return true;
     }
 
     // Refuse the pending investment
-    function refuseInvestment(string _id)
+    function refuseInvestment()
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         public
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
-        Refused(_id, owner, currentInvestor, investedValue);
+        Refused(owner, currentInvestor, investedValue);
         return true;
     }
 
-    function returnInvestment(string _id) payable
+    function returnInvestment() payable
         onlyOwner
         hasStatus(Status.INVESTED)
         public
@@ -145,8 +145,9 @@ contract AssetLibrary is AssetEvents {
             status = Status.RETURNED;
             delayed = false;
         }
-        Returned(_id, owner, investor, msg.value, delayed);
+        Returned(owner, investor, msg.value, delayed);
         return true;
     }
+
 
 }
