@@ -63,6 +63,13 @@ contract InvestmentAsset is AssetEvents {
         status = Status.AVAILABLE;
     }
 
+    function getAsset()
+        public
+        constant
+        returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint)
+    {
+        return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
+    }
 
     function () payable {
         require(assetLibrary.delegatecall(msg.data));

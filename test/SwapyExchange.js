@@ -36,7 +36,7 @@ contract('SwapyExchange', accounts => {
 
     before( async () => {
         Swapy = accounts[0];
-        creditCompany = ac1counts[1];
+        creditCompany = accounts[1];
         investor = accounts[2];
         library = await AssetLibrary.new({ from: Swapy });
         protocol = await SwapyExchange.new(library.address, { from: Swapy });
@@ -66,7 +66,7 @@ contract('SwapyExchange', accounts => {
             '_protocolVersion',
             '_assets'
         ]);
-        assert.equal(args._from, creditCompany, '');
+        assert.equal(args._from, creditCompany, 'The credit company must be the offer owner');
         assert.equal(args._assets.length, assets.length, 'The count of created assets must be equal the count of sent');
         assetsAddress = args._assets;
     })
@@ -75,11 +75,10 @@ contract('SwapyExchange', accounts => {
 describe('Contract: InvestmentAsset ', () => {
     
     it('should add an investment - first', async () => {
-        firstAsset = await InvestmentAsset.at(assetsAddress[0]);
-        const owner = await firstAsset.owner.call();
-        const { logs } = await firstAsset.invest(
-            agreementTerms,
-            {from: investor, value: assetValue}
+        firstAsset = await AssetLibrary.at(assetsAddress[0]);
+        const {logs} = await firstAsset.invest(
+             agreementTerms,
+             {value: assetValue, from: investor}
         );
         const event = logs.find(e => e.event === 'Transferred')
         const args = event.args;
@@ -174,7 +173,7 @@ describe('Contract: InvestmentAsset ', () => {
     })
 
     it('should add an investment - fourth', async () => {
-        secondAsset = await InvestmentAsset.at(assetsAddress[1]);
+        secondAsset = await AssetLibrary.at(assetsAddress[1]);
         await secondAsset.invest(agreementTerms, {from: investor, value: assetValue})
     })
 
