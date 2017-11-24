@@ -19,7 +19,7 @@ const grossReturn = 500;
 const assetValue = 10;
 // returned value =  invested value + return on investment
 const returnValue = (1 + grossReturn/10000) * assetValue;
-const assets = [10,10];
+const assets = [10,10,10,10,10];
 const currency = "USD";
 const offerTerms = "111111";
 
@@ -36,7 +36,7 @@ contract('SwapyExchange', accounts => {
 
     before( async () => {
         Swapy = accounts[0];
-        creditCompany = accounts[1];
+        creditCompany = ac1counts[1];
         investor = accounts[2];
         library = await AssetLibrary.new({ from: Swapy });
         protocol = await SwapyExchange.new(library.address, { from: Swapy });

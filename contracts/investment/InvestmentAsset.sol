@@ -39,11 +39,6 @@ contract InvestmentAsset is AssetEvents {
 
     //  Library to delegate calls
     address public assetLibrary;
-
-    event Created(
-        address _library,
-        address _owner
-    );
     
     function InvestmentAsset(
         address _library,
@@ -68,38 +63,9 @@ contract InvestmentAsset is AssetEvents {
         status = Status.AVAILABLE;
     }
 
-    function invest(bytes _agreementHash) payable 
-        returns(bool)
-    {
-        require(assetLibrary.delegatecall(msg.data));
-        return true;
-    }
-    function cancelInvestment() 
-        returns(bool)
-    {
-        require(assetLibrary.delegatecall(msg.data));
-        return true;
-    }
-    function withdrawFunds(bytes _agreementHash)
-        returns(bool)
-    {
-        require(assetLibrary.delegatecall(msg.data));
-        return true;
-    }
-    function refuseInvestment() 
-        returns(bool)
-    {
-        require(assetLibrary.delegatecall(msg.data));
-        return true;
-    }
-    function returnInvestment() payable 
-        returns(bool)
-    {
-        require(assetLibrary.delegatecall(msg.data));
-        return true;
-    }
 
-
-
+    function () payable {
+        require(assetLibrary.delegatecall(msg.data));
+    }
 
 }
