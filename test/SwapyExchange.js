@@ -43,7 +43,6 @@ contract('SwapyExchange', accounts => {
 
     })
     
-
     it("should has a version", async () => {
         const version = await protocol.VERSION.call();
         should.exist(version)
@@ -74,6 +73,12 @@ contract('SwapyExchange', accounts => {
 
 describe('Contract: InvestmentAsset ', () => {
     
+    it("should retrieve an array with asset's properties", async () => {
+        const investmentAsset = await InvestmentAsset.at(assetsAddress[0]);
+        const assetAttributes = await investmentAsset.getAsset();
+        expect(assetAttributes).to.have.lengthOf(10);
+    });
+
     it('should add an investment - first', async () => {
         firstAsset = await AssetLibrary.at(assetsAddress[0]);
         const {logs} = await firstAsset.invest(
