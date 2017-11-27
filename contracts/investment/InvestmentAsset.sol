@@ -37,21 +37,18 @@ contract InvestmentAsset {
     Status public status;
 
     event Transferred(
-        string _id,
         address _from,
         address _to,
         uint256 _value
     );
 
     event Canceled(
-        string _id,
         address _owner,
         address _investor,
         uint256 _value
     );
 
     event Withdrawal(
-        string _id,
         address _owner,
         address _investor,
         uint256 _value,
@@ -59,14 +56,12 @@ contract InvestmentAsset {
     );
 
     event Refused(
-        string _id,
         address _owner,
         address _investor,
         uint256 _value
     );
 
     event Returned(
-        string _id,
         address _owner,
         address _investor,
         uint256 _value,
@@ -134,7 +129,7 @@ contract InvestmentAsset {
     }
 
     // Add investment interest in this asset and retain the funds within the smart contract
-    function invest(string _id, bytes _agreementHash) payable
+    function invest( bytes _agreementHash) payable
          hasStatus(Status.AVAILABLE)
          public
          returns(bool)
@@ -143,24 +138,24 @@ contract InvestmentAsset {
         agreementHash = _agreementHash;
         investedAt = now;
         status = Status.PENDING_OWNER_AGREEMENT;
-        Transferred(_id, investor, owner, this.balance);
+        Transferred(investor, owner, this.balance);
         return true;
     }
 
     // Cancel the pending investment
-    function cancelInvestment(string _id)
+    function cancelInvestment()
         onlyInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         public
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
-        Canceled(_id, owner, currentInvestor, investedValue);
+        Canceled(owner, currentInvestor, investedValue);
         return true;
     }
 
     // Accept the investor as the asset buyer and withdraw funds
-    function withdrawFunds(string _id, bytes _agreementHash)
+    function withdrawFunds(bytes _agreementHash)
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         onlyAgreed(_agreementHash)
@@ -170,23 +165,23 @@ contract InvestmentAsset {
         uint256 value = this.balance;
         owner.transfer(value);
         status = Status.INVESTED;
-        Withdrawal(_id, owner, investor, value, agreementHash);
+        Withdrawal(owner, investor, value, agreementHash);
         return true;
     }
 
     // Refuse the pending investment
-    function refuseInvestment(string _id)
+    function refuseInvestment()
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         public
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
-        Refused(_id, owner, currentInvestor, investedValue);
+        Refused(owner, currentInvestor, investedValue);
         return true;
     }
 
-    function returnInvestment(string _id) payable
+    function returnInvestment() payable
         onlyOwner
         hasStatus(Status.INVESTED)
         public
@@ -198,16 +193,16 @@ contract InvestmentAsset {
         } else {
             status = Status.RETURNED;
         }
-        Returned(_id, owner, investor, msg.value, status);
+        Returned(owner, investor, msg.value, status);
         return true;
     }
 
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, bytes, uint)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
+        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
     }
 
 }

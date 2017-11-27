@@ -97,7 +97,7 @@ describe('Contract: InvestmentAsset ', () => {
     it('should return the asset when calling getAsset', async () => {
        const firstAsset = await InvestmentAsset.at(assetsAddress[0]);
        const assetValues = await firstAsset.getAsset();
-       assert.equal(assetValues.length, 10, "The asset must have 10 variables");
+       assert.equal(assetValues.length, 11, "The asset must have 10 variables");
        assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany");
     });
 

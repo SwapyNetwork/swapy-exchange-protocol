@@ -8,7 +8,6 @@ contract SwapyExchange {
   string constant public VERSION = "1.0.0";
 
   event Offers(
-    string _id,
     address _from,
     string _protocolVersion,
     address[] _assets
@@ -17,7 +16,6 @@ contract SwapyExchange {
 
   // Creates a new investment offer
   function createOffer(
-      string _id,
       uint256 _paybackDays,
       uint256 _grossReturn,
       string _currency,
@@ -27,7 +25,7 @@ contract SwapyExchange {
     returns(bool)
   {
     address[] memory newAssets = createOfferAssets(_assets, _currency, _offerTermsHash, _paybackDays, _grossReturn);
-    Offers(_id, msg.sender, VERSION, newAssets);
+    Offers(msg.sender, VERSION, newAssets);
     return true;
   }
 
