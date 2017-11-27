@@ -2,7 +2,7 @@ pragma solidity ^0.4.15;
 
 import './investment/InvestmentAsset.sol';
 
-contract SwapyExchange {
+contract SwapyExchange is AssetEvents {
 
   // Protocol version
   string constant public VERSION = "1.0.0";
@@ -47,6 +47,14 @@ contract SwapyExchange {
       newAssets[index] = new InvestmentAsset(assetLibrary, msg.sender, VERSION, _currency, _assets[index], _offerTermsHash, _paybackDays, _grossReturn);
     }
     return newAssets;
+  }
+  
+  function invest(address _asset, bytes _agreementTermsHash) payable
+    returns(bool)
+  {
+    InvestmentAsset asset = InvestmentAsset(_asset);
+    require(asset.call.value(msg.value)(bytes4(sha3("invest(address,bytes)")), msg.sender, _agreementTermsHash));
+    return true;
   }
 
 }

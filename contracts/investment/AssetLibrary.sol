@@ -78,12 +78,12 @@ contract AssetLibrary is AssetEvents {
     }
 
     // Add investment interest in this asset and retain the funds within the smart contract
-    function invest(bytes _agreementHash) payable
+    function invest(address _investor, bytes _agreementHash) payable
          hasStatus(Status.AVAILABLE)
          public
          returns(bool)
     {
-        investor = msg.sender;
+        investor = _investor;
         agreementHash = _agreementHash;
         investedAt = now;
         status = Status.PENDING_OWNER_AGREEMENT;
