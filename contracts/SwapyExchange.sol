@@ -14,6 +14,13 @@ contract SwapyExchange is AssetEvents {
     address[] _assets
   );
 
+  event Investments(
+    address _investor,
+    address _asset,
+    address _owner,
+    uint256 _value
+  );
+
   function SwapyExchange(address _assetLibrary) {
     assetLibrary = _assetLibrary;
   }
@@ -53,7 +60,8 @@ contract SwapyExchange is AssetEvents {
     returns(bool)
   {
     InvestmentAsset asset = InvestmentAsset(_asset);
-    require(asset.call.value(msg.value)(bytes4(sha3("invest(address,bytes)")), msg.sender, _agreementTermsHash));
+    require(_asset.call.value(msg.value)(bytes4(sha3("invest(address,bytes)")), msg.sender, _agreementTermsHash));
+    Investments(msg.sender, _asset, asset.owner(), msg.value);  
     return true;
   }
 

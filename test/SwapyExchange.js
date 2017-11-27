@@ -82,6 +82,7 @@ describe('Contract: InvestmentAsset ', () => {
     it('should add an investment - first', async () => {
         firstAsset = await AssetLibrary.at(assetsAddress[0]);
         const {logs} = await firstAsset.invest(
+             investor,
              agreementTerms,
              {value: assetValue, from: investor}
         );
@@ -98,7 +99,7 @@ describe('Contract: InvestmentAsset ', () => {
     });
 
     it("should deny an investment if the asset isn't available", async () => {
-        await firstAsset.invest(agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
             .should.be.rejectedWith('VM Exception')
     })
     
@@ -118,7 +119,7 @@ describe('Contract: InvestmentAsset ', () => {
     })
 
     it('should add an investment - second', async () => {
-        await firstAsset.invest(agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
     })
 
     it("should deny a refusement if the user isn't the asset owner", async () => {
@@ -138,7 +139,7 @@ describe('Contract: InvestmentAsset ', () => {
 
 
     it('should add an investment - third', async () => {
-        await firstAsset.invest(agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
     })
 
     it("should deny a withdrawal if the user isn't the asset owner", async () => {
@@ -179,7 +180,7 @@ describe('Contract: InvestmentAsset ', () => {
 
     it('should add an investment - fourth', async () => {
         secondAsset = await AssetLibrary.at(assetsAddress[1]);
-        await secondAsset.invest(agreementTerms, {from: investor, value: assetValue})
+        await secondAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
     })
 
     it('should accept a pending investment and withdraw funds - second', async () => {
