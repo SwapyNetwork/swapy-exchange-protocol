@@ -69,18 +69,36 @@ contract('SwapyExchange', accounts => {
         assert.equal(args._assets.length, assets.length, 'The count of created assets must be equal the count of sent');
         assetsAddress = args._assets;
     })
+
+    it("should add an investment by using the protocol", async () => {
+        const investmentAsset = await AssetLibrary.at(assetsAddress[0]);
+        const {logs} = await protocol.invest(
+             investmentAsset.address,
+             agreementTerms,
+             {value: assetValue, from: investor}
+        );
+        const event = logs.find(e => e.event === 'Investments')
+        const args = event.args;
+        expect(args).to.include.all.keys([
+            '_investor',
+            '_asset',
+            '_owner',
+            '_value'
+        ]);
+        console.log(args);
+    })
 })
 
 describe('Contract: InvestmentAsset ', () => {
     
     it("should retrieve an array with asset's properties", async () => {
-        const investmentAsset = await InvestmentAsset.at(assetsAddress[0]);
+        const investmentAsset = await InvestmentAsset.at(assetsAddress[1]);
         const assetAttributes = await investmentAsset.getAsset();
         expect(assetAttributes).to.have.lengthOf(10);
     });
 
     it('should add an investment - first', async () => {
-        firstAsset = await AssetLibrary.at(assetsAddress[0]);
+        firstAsset = await AssetLibrary.at(assetsAddress[1]);
         const {logs} = await firstAsset.invest(
              investor,
              agreementTerms,
@@ -179,7 +197,7 @@ describe('Contract: InvestmentAsset ', () => {
     })
 
     it('should add an investment - fourth', async () => {
-        secondAsset = await AssetLibrary.at(assetsAddress[1]);
+        secondAsset = await AssetLibrary.at(assetsAddress[2]);
         await secondAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
     })
 
