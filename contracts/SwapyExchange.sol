@@ -7,6 +7,7 @@ contract SwapyExchange is AssetEvents {
   // Protocol version
   string constant public VERSION = "1.0.0";
   address public assetLibrary;
+  address public token;
 
   event Offers(
     address _from,
@@ -21,8 +22,9 @@ contract SwapyExchange is AssetEvents {
     uint256 _value
   );
 
-  function SwapyExchange(address _assetLibrary) {
+  function SwapyExchange(address _assetLibrary, address _token) {
     assetLibrary = _assetLibrary;
+    token = _token;
   }
 
   // Creates a new investment offer
@@ -31,11 +33,12 @@ contract SwapyExchange is AssetEvents {
       uint256 _grossReturn,
       string _currency,
       bytes _offerTermsHash,
-      uint256[] _assets)
+      uint256[] _assets,
+      uint256 _tokenFuel)
     public
     returns(bool)
   {
-    address[] memory newAssets = createOfferAssets(_assets, _currency, _offerTermsHash, _paybackDays, _grossReturn);
+    address[] memory newAssets = createOfferAssets(_assets, _currency, _offerTermsHash, _paybackDays, _grossReturn, _tokenFuel);
     Offers(msg.sender, VERSION, newAssets);
     return true;
   }
@@ -45,7 +48,8 @@ contract SwapyExchange is AssetEvents {
       string _currency,
       bytes _offerTermsHash,
       uint _paybackDays,
-      uint _grossReturn)
+      uint _grossReturn,
+      uint256 _tokenFuel)
     internal
     returns (address[])
   {
