@@ -20,7 +20,10 @@ The diagram below describes the flow of fundraising provided by [Swapy Exchange]
 Credit companies can order investment by using the SwapyExchange contract. It works as a factory of InvestmentAsset contract and organizes the protocol versioning.
 
 ### [InvestmentAsset.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/investment/InvestmentAsset.sol)
-InvestmentAsset defines a fundraising asset with its value, investor and agreement terms hash. It provides methods to interact with the asset contract and agree the investment. These methods are only accessible by the investor or the credit company, according to its functionalities.
+InvestmentAsset defines a fundraising asset with its value, investor and agreement terms hash. The business rules is delegated to AssetLibrary.
+
+### [AssetLibrary.sol](https://github.com/swapynetwork/swapy-exchange-protocol/blob/master/contracts/investment/AssetLibrary.sol)
+AssetLibrary centralizes the logical rules of an investment asset, like invest, cancel, refuse and return. These methods are only accessible by the investor or the credit company, according to its functionalities.  
 
 ## Setup
 
