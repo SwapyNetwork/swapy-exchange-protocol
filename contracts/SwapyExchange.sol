@@ -1,23 +1,32 @@
-pragma solidity ^0.4.14;
+pragma solidity ^0.4.15;
 
 import './investment/InvestmentAsset.sol';
 
-contract SwapyExchange {
+contract SwapyExchange is AssetEvents {
 
   // Protocol version
   string constant public VERSION = "1.0.0";
+  address public assetLibrary;
 
   event Offers(
-    string _id,
     address _from,
     string _protocolVersion,
     address[] _assets
   );
 
+  event Investments(
+    address _investor,
+    address _asset,
+    address _owner,
+    uint256 _value
+  );
+
+  function SwapyExchange(address _assetLibrary) {
+    assetLibrary = _assetLibrary;
+  }
 
   // Creates a new investment offer
   function createOffer(
-      string _id,
       uint256 _paybackDays,
       uint256 _grossReturn,
       string _currency,
@@ -27,7 +36,7 @@ contract SwapyExchange {
     returns(bool)
   {
     address[] memory newAssets = createOfferAssets(_assets, _currency, _offerTermsHash, _paybackDays, _grossReturn);
-    Offers(_id, msg.sender, VERSION, newAssets);
+    Offers(msg.sender, VERSION, newAssets);
     return true;
   }
 
@@ -42,9 +51,18 @@ contract SwapyExchange {
   {
     address[] memory newAssets = new address[](_assets.length);
     for (uint index = 0; index < _assets.length; index++) {
-      newAssets[index] = address(new InvestmentAsset(msg.sender, VERSION, _currency, _assets[index], _offerTermsHash, _paybackDays, _grossReturn));
+      newAssets[index] = new InvestmentAsset(assetLibrary, msg.sender, VERSION, _currency, _assets[index], _offerTermsHash, _paybackDays, _grossReturn);
     }
     return newAssets;
+  }
+  
+  function invest(address _asset, bytes _agreementTermsHash) payable
+    returns(bool)
+  {
+    InvestmentAsset asset = InvestmentAsset(_asset);
+    require(_asset.call.value(msg.value)(bytes4(sha3("invest(address,bytes)")), msg.sender, _agreementTermsHash));
+    Investments(msg.sender, _asset, asset.owner(), msg.value);  
+    return true;
   }
 
 }

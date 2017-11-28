@@ -1,9 +1,10 @@
 pragma solidity ^0.4.15;
 
+import './AssetEvents.sol';
 
 // Defines a fund raising asset contract
 
-contract InvestmentAsset {
+contract InvestmentAsset is AssetEvents {
 
     // Asset owner
     address public owner;
@@ -36,68 +37,11 @@ contract InvestmentAsset {
     }
     Status public status;
 
-    event Transferred(
-        string _id,
-        address _from,
-        address _to,
-        uint256 _value
-    );
-
-    event Canceled(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value
-    );
-
-    event Withdrawal(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value,
-        bytes _terms
-    );
-
-    event Refused(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value
-    );
-
-    event Returned(
-        string _id,
-        address _owner,
-        address _investor,
-        uint256 _value,
-        Status _status
-    );
-
-    // Checks the current asset's status
-    modifier hasStatus(Status _status) {
-        assert(status == _status);
-        _;
-    }
-
-    // Checks if the owner is the caller
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    // Checks if the investor is the caller
-    modifier onlyInvestor() {
-        require(msg.sender == investor);
-        _;
-    }
-
-    // Compares the agreement terms hash of investor and owner
-    modifier onlyAgreed(bytes _agreementHash) {
-        require(keccak256(agreementHash) == keccak256(_agreementHash));
-        _;
-    }
-
+    //  Library to delegate calls
+    address public assetLibrary;
+    
     function InvestmentAsset(
+        address _library,
         address _owner,
         string _protocolVersion,
         string _currency,
@@ -107,6 +51,8 @@ contract InvestmentAsset {
         uint _grossReturn)
         public
     {
+        // set the library to delegate methods 
+        assetLibrary = _library;
         owner = _owner;
         protocolVersion = _protocolVersion;
         currency = _currency;
@@ -117,97 +63,16 @@ contract InvestmentAsset {
         status = Status.AVAILABLE;
     }
 
-    // Refund and remove the current investor and make the asset available for investments
-    function makeAvailable()
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        private
-        returns(address, uint256)
-    {
-        uint256 investedValue = this.balance;
-        investor.transfer(investedValue);
-        address currentInvestor = investor;
-        investor = address(0);
-        agreementHash = "";
-        status = Status.AVAILABLE;
-        investedAt = uint(0);
-        return (currentInvestor, investedValue);
-    }
-
-    // Add investment interest in this asset and retain the funds within the smart contract
-    function invest(string _id, bytes _agreementHash) payable
-         hasStatus(Status.AVAILABLE)
-         public
-         returns(bool)
-    {
-        investor = msg.sender;
-        agreementHash = _agreementHash;
-        investedAt = now;
-        status = Status.PENDING_OWNER_AGREEMENT;
-        Transferred(_id, investor, owner, this.balance);
-        return true;
-    }
-
-    // Cancel the pending investment
-    function cancelInvestment(string _id)
-        onlyInvestor
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        public
-        returns(bool)
-    {
-        var (currentInvestor, investedValue) = makeAvailable();
-        Canceled(_id, owner, currentInvestor, investedValue);
-        return true;
-    }
-
-    // Accept the investor as the asset buyer and withdraw funds
-    function withdrawFunds(string _id, bytes _agreementHash)
-        onlyOwner
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        onlyAgreed(_agreementHash)
-        public
-        returns(bool)
-    {
-        uint256 value = this.balance;
-        owner.transfer(value);
-        status = Status.INVESTED;
-        Withdrawal(_id, owner, investor, value, agreementHash);
-        return true;
-    }
-
-    // Refuse the pending investment
-    function refuseInvestment(string _id)
-        onlyOwner
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        public
-        returns(bool)
-    {
-        var (currentInvestor, investedValue) = makeAvailable();
-        Refused(_id, owner, currentInvestor, investedValue);
-        return true;
-    }
-
-    function returnInvestment(string _id) payable
-        onlyOwner
-        hasStatus(Status.INVESTED)
-        public
-        returns(bool)
-    {
-        investor.transfer(msg.value);
-        if (now > investedAt + paybackDays * 1 days) {
-            status = Status.DELAYED_RETURN;
-        } else {
-            status = Status.RETURNED;
-        }
-        Returned(_id, owner, investor, msg.value, status);
-        return true;
-    }
-
     function getAsset()
         public
         constant
         returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint)
     {
         return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
+    }
+
+    function () payable {
+        require(assetLibrary.delegatecall(msg.data));
     }
 
 }
