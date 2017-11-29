@@ -39,7 +39,7 @@ contract InvestmentAsset is AssetEvents {
 
     //  Library to delegate calls
     address public assetLibrary;
-    
+
     function InvestmentAsset(
         address _library,
         address _owner,
@@ -51,7 +51,7 @@ contract InvestmentAsset is AssetEvents {
         uint _grossReturn)
         public
     {
-        // set the library to delegate methods 
+        // set the library to delegate methods
         assetLibrary = _library;
         owner = _owner;
         protocolVersion = _protocolVersion;
@@ -66,9 +66,9 @@ contract InvestmentAsset is AssetEvents {
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, bytes, uint)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
+        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
     }
 
     function () payable {
