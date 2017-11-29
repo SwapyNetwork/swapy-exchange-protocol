@@ -66,6 +66,7 @@ contract SwapyExchange is AssetEvents {
         _offerTermsHash,
         _paybackDays,
         _grossReturn,
+        token,
         _assetTokenFuel
       );
     }

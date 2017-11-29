@@ -1,6 +1,7 @@
 pragma solidity ^0.4.15;
 
 import './AssetEvents.sol';
+import '../token/Token.sol';
 
 // Defines a fund raising asset contract
 
@@ -26,7 +27,7 @@ contract InvestmentAsset is AssetEvents {
     bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
-
+    Token public token;
     uint256 public tokenFuel;
 
     // possible stages of an asset
@@ -51,6 +52,7 @@ contract InvestmentAsset is AssetEvents {
         bytes _assetTermsHash,
         uint _paybackDays,
         uint _grossReturn,
+        address _token,
         uint256 _tokenFuel)
         public
     {
@@ -62,9 +64,13 @@ contract InvestmentAsset is AssetEvents {
         fixedValue = _fixedValue;
         assetTermsHash = _assetTermsHash;
         paybackDays = _paybackDays;
-        grossReturn = _grossReturn;
+        grossReturn = _grossR_assetTokenFueleturn;
         tokenFuel = _tokenFuel;
         status = Status.AVAILABLE;
+        if(tokenFuel > 0){
+            token = Token(_token);
+            require(token.transferFrom(owner, this, tokenFuel));
+        }
     }
 
     function getAsset()

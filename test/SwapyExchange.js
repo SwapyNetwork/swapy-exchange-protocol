@@ -16,6 +16,7 @@ const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
 const agreementTerms = "222222";
 const payback = 12;
 const grossReturn = 500;
+const offerTokenFuel = 1000;
 const assetValue = 10;
 // returned value =  invested value + return on investment
 const returnValue = (1 + grossReturn/10000) * assetValue;
