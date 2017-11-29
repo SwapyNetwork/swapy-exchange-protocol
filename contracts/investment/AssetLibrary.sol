@@ -1,6 +1,7 @@
 pragma solidity ^0.4.15;
 
 import './AssetEvents.sol';
+import '../token/Token.sol';
 
 // Defines methods and control modifiers for an investment 
 contract AssetLibrary is AssetEvents {
@@ -25,8 +26,10 @@ contract AssetLibrary is AssetEvents {
     bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
-    
+    // asset fuel
+    Token public token;
     uint256 public tokenFuel;
+
     // possible stages of an asset
     enum Status {
         AVAILABLE,
@@ -61,6 +64,17 @@ contract AssetLibrary is AssetEvents {
         _;
     }
 
+    modifier onlyDelayed(){
+        require(isDelayed());
+        _;
+    }
+
+    function isDelayed()
+        public
+        returns(bool)
+    {
+        return now > investedAt + paybackDays * 1 days;
+    }
 
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable()
@@ -138,16 +152,22 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         investor.transfer(msg.value);
-        bool delayed;
-        if (now > investedAt + paybackDays * 1 days) {
+        bool isDelayed = isDelayed();
+        if (isDelayed) {
             status = Status.DELAYED_RETURN;
-            delayed = true;
         } else {
             status = Status.RETURNED;
-            delayed = false;
         }
-        Returned(owner, investor, msg.value, delayed);
+        Returned(owner, investor, msg.value, isDelayed);
         return true;
+    }
+
+    function requireTokenFuel() 
+        onlyInvestor
+        hasStatus(Status.INVESTED)
+        onlyDelayed
+    {   
+        token.transferFrom(this, investor, token.balanceOf(this));
     }
 
 }

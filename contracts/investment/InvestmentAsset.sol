@@ -27,6 +27,7 @@ contract InvestmentAsset is AssetEvents {
     bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
+    // asset fuel
     Token public token;
     uint256 public tokenFuel;
 
@@ -67,8 +68,8 @@ contract InvestmentAsset is AssetEvents {
         grossReturn = _grossR_assetTokenFueleturn;
         tokenFuel = _tokenFuel;
         status = Status.AVAILABLE;
+        token = Token(_token);
         if(tokenFuel > 0){
-            token = Token(_token);
             require(token.transferFrom(owner, this, tokenFuel));
         }
     }
