@@ -75,21 +75,7 @@ contract AssetLibrary is AssetEvents {
     {
         return now > investedAt + paybackDays * 1 days;
     }
-    function initAsset(
-        address _owner,
-        string _protocolVersion,
-        string _currency,
-        uint256 _fixedValue,
-        bytes _assetTermsHash,
-        uint _paybackDays,
-        uint _grossReturn,
-        address _token,
-        uint256 _tokenFuel)
-        onlyUninitialized
-        public
-    {
 
-    }
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable()
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
