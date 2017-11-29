@@ -11,6 +11,7 @@ const expect = require('chai').expect;
 const SwapyExchange = artifacts.require("./SwapyExchange.sol");
 const AssetLibrary = artifacts.require("./investment/AssetLibrary.sol");
 const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
+const Token = artifacts.require("./token/Token.sol");
 
 // --- Test constants
 const agreementTerms = "222222";
@@ -20,7 +21,8 @@ const assetValue = 10;
 // returned value =  invested value + return on investment
 const returnValue = (1 + grossReturn/10000) * assetValue;
 const assets = [10,10,10,10,10];
-const assetFuel = 1000;
+const offerFuel = 5000;
+const assetFuel = offerFuel / assets.length;
 const currency = "USD";
 const offerTerms = "111111";
 
@@ -28,6 +30,7 @@ const offerTerms = "111111";
 let protocol = null;
 let assetsAddress = [];
 let firstAsset = null;
+let token = null;
 
 let investor = null;
 let creditCompany = null;
@@ -39,9 +42,10 @@ contract('SwapyExchange', accounts => {
         Swapy = accounts[0];
         creditCompany = accounts[1];
         investor = accounts[2];
-        library = await AssetLibrary.new({ from: Swapy });
-        protocol = await SwapyExchange.new(library.address, { from: Swapy });
-
+        const library = await AssetLibrary.new({ from: Swapy });
+        token  = await Token.new({from: Swapy});
+        protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy });
+        await token.transfer(creditCompany, offerFuel, {from: Swapy});
     })
    
     it("should have a version", async () => {
@@ -57,7 +61,6 @@ contract('SwapyExchange', accounts => {
             currency,
             offerTerms,
             assets,
-            assetFuel,
             {from: creditCompany}
         );
         const event = logs.find(e => e.event === 'Offers')
@@ -87,20 +90,37 @@ contract('SwapyExchange', accounts => {
             '_owner',
             '_value'
         ]);
-        console.log(args);
     })
 })
 
 describe('Contract: InvestmentAsset ', () => {
    
-    it("should retrieve an array with asset's properties", async () => {
-        const investmentAsset = await InvestmentAsset.at(assetsAddress[1]);
-        const assetAttributes = await investmentAsset.getAsset();
-        expect(assetAttributes).to.have.lengthOf(10);
-    });
+    it('should return the asset when calling getAsset', async () => {
+        const firstAsset = await InvestmentAsset.at(assetsAddress[0]);
+        const assetValues = await firstAsset.getAsset();
+        assert.equal(assetValues.length, 11, "The asset must have 11 variables");
+        assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany");
+     });
+
+    it("should accept supplied tokens as fuel", async () => {
+        await token.transfer(assetsAddress[1], assetFuel, {from: creditCompany});
+        firstAsset = await AssetLibrary.at(assetsAddress[1]);
+        const {logs} = await firstAsset.supplyFuel(
+            assetFuel,
+            {from: creditCompany}
+        );
+        const event = logs.find(e => e.event === 'Supplied')
+        const args = event.args;
+        expect(args).to.include.all.keys([
+           '_owner',
+           '_amount',
+           '_assetFuel'
+        ]);
+        creditCompanyBalance = await token.balanceOf(creditCompany);
+        assetBalance = await token.balanceOf(assetsAddress[1]);
+    })  
 
     it('should add an investment - first', async () => {
-        firstAsset = await AssetLibrary.at(assetsAddress[1]);
         const {logs} = await firstAsset.invest(
              investor,
              agreementTerms,
@@ -116,13 +136,6 @@ describe('Contract: InvestmentAsset ', () => {
         assert.equal(args._from, investor, "The current user must the asset's investor");
         assert.equal(args._to, creditCompany, "The credit company must be the asset's seller");
         assert.equal(args._value, assetValue, "The invested value must be equal the sent value");
-    });
-
-    it('should return the asset when calling getAsset', async () => {
-       const firstAsset = await InvestmentAsset.at(assetsAddress[0]);
-       const assetValues = await firstAsset.getAsset();
-       assert.equal(assetValues.length, 10, "The asset must have 10 variables");
-       assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany");
     });
 
     it("should deny an investment if the asset isn't available", async () => {

@@ -13,8 +13,7 @@ contract SwapyExchange is AssetEvents {
   event Offers(
     address _from,
     string _protocolVersion,
-    address[] _assets,
-    uint256 _offerFuel
+    address[] _assets
   );
 
   event Investments(
@@ -35,13 +34,12 @@ contract SwapyExchange is AssetEvents {
       uint256 _grossReturn,
       string _currency,
       bytes _offerTermsHash,
-      uint256[] _assets,
-      uint256 _assetTokenFuel)
+      uint256[] _assets)
     public
     returns(bool)
   {
-    address[] memory newAssets = createOfferAssets(_assets, _currency, _offerTermsHash, _paybackDays, _grossReturn, _assetTokenFuel);
-    Offers(msg.sender, VERSION, newAssets, _assetTokenFuel * newAssets.length);
+    address[] memory newAssets = createOfferAssets(_assets, _currency, _offerTermsHash, _paybackDays, _grossReturn);
+    Offers(msg.sender, VERSION, newAssets);
     return true;
   }
 
@@ -50,8 +48,7 @@ contract SwapyExchange is AssetEvents {
       string _currency,
       bytes _offerTermsHash,
       uint _paybackDays,
-      uint _grossReturn,
-      uint256 _assetTokenFuel)
+      uint _grossReturn)
     internal
     returns (address[])
   {
@@ -66,8 +63,7 @@ contract SwapyExchange is AssetEvents {
         _offerTermsHash,
         _paybackDays,
         _grossReturn,
-        token,
-        _assetTokenFuel
+        token
       );
     }
     return newAssets;

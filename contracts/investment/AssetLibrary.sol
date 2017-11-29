@@ -152,14 +152,25 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         investor.transfer(msg.value);
-        bool isDelayed = isDelayed();
-        status = isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
+        bool _isDelayed = isDelayed();
+        status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
         if(tokenFuel > 0){
-            address recipient = isDelayed ? investor : owner;          
-            token.transferFrom(this, recipient, tokenFuel);
+            address recipient = _isDelayed ? investor : owner;          
+            token.transfer(recipient, tokenFuel);
         }
-        Returned(owner, investor, msg.value, isDelayed);
+        Returned(owner, investor, msg.value, _isDelayed);
         return true;
+    }
+
+    function supplyFuel(uint256 _amount)
+        onlyOwner
+        hasStatus(Status.AVAILABLE)
+        returns(bool)
+    {
+        assert(token.balanceOf(this) == tokenFuel + _amount);
+        tokenFuel += _amount;
+        Supplied(owner, _amount, tokenFuel);
+        return true; 
     }
 
     function requireTokenFuel() 
@@ -167,7 +178,8 @@ contract AssetLibrary is AssetEvents {
         hasStatus(Status.INVESTED)
         onlyDelayed
     {   
-        token.transferFrom(this, investor, tokenFuel);
+        token.transfer(investor, tokenFuel);
+        tokenFuel = 0;
     }
 
 }

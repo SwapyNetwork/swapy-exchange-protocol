@@ -27,8 +27,7 @@ contract InvestmentAsset is AssetEvents {
     bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
-    // asset fuel
-    address public tokenAddress;
+    // Fuel
     Token public token;
     uint256 public tokenFuel;
 
@@ -54,8 +53,7 @@ contract InvestmentAsset is AssetEvents {
         bytes _assetTermsHash,
         uint _paybackDays,
         uint _grossReturn,
-        address _token,
-        uint256 _tokenFuel)
+        address _token)
         public
     {
         // set the library to delegate methods 
@@ -68,13 +66,9 @@ contract InvestmentAsset is AssetEvents {
         assetTermsHash = _assetTermsHash;
         paybackDays = _paybackDays;
         grossReturn = _grossReturn;
-        tokenFuel = _tokenFuel;
         status = Status.AVAILABLE;
-        tokenAddress = _token;
-        token = Token(tokenAddress);
-        if(tokenFuel > 0){
-            require(token.transferFrom(owner, this, tokenFuel));
-        }
+        tokenFuel = 0;
+        token = Token(_token);
     }
 
     function getAsset()
