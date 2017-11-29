@@ -16,11 +16,11 @@ const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol");
 const agreementTerms = "222222";
 const payback = 12;
 const grossReturn = 500;
-const offerTokenFuel = 1000;
 const assetValue = 10;
 // returned value =  invested value + return on investment
 const returnValue = (1 + grossReturn/10000) * assetValue;
 const assets = [10,10,10,10,10];
+const assetFuel = 1000;
 const currency = "USD";
 const offerTerms = "111111";
 
@@ -57,6 +57,7 @@ contract('SwapyExchange', accounts => {
             currency,
             offerTerms,
             assets,
+            assetFuel,
             {from: creditCompany}
         );
         const event = logs.find(e => e.event === 'Offers')

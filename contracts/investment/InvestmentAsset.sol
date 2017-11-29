@@ -28,6 +28,7 @@ contract InvestmentAsset is AssetEvents {
     // investment timestamp
     uint public investedAt;
     // asset fuel
+    address public tokenAddress;
     Token public token;
     uint256 public tokenFuel;
 
@@ -59,16 +60,18 @@ contract InvestmentAsset is AssetEvents {
     {
         // set the library to delegate methods 
         assetLibrary = _library;
+        // init asset 
         owner = _owner;
         protocolVersion = _protocolVersion;
         currency = _currency;
         fixedValue = _fixedValue;
         assetTermsHash = _assetTermsHash;
         paybackDays = _paybackDays;
-        grossReturn = _grossR_assetTokenFueleturn;
+        grossReturn = _grossReturn;
         tokenFuel = _tokenFuel;
         status = Status.AVAILABLE;
-        token = Token(_token);
+        tokenAddress = _token;
+        token = Token(tokenAddress);
         if(tokenFuel > 0){
             require(token.transferFrom(owner, this, tokenFuel));
         }
