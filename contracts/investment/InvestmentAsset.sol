@@ -66,9 +66,9 @@ contract InvestmentAsset is AssetEvents {
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, bytes, uint)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, bytes)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
+        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, agreementHash);
     }
 
     function () payable {
