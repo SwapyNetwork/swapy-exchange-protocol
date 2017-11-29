@@ -25,7 +25,8 @@ contract AssetLibrary is AssetEvents {
     bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
-
+    
+    uint256 public tokenFuel;
     // possible stages of an asset
     enum Status {
         AVAILABLE,

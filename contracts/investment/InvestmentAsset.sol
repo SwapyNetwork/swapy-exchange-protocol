@@ -27,6 +27,8 @@ contract InvestmentAsset is AssetEvents {
     // investment timestamp
     uint public investedAt;
 
+    uint256 public tokenFuel;
+
     // possible stages of an asset
     enum Status {
         AVAILABLE,
@@ -48,7 +50,8 @@ contract InvestmentAsset is AssetEvents {
         uint256 _fixedValue,
         bytes _assetTermsHash,
         uint _paybackDays,
-        uint _grossReturn)
+        uint _grossReturn,
+        uint256 _tokenFuel)
         public
     {
         // set the library to delegate methods 
@@ -60,15 +63,16 @@ contract InvestmentAsset is AssetEvents {
         assetTermsHash = _assetTermsHash;
         paybackDays = _paybackDays;
         grossReturn = _grossReturn;
+        tokenFuel = _tokenFuel;
         status = Status.AVAILABLE;
     }
 
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint)
+        returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint, uint256)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt);
+        return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt, tokenFuel);
     }
 
     function () payable {
