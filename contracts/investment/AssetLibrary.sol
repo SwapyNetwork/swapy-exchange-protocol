@@ -153,10 +153,10 @@ contract AssetLibrary is AssetEvents {
     {
         investor.transfer(msg.value);
         bool isDelayed = isDelayed();
-        if (isDelayed) {
-            status = Status.DELAYED_RETURN;
-        } else {
-            status = Status.RETURNED;
+        status = isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
+        if(tokenFuel > 0){
+            address recipient = isDelayed ? investor : owner;          
+            token.transferFrom(this, recipient, tokenFuel);
         }
         Returned(owner, investor, msg.value, isDelayed);
         return true;
