@@ -1,6 +1,7 @@
 pragma solidity ^0.4.15;
 
 import './investment/InvestmentAsset.sol';
+import './token/Token.sol';
 
 contract SwapyExchange is AssetEvents {
 
