@@ -55,13 +55,13 @@ contract SwapyExchange is AssetEvents {
     }
     return newAssets;
   }
-  
-  function invest(address _asset, bytes _agreementTermsHash) payable
+
+  function invest(address _asset) payable
     returns(bool)
   {
     InvestmentAsset asset = InvestmentAsset(_asset);
-    require(_asset.call.value(msg.value)(bytes4(sha3("invest(address,bytes)")), msg.sender, _agreementTermsHash));
-    Investments(msg.sender, _asset, asset.owner(), msg.value);  
+    require(_asset.call.value(msg.value)(bytes4(sha3("invest(address)")), msg.sender));
+    Investments(msg.sender, _asset, asset.owner(), msg.value);
     return true;
   }
 

@@ -42,7 +42,7 @@ contract('SwapyExchange', accounts => {
         protocol = await SwapyExchange.new(library.address, { from: Swapy });
 
     })
-   
+
     it("should have a version", async () => {
         const version = await protocol.VERSION.call();
         should.exist(version)
@@ -74,7 +74,6 @@ contract('SwapyExchange', accounts => {
         const investmentAsset = await AssetLibrary.at(assetsAddress[0]);
         const {logs} = await protocol.invest(
              investmentAsset.address,
-             agreementTerms,
              {value: assetValue, from: investor}
         );
         const event = logs.find(e => e.event === 'Investments')
@@ -90,7 +89,7 @@ contract('SwapyExchange', accounts => {
 })
 
 describe('Contract: InvestmentAsset ', () => {
-   
+
     it("should retrieve an array with asset's properties", async () => {
         const investmentAsset = await InvestmentAsset.at(assetsAddress[1]);
         const assetAttributes = await investmentAsset.getAsset();
@@ -101,7 +100,6 @@ describe('Contract: InvestmentAsset ', () => {
         firstAsset = await AssetLibrary.at(assetsAddress[1]);
         const {logs} = await firstAsset.invest(
              investor,
-             agreementTerms,
              {value: assetValue, from: investor}
         );
         const event = logs.find(e => e.event === 'Transferred')
@@ -124,7 +122,7 @@ describe('Contract: InvestmentAsset ', () => {
     });
 
     it("should deny an investment if the asset isn't available", async () => {
-        await firstAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(investor, {from: investor, value: assetValue})
             .should.be.rejectedWith('VM Exception')
     })
 
@@ -144,7 +142,7 @@ describe('Contract: InvestmentAsset ', () => {
     })
 
     it('should add an investment - second', async () => {
-        await firstAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(investor, {from: investor, value: assetValue})
     })
 
     it("should deny a refusement if the user isn't the asset owner", async () => {
@@ -164,28 +162,27 @@ describe('Contract: InvestmentAsset ', () => {
 
 
     it('should add an investment - third', async () => {
-        await firstAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
+        await firstAsset.invest(investor, {from: investor, value: assetValue})
     })
 
     it("should deny a withdrawal if the user isn't the asset owner", async () => {
-        await firstAsset.withdrawFunds(agreementTerms, { from: investor }) 
+        await firstAsset.withdrawFunds({ from: investor })
         .should.be.rejectedWith('VM Exception')
     })
 
     it('should accept a pending investment and withdraw funds', async () => {
-        const {logs} = await firstAsset.withdrawFunds( agreementTerms, { from: creditCompany })
+        const {logs} = await firstAsset.withdrawFunds({ from: creditCompany })
         const event = logs.find(e => e.event === 'Withdrawal');
         expect(event.args).to.include.all.keys([
             '_owner',
             '_investor',
             '_value',
-            '_terms',
         ]);
     })
 
 
     it("should deny an investment return if the user isn't the asset owner", async () => {
-        await firstAsset.returnInvestment({ from: investor, value: returnValue }) 
+        await firstAsset.returnInvestment({ from: investor, value: returnValue })
             .should.be.rejectedWith('VM Exception')
     })
 
@@ -205,17 +202,16 @@ describe('Contract: InvestmentAsset ', () => {
 
     it('should add an investment - fourth', async () => {
         secondAsset = await AssetLibrary.at(assetsAddress[2]);
-        await secondAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
+        await secondAsset.invest(investor, {from: investor, value: assetValue})
     })
 
     it('should accept a pending investment and withdraw funds - second', async () => {
-        const {logs} =  await secondAsset.withdrawFunds(agreementTerms, {from: creditCompany})
+        const {logs} =  await secondAsset.withdrawFunds({from: creditCompany})
         const event = logs.find(e => e.event === 'Withdrawal');
         expect(event.args).to.include.all.keys([
             '_owner',
             '_investor',
             '_value',
-            '_terms',
         ]);
     })
 
