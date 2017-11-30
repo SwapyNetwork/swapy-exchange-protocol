@@ -1,11 +1,10 @@
 pragma solidity ^0.4.15;
 
-import './AssetEvents.sol';
 import '../token/Token.sol';
 
 // Defines a fund raising asset contract
 
-contract InvestmentAsset is AssetEvents {
+contract InvestmentAsset {
 
     // Asset owner
     address public owner;

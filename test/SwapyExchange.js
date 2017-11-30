@@ -30,6 +30,7 @@ const offerTerms = "111111";
 let protocol = null;
 let assetsAddress = [];
 let firstAsset = null;
+let secondAsset = null;
 let token = null;
 
 let investor = null;
@@ -96,11 +97,11 @@ contract('SwapyExchange', accounts => {
 describe('Contract: InvestmentAsset ', () => {
    
     it('should return the asset when calling getAsset', async () => {
-        const firstAsset = await InvestmentAsset.at(assetsAddress[0]);
+        firstAsset = await InvestmentAsset.at(assetsAddress[0]);
         const assetValues = await firstAsset.getAsset();
         assert.equal(assetValues.length, 11, "The asset must have 11 variables");
         assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany");
-     });
+    })
 
     it("should accept supplied tokens as fuel", async () => {
         await token.transfer(assetsAddress[1], assetFuel, {from: creditCompany});
@@ -203,10 +204,29 @@ describe('Contract: InvestmentAsset ', () => {
         await firstAsset.returnInvestment({ from: investor, value: returnValue }) 
             .should.be.rejectedWith('VM Exception')
     })
+    
+    it("should deny the token fuel request if the return of investment isn't delayed", async () => {
+        await firstAsset.requireTokenFuel({ from: investor })
+            .should.be.rejectedWith('VM Exception')
+    })
 
-    it('should return the investment with delay', async () => {
+    it("should deny the token fuel request if the user isn't the investor", async () => {
         // simulate a long period after the funds transfer
         await increaseTime(16416000);
+        await firstAsset.requireTokenFuel({ from: creditCompany })
+           .should.be.rejectedWith('VM Exception')
+    })
+
+    it("should send the token fuel to the asset's investor", async () => {
+        const {logs} =  await firstAsset.requireTokenFuel({ from: investor })
+        const event = logs.find(e => e.event === 'TokenWithdrawal');
+        expect(event.args).to.include.all.keys([
+            '_to',
+            '_amount'
+        ]);
+    })  
+ 
+    it('should return the investment with delay', async () => {
         const {logs} = await firstAsset.returnInvestment({ from: creditCompany, value: returnValue })
         const event = logs.find(e => e.event === 'Returned');
         expect(event.args).to.include.all.keys([

@@ -2,7 +2,7 @@ pragma solidity ^0.4.15;
 
 import './investment/InvestmentAsset.sol';
 
-contract SwapyExchange is AssetEvents {
+contract SwapyExchange {
 
   // Protocol version
   string constant public VERSION = "1.0.0";
