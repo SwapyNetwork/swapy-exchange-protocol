@@ -75,7 +75,7 @@ contract AssetLibrary is AssetEvents {
     {
         return now > investedAt + paybackDays * 1 days;
     }
-
+    
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable()
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -91,6 +91,18 @@ contract AssetLibrary is AssetEvents {
         investedAt = uint(0);
         return (currentInvestor, investedValue);
     }
+
+    
+    function withdrawTokens(address _recipient, uint256 _amount)
+        private
+        returns(bool)
+    {
+        assert(tokenFuel >= _amount);
+        require(token.transfer(_recipient, _amount));
+        TokenWithdrawal(_recipient, _amount);
+        tokenFuel -= _amount;
+        return true;
+    }     
 
     // Add investment interest in this asset and retain the funds within the smart contract
     function invest(address _investor, bytes _agreementHash) payable
@@ -156,7 +168,7 @@ contract AssetLibrary is AssetEvents {
         status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
         if(tokenFuel > 0){
             address recipient = _isDelayed ? investor : owner;          
-            token.transfer(recipient, tokenFuel);
+            withdrawTokens(recipient, tokenFuel);
         }
         Returned(owner, investor, msg.value, _isDelayed);
         return true;
@@ -177,9 +189,9 @@ contract AssetLibrary is AssetEvents {
         onlyInvestor
         hasStatus(Status.INVESTED)
         onlyDelayed
+        returns(bool)
     {   
-        token.transfer(investor, tokenFuel);
-        tokenFuel = 0;
+        return withdrawTokens(investor, tokenFuel);
     }
 
 }
