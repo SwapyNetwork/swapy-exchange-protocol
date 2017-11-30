@@ -31,6 +31,7 @@ let protocol = null;
 let assetsAddress = [];
 let firstAsset = null;
 let secondAsset = null;
+let thirdAsset = null;
 let token = null;
 
 let investor = null;
@@ -55,7 +56,7 @@ contract('SwapyExchange', accounts => {
         console.log(`Protocol version: ${version}`);
     })
 
-    it("should create an investment offer", async () => {
+    it("should create an investment offer with assets", async () => {
         const {logs} = await protocol.createOffer(
             payback,
             grossReturn,
@@ -97,13 +98,13 @@ contract('SwapyExchange', accounts => {
 describe('Contract: InvestmentAsset ', () => {
    
     it('should return the asset when calling getAsset', async () => {
-        firstAsset = await InvestmentAsset.at(assetsAddress[0]);
-        const assetValues = await firstAsset.getAsset();
+        const asset = await InvestmentAsset.at(assetsAddress[0]);
+        const assetValues = await asset.getAsset();
         assert.equal(assetValues.length, 11, "The asset must have 11 variables");
         assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany");
     })
 
-    it("should accept supplied tokens as fuel", async () => {
+    it("should supply tokens as fuel to the first asset", async () => {
         await token.transfer(assetsAddress[1], assetFuel, {from: creditCompany});
         firstAsset = await AssetLibrary.at(assetsAddress[1]);
         const {logs} = await firstAsset.supplyFuel(
@@ -117,8 +118,6 @@ describe('Contract: InvestmentAsset ', () => {
            '_amount',
            '_assetFuel'
         ]);
-        creditCompanyBalance = await token.balanceOf(creditCompany);
-        assetBalance = await token.balanceOf(assetsAddress[1]);
     })  
 
     it('should add an investment - first', async () => {
@@ -178,7 +177,6 @@ describe('Contract: InvestmentAsset ', () => {
         ]);
     })
 
-
     it('should add an investment - third', async () => {
         await firstAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
     })
@@ -237,7 +235,16 @@ describe('Contract: InvestmentAsset ', () => {
         ]);
         assert.equal(event.args._delayed,true,"The investment must be returned with delay");
     })
-
+    
+    it("should supply tokens to the second asset", async () => {
+        await token.transfer(assetsAddress[2], assetFuel, {from: creditCompany});
+        secondAsset = await AssetLibrary.at(assetsAddress[2]);
+        await secondAsset.supplyFuel(
+            assetFuel,
+            {from: creditCompany}
+        );
+    })  
+    
     it('should add an investment - fourth', async () => {
         secondAsset = await AssetLibrary.at(assetsAddress[2]);
         await secondAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
@@ -254,8 +261,42 @@ describe('Contract: InvestmentAsset ', () => {
         ]);
     })
 
-    it('should return the investment correctly', async () => {
+    it("should return the investment with delay and send the token fuel to the asset's investor", async () => {
+        // simulate a long period after the funds transfer
+        await increaseTime(16416000);
+        const investorTokenBalance = await token.balanceOf(investor);
+        const assetTokenBalance = await token.balanceOf(secondAsset.address);
         const {logs} = await secondAsset.returnInvestment({ from: creditCompany, value: returnValue })
+        const event = logs.find(e => e.event === 'Returned');
+        expect(event.args).to.include.all.keys([
+            '_owner',
+            '_investor',
+            '_value',
+            '_delayed'
+        ]);
+        assert.equal(event.args._delayed,true,"The investment must be returned with delay");
+        const currentInvestorTokenBalance = await token.balanceOf(investor);
+        assert.equal(investorTokenBalance.toNumber() + assetTokenBalance.toNumber(), currentInvestorTokenBalance.toNumber(), "The investor must receive the asset's fuel if the investment is returned with delay")
+    })
+
+    it('should add an investment - fifth', async () => {
+        thirdAsset = await AssetLibrary.at(assetsAddress[3]);
+        await thirdAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
+    })
+
+    it('should accept a pending investment and withdraw funds - third', async () => {
+        const {logs} =  await thirdAsset.withdrawFunds(agreementTerms, {from: creditCompany})
+        const event = logs.find(e => e.event === 'Withdrawal');
+        expect(event.args).to.include.all.keys([
+            '_owner',
+            '_investor',
+            '_value',
+            '_terms',
+        ]);
+    })
+    
+    it('should return the investment correctly', async () => {
+        const {logs} = await thirdAsset.returnInvestment({ from: creditCompany, value: returnValue })
         const event = logs.find(e => e.event === 'Returned');
         expect(event.args).to.include.all.keys([
             '_owner',
@@ -265,4 +306,5 @@ describe('Contract: InvestmentAsset ', () => {
         ]);
         assert.equal(event.args._delayed,false,"The investment must be returned without delay");
     })
+
 })
