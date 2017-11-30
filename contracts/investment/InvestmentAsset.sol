@@ -22,8 +22,6 @@ contract InvestmentAsset is AssetEvents {
     string public protocolVersion;
     // Contractual terms hash of investment
     bytes public assetTermsHash;
-    // Document hash agreeing the contractual terms
-    bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
 
@@ -66,9 +64,9 @@ contract InvestmentAsset is AssetEvents {
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, bytes)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, agreementHash);
+        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash);
     }
 
     function () payable {

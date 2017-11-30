@@ -2,7 +2,7 @@ pragma solidity ^0.4.15;
 
 import './AssetEvents.sol';
 
-// Defines methods and control modifiers for an investment 
+// Defines methods and control modifiers for an investment
 contract AssetLibrary is AssetEvents {
 
     // Asset owner
@@ -21,8 +21,6 @@ contract AssetLibrary is AssetEvents {
     string public protocolVersion;
     // Contractual terms hash of investment
     bytes public assetTermsHash;
-    // Document hash agreeing the contractual terms
-    bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
 
@@ -54,13 +52,6 @@ contract AssetLibrary is AssetEvents {
         _;
     }
 
-    // Compares the agreement terms hash of investor and owner
-    modifier onlyAgreed(bytes _agreementHash) {
-        require(keccak256(agreementHash) == keccak256(_agreementHash));
-        _;
-    }
-
-
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable()
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -71,20 +62,18 @@ contract AssetLibrary is AssetEvents {
         investor.transfer(investedValue);
         address currentInvestor = investor;
         investor = address(0);
-        agreementHash = "";
         status = Status.AVAILABLE;
         investedAt = uint(0);
         return (currentInvestor, investedValue);
     }
 
     // Add investment interest in this asset and retain the funds within the smart contract
-    function invest(address _investor, bytes _agreementHash) payable
+    function invest(address _investor) payable
          hasStatus(Status.AVAILABLE)
          public
          returns(bool)
     {
         investor = _investor;
-        agreementHash = _agreementHash;
         investedAt = now;
         status = Status.PENDING_OWNER_AGREEMENT;
         Transferred(investor, owner, this.balance);
@@ -104,17 +93,16 @@ contract AssetLibrary is AssetEvents {
     }
 
     // Accept the investor as the asset buyer and withdraw funds
-    function withdrawFunds(bytes _agreementHash)
+    function withdrawFunds()
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        onlyAgreed(_agreementHash)
         public
         returns(bool)
     {
         uint256 value = this.balance;
         owner.transfer(value);
         status = Status.INVESTED;
-        Withdrawal(owner, investor, value, agreementHash);
+        Withdrawal(owner, investor, value);
         return true;
     }
 
