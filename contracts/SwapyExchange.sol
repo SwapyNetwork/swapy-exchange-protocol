@@ -2,11 +2,12 @@ pragma solidity ^0.4.15;
 
 import './investment/InvestmentAsset.sol';
 
-contract SwapyExchange is AssetEvents {
+contract SwapyExchange {
 
   // Protocol version
   string constant public VERSION = "1.0.0";
   address public assetLibrary;
+  address public token;
 
   event Offers(
     address _from,
@@ -16,13 +17,13 @@ contract SwapyExchange is AssetEvents {
 
   event Investments(
     address _investor,
-    address _asset,
-    address _owner,
+    address[] _assets,
     uint256 _value
   );
 
-  function SwapyExchange(address _assetLibrary) {
+  function SwapyExchange(address _assetLibrary, address _token) {
     assetLibrary = _assetLibrary;
+    token = _token;
   }
 
   // Creates a new investment offer
@@ -51,18 +52,31 @@ contract SwapyExchange is AssetEvents {
   {
     address[] memory newAssets = new address[](_assets.length);
     for (uint index = 0; index < _assets.length; index++) {
-      newAssets[index] = new InvestmentAsset(assetLibrary, msg.sender, VERSION, _currency, _assets[index], _offerTermsHash, _paybackDays, _grossReturn);
+      newAssets[index] = new InvestmentAsset(
+        assetLibrary,
+        msg.sender,
+        VERSION,
+        _currency,
+        _assets[index],
+        _offerTermsHash,
+        _paybackDays,
+        _grossReturn,
+        token
+      );
     }
     return newAssets;
   }
 
-  function invest(address _asset) payable
+  function invest(address[] _assets) payable
     returns(bool)
   {
-    InvestmentAsset asset = InvestmentAsset(_asset);
-    require(_asset.call.value(msg.value)(bytes4(sha3("invest(address)")), msg.sender));
-    Investments(msg.sender, _asset, asset.owner(), msg.value);
+    uint256 assetValue = msg.value / _assets.length;
+    for (uint index = 0; index < _assets.length; index++) {
+      require(_assets[index].call.value(assetValue)(bytes4(sha3("invest(address)")), msg.sender));
+    }
+    Investments(msg.sender, _assets, msg.value);
     return true;
+   
   }
 
 }

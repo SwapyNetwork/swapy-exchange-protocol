@@ -34,4 +34,15 @@ contract AssetEvents {
         uint256 _value,
         bool _delayed
     );
-}
+
+    event Supplied(
+        address _owner,
+        uint256 _amount,
+        uint256 _assetFuel
+    );
+
+    event TokenWithdrawal(
+        address _to,
+        uint256 _amount
+    );
+}    

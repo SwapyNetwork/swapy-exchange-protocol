@@ -1,6 +1,7 @@
 pragma solidity ^0.4.15;
 
 import './AssetEvents.sol';
+import '../token/Token.sol';
 
 // Defines methods and control modifiers for an investment
 contract AssetLibrary is AssetEvents {
@@ -23,6 +24,9 @@ contract AssetLibrary is AssetEvents {
     bytes public assetTermsHash;
     // investment timestamp
     uint public investedAt;
+    // asset fuel
+    Token public token;
+    uint256 public tokenFuel;
 
     // possible stages of an asset
     enum Status {
@@ -52,6 +56,18 @@ contract AssetLibrary is AssetEvents {
         _;
     }
 
+    modifier onlyDelayed(){
+        require(isDelayed());
+        _;
+    }
+
+    function isDelayed()
+        public
+        returns(bool)
+    {
+        return now > investedAt + paybackDays * 1 days;
+    }
+    
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable()
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -66,6 +82,18 @@ contract AssetLibrary is AssetEvents {
         investedAt = uint(0);
         return (currentInvestor, investedValue);
     }
+
+    
+    function withdrawTokens(address _recipient, uint256 _amount)
+        private
+        returns(bool)
+    {
+        assert(tokenFuel >= _amount);
+        require(token.transfer(_recipient, _amount));
+        TokenWithdrawal(_recipient, _amount);
+        tokenFuel -= _amount;
+        return true;
+    }     
 
     // Add investment interest in this asset and retain the funds within the smart contract
     function invest(address _investor) payable
@@ -125,16 +153,34 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         investor.transfer(msg.value);
-        bool delayed;
-        if (now > investedAt + paybackDays * 1 days) {
-            status = Status.DELAYED_RETURN;
-            delayed = true;
-        } else {
-            status = Status.RETURNED;
-            delayed = false;
+        bool _isDelayed = isDelayed();
+        status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
+        if(tokenFuel > 0){
+            address recipient = _isDelayed ? investor : owner;          
+            withdrawTokens(recipient, tokenFuel);
         }
-        Returned(owner, investor, msg.value, delayed);
+        Returned(owner, investor, msg.value, _isDelayed);
         return true;
+    }
+
+    function supplyFuel(uint256 _amount)
+        onlyOwner
+        hasStatus(Status.AVAILABLE)
+        returns(bool)
+    {
+        assert(token.balanceOf(this) == tokenFuel + _amount);
+        tokenFuel += _amount;
+        Supplied(owner, _amount, tokenFuel);
+        return true; 
+    }
+
+    function requireTokenFuel() 
+        onlyInvestor
+        hasStatus(Status.INVESTED)
+        onlyDelayed
+        returns(bool)
+    {   
+        return withdrawTokens(investor, tokenFuel);
     }
 
 }

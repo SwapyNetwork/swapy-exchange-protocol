@@ -1,10 +1,10 @@
 pragma solidity ^0.4.15;
 
-import './AssetEvents.sol';
+import '../token/Token.sol';
 
 // Defines a fund raising asset contract
 
-contract InvestmentAsset is AssetEvents {
+contract InvestmentAsset {
 
     // Asset owner
     address public owner;
@@ -24,6 +24,9 @@ contract InvestmentAsset is AssetEvents {
     bytes public assetTermsHash;
     // investment timestamp
     uint public investedAt;
+    // Fuel
+    Token public token;
+    uint256 public tokenFuel;
 
     // possible stages of an asset
     enum Status {
@@ -46,11 +49,13 @@ contract InvestmentAsset is AssetEvents {
         uint256 _fixedValue,
         bytes _assetTermsHash,
         uint _paybackDays,
-        uint _grossReturn)
+        uint _grossReturn,
+        address _token)
         public
     {
         // set the library to delegate methods
         assetLibrary = _library;
+        // init asset 
         owner = _owner;
         protocolVersion = _protocolVersion;
         currency = _currency;
@@ -59,14 +64,16 @@ contract InvestmentAsset is AssetEvents {
         paybackDays = _paybackDays;
         grossReturn = _grossReturn;
         status = Status.AVAILABLE;
+        tokenFuel = 0;
+        token = Token(_token);
     }
 
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, uint)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, uint, uint256)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, investedAt);
+        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, investedAt, tokenFuel);
     }
 
     function () payable {

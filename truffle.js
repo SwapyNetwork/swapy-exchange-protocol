@@ -44,8 +44,7 @@ module.exports = {
     test : {
       host: "localhost",
       network_id: '*',
-      port: 8545,
-      gasPrice: 0x01
+      port: 8545
     }
   },
   rpc: {
