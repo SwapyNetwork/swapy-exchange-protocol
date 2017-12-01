@@ -81,10 +81,10 @@ contract('SwapyExchange', accounts => {
         })
     
         it("should add an investment by using the protocol", async () => {
-            const investmentAsset = await AssetLibrary.at(assetsAddress[0]);
+            const assets = [assetsAddress[0]];
             const {logs} = await protocol.invest(
-                [investmentAsset.address, assetsAddress[4]],
-                {value: assetValue, from: investor}
+                assets,
+                {value: assetValue * assets.length, from: investor}
             );
             const event = logs.find(e => e.event === 'Investments')
             const args = event.args;
