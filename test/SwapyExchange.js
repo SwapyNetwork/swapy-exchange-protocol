@@ -27,13 +27,15 @@ const currency = "USD";
 const offerTerms = "111111";
 
 // --- Test variables
+let token = null;
+let library = null;
 let protocol = null;
+
 let assetsAddress = [];
 let firstAsset = null;
 let secondAsset = null;
 let thirdAsset = null;
-let token = null;
-
+// Agents
 let investor = null;
 let creditCompany = null;
 let Swapy = null;
@@ -276,11 +278,23 @@ describe('Contract: InvestmentAsset ', () => {
         ]);
         assert.equal(event.args._delayed,true,"The investment must be returned with delay");
         const currentInvestorTokenBalance = await token.balanceOf(investor);
-        assert.equal(investorTokenBalance.toNumber() + assetTokenBalance.toNumber(), currentInvestorTokenBalance.toNumber(), "The investor must receive the asset's fuel if the investment is returned with delay")
+        assert.equal(
+            investorTokenBalance.toNumber() + assetTokenBalance.toNumber(),
+            currentInvestorTokenBalance.toNumber(),
+            "The investor must receive the asset's fuel if the investment is returned with delay"
+        )
     })
+    
+    it("should supply tokens to the third asset", async () => {
+        await token.transfer(assetsAddress[3], assetFuel, {from: creditCompany});
+        thirdAsset = await AssetLibrary.at(assetsAddress[3]);
+        await thirdAsset.supplyFuel(
+            assetFuel,
+            {from: creditCompany}
+        );
+    }) 
 
     it('should add an investment - fifth', async () => {
-        thirdAsset = await AssetLibrary.at(assetsAddress[3]);
         await thirdAsset.invest(investor,agreementTerms, {from: investor, value: assetValue})
     })
 
@@ -295,7 +309,9 @@ describe('Contract: InvestmentAsset ', () => {
         ]);
     })
     
-    it('should return the investment correctly', async () => {
+    it("should return the investment correctly and send the token fuel to the asset's owner", async () => {
+        const creditCoTokenBalance = await token.balanceOf(creditCompany);
+        const assetTokenBalance = await token.balanceOf(thirdAsset.address);
         const {logs} = await thirdAsset.returnInvestment({ from: creditCompany, value: returnValue })
         const event = logs.find(e => e.event === 'Returned');
         expect(event.args).to.include.all.keys([
@@ -305,6 +321,12 @@ describe('Contract: InvestmentAsset ', () => {
             '_delayed'
         ]);
         assert.equal(event.args._delayed,false,"The investment must be returned without delay");
+        const currentCreditCoTokenBalance = await token.balanceOf(creditCompany);
+        assert.equal(
+            creditCoTokenBalance.toNumber() + assetTokenBalance.toNumber(),
+            currentCreditCoTokenBalance.toNumber(),
+            "The credit company must receive the asset's fuel if the investment is returned without delay"
+        )
     })
 
 })
