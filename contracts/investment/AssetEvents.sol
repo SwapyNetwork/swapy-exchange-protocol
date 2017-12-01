@@ -1,6 +1,6 @@
 pragma solidity ^0.4.15;
 
-// Defines events fired by investment assets 
+// Defines events fired by investment assets
 
 contract AssetEvents {
 
@@ -19,8 +19,7 @@ contract AssetEvents {
     event Withdrawal(
         address _owner,
         address _investor,
-        uint256 _value,
-        bytes _terms
+        uint256 _value
     );
 
     event Refused(

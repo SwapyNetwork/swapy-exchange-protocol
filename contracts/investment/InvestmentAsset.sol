@@ -22,8 +22,6 @@ contract InvestmentAsset {
     string public protocolVersion;
     // Contractual terms hash of investment
     bytes public assetTermsHash;
-    // Document hash agreeing the contractual terms
-    bytes public agreementHash;
     // investment timestamp
     uint public investedAt;
     // Fuel
@@ -42,7 +40,7 @@ contract InvestmentAsset {
 
     //  Library to delegate calls
     address public assetLibrary;
-    
+
     function InvestmentAsset(
         address _library,
         address _owner,
@@ -55,7 +53,7 @@ contract InvestmentAsset {
         address _token)
         public
     {
-        // set the library to delegate methods 
+        // set the library to delegate methods
         assetLibrary = _library;
         // init asset 
         owner = _owner;
@@ -73,9 +71,9 @@ contract InvestmentAsset {
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, address, string, bytes, bytes, uint, uint256)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, uint, uint256)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, investor, protocolVersion, assetTermsHash, agreementHash, investedAt, tokenFuel);
+        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, investedAt, tokenFuel);
     }
 
     function () payable {
