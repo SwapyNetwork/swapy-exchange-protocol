@@ -29,7 +29,7 @@ const offerTerms = "111111";
 let token = null;
 let library = null;
 let protocol = null;
-
+// Assets
 let assetsAddress = [];
 let firstAsset = null;
 let secondAsset = null;
@@ -42,6 +42,7 @@ let Swapy = null;
 contract('SwapyExchange', accounts => {
 
     before( async () => {
+   
         Swapy = accounts[0];
         creditCompany = accounts[1];
         investor = accounts[2];
@@ -49,12 +50,14 @@ contract('SwapyExchange', accounts => {
         token  = await Token.new({from: Swapy});
         protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy });
         await token.transfer(creditCompany, offerFuel, {from: Swapy});
+   
     })
 
     it("should have a version", async () => {
         const version = await protocol.VERSION.call();
         should.exist(version)
     })
+
     describe('Fundraising offers', () => {
         it("should create an investment offer with assets", async () => {
             const {logs} = await protocol.createOffer(
@@ -80,17 +83,17 @@ contract('SwapyExchange', accounts => {
         it("should add an investment by using the protocol", async () => {
             const investmentAsset = await AssetLibrary.at(assetsAddress[0]);
             const {logs} = await protocol.invest(
-                 investmentAsset.address,
-                                  {value: assetValue, from: investor}
+                [investmentAsset.address, assetsAddress[4]],
+                {value: assetValue, from: investor}
             );
             const event = logs.find(e => e.event === 'Investments')
             const args = event.args;
             expect(args).to.include.all.keys([
                 '_investor',
-                '_asset',
-                '_owner',
+                '_assets',
                 '_value'
             ]);
+
         })
     })
     
@@ -125,8 +128,8 @@ describe('Contract: InvestmentAsset ', () => {
     describe('Invest', () => {
         it('should add an investment - first', async () => {
             const {logs} = await firstAsset.invest(
-                 investor,
-                                  {value: assetValue, from: investor}
+                investor,
+                {value: assetValue, from: investor}
             );
             const event = logs.find(e => e.event === 'Transferred')
             const args = event.args;

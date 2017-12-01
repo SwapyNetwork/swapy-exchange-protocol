@@ -17,8 +17,7 @@ contract SwapyExchange {
 
   event Investments(
     address _investor,
-    address _asset,
-    address _owner,
+    address[] _assets,
     uint256 _value
   );
 
@@ -68,13 +67,16 @@ contract SwapyExchange {
     return newAssets;
   }
 
-  function invest(address _asset) payable
+  function invest(address[] _assets) payable
     returns(bool)
   {
-    InvestmentAsset asset = InvestmentAsset(_asset);
-    require(_asset.call.value(msg.value)(bytes4(sha3("invest(address)")), msg.sender));
-    Investments(msg.sender, _asset, asset.owner(), msg.value);
+    uint256 assetValue = msg.value / _assets.length;
+    for (uint index = 0; index < _assets.length; index++) {
+      require(_assets[index].call.value(assetValue)(bytes4(sha3("invest(address)")), msg.sender));
+    }
+    Investments(msg.sender, _assets, msg.value);
     return true;
+   
   }
 
 }
