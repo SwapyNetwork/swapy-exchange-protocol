@@ -76,7 +76,12 @@ contract SwapyExchange {
     }
     Investments(msg.sender, _assets, msg.value);
     return true;
-   
+  }
+
+  function sell(address[] _assets) 
+    returns(bool)
+  {
+    return true;
   }
 
 }

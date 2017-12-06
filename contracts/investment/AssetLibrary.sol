@@ -33,6 +33,8 @@ contract AssetLibrary is AssetEvents {
         AVAILABLE,
         PENDING_OWNER_AGREEMENT,
         INVESTED,
+        FOR_SALE,
+        PENDING_INVESTOR_AGREEMENT,
         RETURNED,
         DELAYED_RETURN
     }
@@ -144,6 +146,38 @@ contract AssetLibrary is AssetEvents {
         var (currentInvestor, investedValue) = makeAvailable();
         Refused(owner, currentInvestor, investedValue);
         return true;
+    }
+
+    function sell(uint256 _sellValue) 
+        onlyInvestor
+        hasStatus(Status.INVESTED)
+        public
+        returns(bool)
+    {       
+        sellValue = _sellValue;
+        status = Status.FOR_SALE;
+        ForSale()
+    }
+
+    function cancelSale() 
+        onlyInvestor
+        hasStatus(Status.FOR_SALE)
+        public
+        returns(bool)
+    {       
+        investor = _investor;
+        investedAt = now;
+        status = Status.PENDING_INVESTOR_AGREEMENT;
+        Transferred(investor, owner, this.balance);
+        return true;
+    }
+
+    function buy()
+        hasStatus(Status.FOR_SALE)
+        public
+        returns(bool)
+    {
+
     }
 
     function returnInvestment() payable

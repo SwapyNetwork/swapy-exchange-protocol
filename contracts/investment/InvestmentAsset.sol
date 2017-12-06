@@ -10,8 +10,10 @@ contract InvestmentAsset {
     address public owner;
     // Asset currency
     string public currency;
-    // Asset fixed value
-    uint256 public fixedValue;
+    // Asset value
+    uint256 public value;
+    // Asset sell value 
+    uint256 public sellValue;
     // period to return the investment
     uint256 public paybackDays;
     // Gross return of investment

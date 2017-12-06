@@ -4,9 +4,9 @@ pragma solidity ^0.4.15;
 
 contract AssetEvents {
 
-    event Transferred(
-        address _from,
-        address _to,
+    event Invested(
+        address _owner,
+        address _investor,
         uint256 _value
     );
 
@@ -45,4 +45,10 @@ contract AssetEvents {
         address _to,
         uint256 _amount
     );
+
+    event ForSale(
+        address _investor,
+        uint256 _sellValue
+    );
+    
 }    

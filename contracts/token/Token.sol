@@ -6,7 +6,7 @@ contract Token is StandardToken {
     
     string public constant name = "SwapyBeta";
     string public constant symbol = "SWBETA";
-    uint8 public constant decimals = 2;
+    uint8 public constant decimals = 18;
 
     uint256 public constant INITIAL_SUPPLY = 1000000000000 * (10 ** uint256(decimals));
 
