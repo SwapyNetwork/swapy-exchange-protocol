@@ -99,7 +99,7 @@ contract SwapyExchange {
     returns(bool)
   {
     InvestmentAsset asset = InvestmentAsset(_asset);
-    require(msg.sender == asset.investor());
+    //require(msg.sender == asset.investor());
     require(_asset.call(bytes4(keccak256("sell(uint256)")), _value));
     ForSale(msg.sender, _asset, _value);
     return true;
