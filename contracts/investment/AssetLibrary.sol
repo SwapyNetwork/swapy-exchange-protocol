@@ -1,4 +1,4 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 import './AssetEvents.sol';
 import '../token/Token.sol';
@@ -8,10 +8,12 @@ contract AssetLibrary is AssetEvents {
 
     // Asset owner
     address public owner;
+    // Protocol
+    address public protocol;
     // Asset currency
     string public currency;
     // Asset fixed value
-    uint256 public fixedValue;
+    uint256 public value;
     // period to return the investment
     uint256 public paybackDays;
     // Gross return of investment
@@ -24,10 +26,19 @@ contract AssetLibrary is AssetEvents {
     bytes public assetTermsHash;
     // investment timestamp
     uint public investedAt;
+    
     // asset fuel
     Token public token;
     uint256 public tokenFuel;
+    
+    // sell data
+    struct Sell {
+        uint256 value;
+        address buyer;  
+    }
 
+    Sell sellData;
+    
     // possible stages of an asset
     enum Status {
         AVAILABLE,
@@ -58,12 +69,20 @@ contract AssetLibrary is AssetEvents {
         _;
     }
 
+    // The asset can be selled by using the protocol or directly by the current investor
+    modifier authorizedToSell() {
+        require(msg.sender == investor || msg.sender == protocol);
+        _;
+    }
+
     modifier onlyDelayed(){
         require(isDelayed());
         _;
     }
 
+
     function isDelayed()
+        view
         public
         returns(bool)
     {
@@ -106,7 +125,7 @@ contract AssetLibrary is AssetEvents {
         investor = _investor;
         investedAt = now;
         status = Status.PENDING_OWNER_AGREEMENT;
-        Transferred(investor, owner, this.balance);
+        Invested(owner, investor, this.balance);
         return true;
     }
 
@@ -129,10 +148,10 @@ contract AssetLibrary is AssetEvents {
         public
         returns(bool)
     {
-        uint256 value = this.balance;
-        owner.transfer(value);
+        uint256 _value = this.balance;
+        owner.transfer(_value);
         status = Status.INVESTED;
-        Withdrawal(owner, investor, value);
+        Withdrawal(owner, investor, _value);
         return true;
     }
 
@@ -149,36 +168,72 @@ contract AssetLibrary is AssetEvents {
     }
 
     function sell(uint256 _sellValue) 
-        onlyInvestor
+        authorizedToSell
         hasStatus(Status.INVESTED)
         public
         returns(bool)
-    {       
-        sellValue = _sellValue;
+    {
+        sellData.value = _sellValue;
         status = Status.FOR_SALE;
-        ForSale()
+        ForSale(msg.sender, _sellValue);
+        return true;
     }
 
-    function cancelSale() 
-        onlyInvestor
+    function cancelSell() 
+        authorizedToSell
         hasStatus(Status.FOR_SALE)
         public
         returns(bool)
     {       
-        investor = _investor;
-        investedAt = now;
-        status = Status.PENDING_INVESTOR_AGREEMENT;
-        Transferred(investor, owner, this.balance);
+        sellData.value = uint256(0);
+        status = Status.INVESTED;
         return true;
     }
 
-    function buy()
+    function buy(address _buyer) payable
         hasStatus(Status.FOR_SALE)
         public
         returns(bool)
     {
-
+        sellData.buyer = _buyer;
+        status = Status.PENDING_INVESTOR_AGREEMENT;
+        Invested(investor, _buyer, msg.value);
+        return true;
     }
+
+    // Refunds asset's buyer and became available for sale again
+    function refuseSell()
+        authorizedToSell
+        hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
+        public 
+        returns(bool)
+    {
+        address buyer = sellData.buyer;
+        uint256 _value = this.balance;
+        buyer.transfer(_value);
+        sellData.buyer = address(0);
+        status = Status.FOR_SALE;
+        Refused(investor, buyer, _value);
+        return true;
+    }  
+
+    // Withdraw funds, clear the sell data and change investor's address
+    function acceptSell()
+        authorizedToSell
+        hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
+        public
+        returns(bool)
+    {
+        address currentInvestor = investor;
+        uint256 _value = this.balance;
+        currentInvestor.transfer(_value);
+        status = Status.INVESTED;
+        investor = sellData.buyer;
+        sellData.buyer = address(0);
+        sellData.value = uint256(0);
+        Withdrawal(currentInvestor, investor, _value);
+        return true;
+    }      
 
     function returnInvestment() payable
         onlyOwner
@@ -200,6 +255,7 @@ contract AssetLibrary is AssetEvents {
     function supplyFuel(uint256 _amount)
         onlyOwner
         hasStatus(Status.AVAILABLE)
+        public
         returns(bool)
     {
         assert(token.balanceOf(this) == tokenFuel + _amount);
@@ -212,6 +268,7 @@ contract AssetLibrary is AssetEvents {
         onlyInvestor
         hasStatus(Status.INVESTED)
         onlyDelayed
+        public
         returns(bool)
     {   
         return withdrawTokens(investor, tokenFuel);

@@ -39,7 +39,7 @@ let investor = null;
 let creditCompany = null;
 let Swapy = null;
 
-contract('SwapyExchange', accounts => {
+contract('SwapyExchange', async accounts => {
 
     before( async () => {
    
@@ -99,7 +99,7 @@ contract('SwapyExchange', accounts => {
     
 })
 
-describe('Contract: InvestmentAsset ', () => {
+describe('Contract: InvestmentAsset ', async () => {
     
     it('should return the asset when calling getAsset', async () => {
         const asset = await InvestmentAsset.at(assetsAddress[0]);
@@ -107,6 +107,7 @@ describe('Contract: InvestmentAsset ', () => {
         assert.equal(assetValues.length, 11, "The asset must have 11 variables");
         assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany");
     })
+
     describe('Token Supply', () => {
         it("should supply tokens as fuel to the first asset", async () => {
             await token.transfer(assetsAddress[1], assetFuel, {from: creditCompany});
@@ -131,15 +132,15 @@ describe('Contract: InvestmentAsset ', () => {
                 investor,
                 {value: assetValue, from: investor}
             );
-            const event = logs.find(e => e.event === 'Transferred')
+            const event = logs.find(e => e.event === 'Invested')
             const args = event.args;
             expect(args).to.include.all.keys([
-                '_from',
-                '_to',
+                '_owner',
+                '_investor',
                 '_value',
             ]);
-            assert.equal(args._from, investor, "The current user must the asset's investor");
-            assert.equal(args._to, creditCompany, "The credit company must be the asset's seller");
+            assert.equal(args._owner, creditCompany, "The credit company must be the asset's seller");
+            assert.equal(args._investor, investor, "The current user must the asset's investor");
             assert.equal(args._value, assetValue, "The invested value must be equal the sent value");
         });
     
@@ -212,6 +213,22 @@ describe('Contract: InvestmentAsset ', () => {
           
     })
 
+    describe('Sell', () => {
+
+        it('should sell an asset by using the protocol', async() => {
+            const periodAfterInvestment = 1/2;
+            await increaseTime(86400 * payback * periodAfterInvestment)
+            const sellValue = returnValue - (returnValue - assetValue) * periodAfterInvestment;
+            const {logs} = await protocol.sellAsset(assetsAddress[1], sellValue)
+            const event = logs.find(e => e.event === 'ForSale')
+            expect(event.args).to.include.all.keys([
+                '_investor',
+                '_asset',
+                '_value'
+            ])
+            console.log(sellValue);
+        })
+    })
     describe("Require Asset's Fuel", () => {
         it("should deny the token fuel request if the return of investment isn't delayed", async () => {
             await firstAsset.requireTokenFuel({ from: investor })
