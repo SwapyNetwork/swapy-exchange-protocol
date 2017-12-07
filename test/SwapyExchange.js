@@ -327,13 +327,7 @@ describe('Contract: InvestmentAsset ', async () => {
     describe('Accept sale and withdraw funds', () => {
        
         it("should buy an asset", async () => {
-            const {logs} = await firstAsset.buy(secondInvestor, {value: sellValue})
-            const event = logs.find(e => e.event === 'Invested')
-            expect(event.args).to.include.all.keys([
-                '_owner',
-                '_investor',
-                '_value'
-            ])
+           await firstAsset.buy(secondInvestor, {value: sellValue})
         })
         it("should deny a sale acceptment if the user isnt't the investor", async () => {
             await firstAsset.acceptSale({from: secondInvestor})
