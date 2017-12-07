@@ -179,7 +179,7 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    function cancelSell() 
+    function cancelSellOrder() 
         authorizedToSell
         hasStatus(Status.FOR_SALE)
         public
@@ -187,6 +187,7 @@ contract AssetLibrary is AssetEvents {
     {       
         sellData.value = uint256(0);
         status = Status.INVESTED;
+        CanceledSell(investor, value);
         return true;
     }
 
@@ -201,8 +202,23 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+     function cancelSale()
+        hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
+        public
+        returns(bool)
+    {
+        require(msg.sender == protocol || msg.sender == sellData.buyer);
+        address buyer = sellData.buyer;
+        uint256 _value = this.balance;
+        buyer.transfer(_value);
+        sellData.buyer = address(0);
+        status = Status.FOR_SALE;
+        Canceled(investor, buyer, _value);
+        return true;
+    }
+
     // Refunds asset's buyer and became available for sale again
-    function refuseSell()
+    function refuseSale()
         authorizedToSell
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
         public 
@@ -218,7 +234,7 @@ contract AssetLibrary is AssetEvents {
     }  
 
     // Withdraw funds, clear the sell data and change investor's address
-    function acceptSell()
+    function acceptSale()
         authorizedToSell
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
         public

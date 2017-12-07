@@ -48,7 +48,13 @@ contract AssetEvents {
 
     event ForSale(
         address _investor,
-        uint256 _sellValue
+        uint256 _value
+    );
+
+
+    event CanceledSell(
+        address _investor,
+        uint256 _value
     );
     
 }    
