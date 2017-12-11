@@ -43,6 +43,8 @@ contract InvestmentAsset {
         AVAILABLE,
         PENDING_OWNER_AGREEMENT,
         INVESTED,
+        FOR_SALE,
+        PENDING_INVESTOR_AGREEMENT,
         RETURNED,
         DELAYED_RETURN
     }

@@ -10,25 +10,25 @@ contract SwapyExchange {
   address public token;
 
   event Offers(
-    address _from,
+    address indexed _from,
     string _protocolVersion,
     address[] _assets
   );
 
   event Investments(
-    address _investor,
+    address indexed _investor,
     address[] _assets,
     uint256 _value
   );
 
   event ForSale(
-    address _investor,
+    address indexed _investor,
     address _asset,
     uint256 _value
   );
 
   event Bought(
-    address _buyer,
+    address indexed _buyer,
     address _asset,
     uint256 _value
   );
