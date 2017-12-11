@@ -1,12 +1,12 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 // Defines events fired by investment assets
 
 contract AssetEvents {
 
-    event Transferred(
-        address _from,
-        address _to,
+    event Invested(
+        address _owner,
+        address _investor,
         uint256 _value
     );
 
@@ -45,4 +45,16 @@ contract AssetEvents {
         address _to,
         uint256 _amount
     );
+
+    event ForSale(
+        address _investor,
+        uint256 _value
+    );
+
+
+    event CanceledSell(
+        address _investor,
+        uint256 _value
+    );
+    
 }    

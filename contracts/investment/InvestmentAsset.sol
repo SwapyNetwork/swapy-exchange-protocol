@@ -1,4 +1,4 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 import '../token/Token.sol';
 
@@ -8,10 +8,12 @@ contract InvestmentAsset {
 
     // Asset owner
     address public owner;
+    // Protocol
+    address public protocol;
     // Asset currency
     string public currency;
-    // Asset fixed value
-    uint256 public fixedValue;
+    // Asset value
+    uint256 public value;
     // period to return the investment
     uint256 public paybackDays;
     // Gross return of investment
@@ -24,9 +26,17 @@ contract InvestmentAsset {
     bytes public assetTermsHash;
     // investment timestamp
     uint public investedAt;
+    
     // Fuel
     Token public token;
     uint256 public tokenFuel;
+    
+    // sell data
+    struct Sell {
+        uint256 value;
+        address buyer;  
+    }
+    Sell sellData;
 
     // possible stages of an asset
     enum Status {
@@ -43,10 +53,11 @@ contract InvestmentAsset {
 
     function InvestmentAsset(
         address _library,
+        address _protocol,
         address _owner,
         string _protocolVersion,
         string _currency,
-        uint256 _fixedValue,
+        uint256 _value,
         bytes _assetTermsHash,
         uint _paybackDays,
         uint _grossReturn,
@@ -56,10 +67,11 @@ contract InvestmentAsset {
         // set the library to delegate methods
         assetLibrary = _library;
         // init asset 
+        protocol = _protocol;
         owner = _owner;
         protocolVersion = _protocolVersion;
         currency = _currency;
-        fixedValue = _fixedValue;
+        value = _value;
         assetTermsHash = _assetTermsHash;
         paybackDays = _paybackDays;
         grossReturn = _grossReturn;
@@ -73,10 +85,12 @@ contract InvestmentAsset {
         constant
         returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, uint, uint256)
     {
-        return (owner, currency, fixedValue, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, investedAt, tokenFuel);
+        return (owner, currency, value, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, investedAt, tokenFuel);
     }
 
-    function () payable {
+    function () payable 
+        public
+    {
         require(assetLibrary.delegatecall(msg.data));
     }
 

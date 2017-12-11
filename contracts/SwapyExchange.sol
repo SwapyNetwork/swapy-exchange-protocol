@@ -1,4 +1,4 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 import './investment/InvestmentAsset.sol';
 
@@ -21,7 +21,21 @@ contract SwapyExchange {
     uint256 _value
   );
 
-  function SwapyExchange(address _assetLibrary, address _token) {
+  event ForSale(
+    address _investor,
+    address _asset,
+    uint256 _value
+  );
+
+  event Bought(
+    address _buyer,
+    address _asset,
+    uint256 _value
+  );
+
+  function SwapyExchange(address _assetLibrary, address _token)
+    public
+  {
     assetLibrary = _assetLibrary;
     token = _token;
   }
@@ -54,6 +68,7 @@ contract SwapyExchange {
     for (uint index = 0; index < _assets.length; index++) {
       newAssets[index] = new InvestmentAsset(
         assetLibrary,
+        this,
         msg.sender,
         VERSION,
         _currency,
@@ -68,15 +83,36 @@ contract SwapyExchange {
   }
 
   function invest(address[] _assets) payable
+    public
     returns(bool)
   {
     uint256 assetValue = msg.value / _assets.length;
     for (uint index = 0; index < _assets.length; index++) {
-      require(_assets[index].call.value(assetValue)(bytes4(sha3("invest(address)")), msg.sender));
+      require(_assets[index].call.value(assetValue)(bytes4(keccak256("invest(address)")), msg.sender));
     }
     Investments(msg.sender, _assets, msg.value);
     return true;
-   
+  }
+
+  function sellAsset(address _asset, uint256 _value)
+    public
+    returns(bool)
+  {
+    InvestmentAsset asset = InvestmentAsset(_asset);
+    require(msg.sender == asset.investor());
+    require(_asset.call(bytes4(keccak256("sell(uint256)")), _value));
+    ForSale(msg.sender, _asset, _value);
+    return true;
+  }
+
+  function buyAsset(address _asset) payable
+    public
+    returns(bool)
+  {
+    uint256 assetValue = msg.value;
+    require(_asset.call.value(assetValue)(bytes4(keccak256("buy(address)")), msg.sender));
+    Bought(msg.sender, _asset, msg.value);
+    return true;
   }
 
 }

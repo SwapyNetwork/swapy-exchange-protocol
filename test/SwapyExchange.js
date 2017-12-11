@@ -38,14 +38,16 @@ let thirdAsset = null;
 let investor = null;
 let creditCompany = null;
 let Swapy = null;
+let secondInvestor = null;
 
-contract('SwapyExchange', accounts => {
+contract('SwapyExchange', async accounts => {
 
     before( async () => {
    
         Swapy = accounts[0];
         creditCompany = accounts[1];
         investor = accounts[2];
+        secondInvestor = accounts[3];
         const library = await AssetLibrary.new({ from: Swapy });
         token  = await Token.new({from: Swapy});
         protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy });
@@ -99,14 +101,19 @@ contract('SwapyExchange', accounts => {
     
 })
 
-describe('Contract: InvestmentAsset ', () => {
-    
+describe('Contract: InvestmentAsset ', async () => {
+   
+    const periodAfterInvestment = 1/2;
+    await increaseTime(86400 * payback * periodAfterInvestment)
+    const sellValue = returnValue - (returnValue - assetValue) * periodAfterInvestment;
+
     it('should return the asset when calling getAsset', async () => {
         const asset = await InvestmentAsset.at(assetsAddress[0]);
         const assetValues = await asset.getAsset();
         assert.equal(assetValues.length, 11, "The asset must have 11 variables");
         assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany");
     })
+
     describe('Token Supply', () => {
         it("should supply tokens as fuel to the first asset", async () => {
             await token.transfer(assetsAddress[1], assetFuel, {from: creditCompany});
@@ -131,15 +138,15 @@ describe('Contract: InvestmentAsset ', () => {
                 investor,
                 {value: assetValue, from: investor}
             );
-            const event = logs.find(e => e.event === 'Transferred')
+            const event = logs.find(e => e.event === 'Invested')
             const args = event.args;
             expect(args).to.include.all.keys([
-                '_from',
-                '_to',
+                '_owner',
+                '_investor',
                 '_value',
             ]);
-            assert.equal(args._from, investor, "The current user must the asset's investor");
-            assert.equal(args._to, creditCompany, "The credit company must be the asset's seller");
+            assert.equal(args._owner, creditCompany, "The credit company must be the asset's seller");
+            assert.equal(args._investor, investor, "The current user must the asset's investor");
             assert.equal(args._value, assetValue, "The invested value must be equal the sent value");
         });
     
@@ -212,9 +219,136 @@ describe('Contract: InvestmentAsset ', () => {
           
     })
 
+    describe('Sell', () => {
+        
+        it("should deny a sell order if the user isn't the investor", async() => {
+            await protocol.sellAsset(assetsAddress[1], sellValue, {from: creditCompany})
+            .should.be.rejectedWith('VM Exception')
+        })
+
+        it('should sell an asset by using the protocol', async() => {
+            const {logs} = await protocol.sellAsset(assetsAddress[1], sellValue, {from: investor})
+            const event = logs.find(e => e.event === 'ForSale')
+            expect(event.args).to.include.all.keys([
+                '_investor',
+                '_asset',
+                '_value'
+            ])
+        })
+
+    })
+
+    describe('Cancel sell order', () => {
+      
+        it("should deny a sell order cancelment if the user isnt't the investor", async () => {
+            await firstAsset.cancelSellOrder({from: creditCompany})
+            .should.be.rejectedWith('VM Exception')
+        })
+
+        it("should cancel a sell", async () => {
+            const {logs} = await firstAsset.cancelSellOrder({from: investor})
+            const event = logs.find(e => e.event === 'CanceledSell')
+            expect(event.args).to.include.all.keys([
+                '_investor',
+                '_value'
+            ])
+        })
+    
+    })
+
+    describe('Buy', () => {
+        
+        it("should sell an asset", async() => {
+            const {logs} = await firstAsset.sell(sellValue, {from: investor})
+            const event = logs.find(e => e.event === 'ForSale')
+            expect(event.args).to.include.all.keys([
+                '_investor',
+                '_value'
+            ])
+        })
+
+        it("should buy an asset by using the protocol", async () => {
+            const {logs} = await protocol.buyAsset(assetsAddress[1], {from: secondInvestor, value: sellValue})
+            const event = logs.find(e => e.event === 'Bought')
+            expect(event.args).to.include.all.keys([
+                '_buyer',
+                '_asset',
+                '_value'
+            ])
+        })
+    })
+
+    describe('Cancel sale', () => {
+        
+        it("should deny a sale cancelment if the user isnt't the buyer", async () => {
+            await firstAsset.cancelSale({from: investor})
+            .should.be.rejectedWith('VM Exception')
+        })
+
+        it("should cancel a sale", async () => {
+            const {logs} = await firstAsset.cancelSale({from: secondInvestor})
+            const event = logs.find(e => e.event === 'Canceled')
+            expect(event.args).to.include.all.keys([
+                '_owner',
+                '_investor',
+                '_value'
+            ])
+        })
+    })
+
+    describe('Refuse sale', () => {
+        
+        it("should buy an asset", async () => {
+            const {logs} = await firstAsset.buy(secondInvestor, {value: sellValue})
+            const event = logs.find(e => e.event === 'Invested')
+            expect(event.args).to.include.all.keys([
+                '_owner',
+                '_investor',
+                '_value'
+            ])
+        })
+        
+        it("should deny a sale refusement if the user isnt't the investor", async () => {
+            await firstAsset.refuseSale({from: secondInvestor})
+            .should.be.rejectedWith('VM Exception')
+        })
+
+        it("should refuse a sale", async () => {
+            const {logs} = await firstAsset.refuseSale({from: investor})
+            const event = logs.find(e => e.event === 'Refused')
+            expect(event.args).to.include.all.keys([
+                '_owner',
+                '_investor',
+                '_value'
+            ])
+        })
+    })
+
+    describe('Accept sale and withdraw funds', () => {
+       
+        it("should buy an asset", async () => {
+           await firstAsset.buy(secondInvestor, {value: sellValue})
+        })
+        it("should deny a sale acceptment if the user isnt't the investor", async () => {
+            await firstAsset.acceptSale({from: secondInvestor})
+            .should.be.rejectedWith('VM Exception')
+        })
+
+        it("should accept a sale", async () => {
+            const {logs} = await firstAsset.acceptSale({from: investor})
+            const event = logs.find(e => e.event === 'Withdrawal')
+            expect(event.args).to.include.all.keys([
+                '_owner',
+                '_investor',
+                '_value'
+            ])
+        })
+    })
+
+
     describe("Require Asset's Fuel", () => {
         it("should deny the token fuel request if the return of investment isn't delayed", async () => {
-            await firstAsset.requireTokenFuel({ from: investor })
+            await firstAsset.requireTokenFuel({ from: secondInvestor })
                 .should.be.rejectedWith('VM Exception')
         })
     
@@ -226,7 +360,7 @@ describe('Contract: InvestmentAsset ', () => {
         })
     
         it("should send the token fuel to the asset's investor", async () => {
-            const {logs} =  await firstAsset.requireTokenFuel({ from: investor })
+            const {logs} =  await firstAsset.requireTokenFuel({ from: secondInvestor })
             const event = logs.find(e => e.event === 'TokenWithdrawal');
             expect(event.args).to.include.all.keys([
                 '_to',
@@ -238,7 +372,7 @@ describe('Contract: InvestmentAsset ', () => {
     describe('Delayed return without remaining tokens', () => {
     
         it("should deny an investment return if the user isn't the asset owner", async () => {
-            await firstAsset.returnInvestment({ from: investor, value: returnValue }) 
+            await firstAsset.returnInvestment({ from: secondInvestor, value: returnValue }) 
                 .should.be.rejectedWith('VM Exception')
         })
     
