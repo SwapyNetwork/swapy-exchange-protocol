@@ -19,16 +19,17 @@ const Token = artifacts.require("./token/Token.sol");
 // --- Test constants
 const payback = new BigNumber(12);
 const grossReturn = new BigNumber(500);
-const assetValue = ether(10);
+const assetValue = ether(5);
 // returned value =  invested value + return on investment
-const returnValue = ether((1 + grossReturn.toNumber()/10000) * assetValue);
-const assets = [5000,5000,5000,5000,5000];
-const offerFuel = 5000;
-const assetFuel = offerFuel / assets.length;
+const returnValue = new BigNumber(1 + grossReturn.toNumber()/10000).times(assetValue);
+const assets = [500,500,500,500,500];
+const offerFuel = new BigNumber(5000);
+const assetFuel = offerFuel.dividedBy(new BigNumber(assets.length));
 const currency = "USD";
 const offerTerms = "111111";
 
 // --- Test variables
+// Contracts
 let token = null;
 let library = null;
 let protocol = null;
@@ -42,6 +43,8 @@ let investor = null;
 let creditCompany = null;
 let Swapy = null;
 let secondInvestor = null;
+// Util
+let gasPrice = null;
 
 contract('SwapyExchange', async accounts => {
 
@@ -51,6 +54,8 @@ contract('SwapyExchange', async accounts => {
         creditCompany = accounts[1];
         investor = accounts[2];
         secondInvestor = accounts[3];
+        gasPrice = await getGasPrice();
+        gasPrice = new BigNumber(gasPrice);        
         const library = await AssetLibrary.new({ from: Swapy });
         token  = await Token.new({from: Swapy});
         protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy });
@@ -104,9 +109,7 @@ contract('SwapyExchange', async accounts => {
             // balances after invest
             const currentAssetBalance = await getBalance(assetsAddress[0]);
             const currentInvestorBalance = await getBalance(investor);
-            let gasPrice = await getGasPrice();
             const gasUsed = new BigNumber(receipt.gasUsed);
-            gasPrice = new BigNumber(gasPrice);
             currentInvestorBalance.toNumber().should.equal(
                 previousInvestorBalance
                 .minus(assetValue)
@@ -121,9 +124,10 @@ contract('SwapyExchange', async accounts => {
 
 describe('Contract: InvestmentAsset ', async () => {
    
-    const periodAfterInvestment = 1/2;
-    await increaseTime(86400 * payback * periodAfterInvestment)
-    const sellValue = returnValue - (returnValue - assetValue) * periodAfterInvestment;
+    const periodAfterInvestment = new BigNumber(1/2);
+    await increaseTime(86400 * payback * periodAfterInvestment.toNumber())
+    const returnOnPeriod = returnValue.minus(assetValue).times(periodAfterInvestment);
+    const sellValue = assetValue.plus(returnOnPeriod);
 
     it('should return the asset when calling getAsset', async () => {
         const asset = await InvestmentAsset.at(assetsAddress[0]);
@@ -151,8 +155,10 @@ describe('Contract: InvestmentAsset ', async () => {
     })
     
     describe('Invest', () => {
-        it('should add an investment - first', async () => {
-            const {logs} = await firstAsset.invest(
+        it('should add an investment by using the asset', async () => {
+            const previousAssetBalance = await getBalance(firstAsset.address);
+            const previousInvestorBalance = await getBalance(investor);
+            const {logs, receipt} = await firstAsset.invest(
                 investor,
                 {value: assetValue, from: investor}
             );
@@ -163,9 +169,16 @@ describe('Contract: InvestmentAsset ', async () => {
                 '_investor',
                 '_value',
             ]);
-            assert.equal(args._owner, creditCompany, "The credit company must be the asset's seller");
-            assert.equal(args._investor, investor, "The current user must the asset's investor");
-            assert.equal(args._value, assetValue, "The invested value must be equal the sent value");
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentInvestorBalance = await getBalance(investor);
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentInvestorBalance.toNumber().should.equal(
+                previousInvestorBalance
+                .minus(assetValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.plus(assetValue).toNumber())
         });
     
         it("should deny an investment if the asset isn't available", async () => {
@@ -192,17 +205,20 @@ describe('Contract: InvestmentAsset ', async () => {
             ]);
             const currentAssetBalance = await getBalance(firstAsset.address);
             const currentInvestorBalance = await getBalance(investor);
-            const gasPrice = await getGasPrice();
-            currentInvestorBalance.should.equal(previousInvestorBalance
-                .plus(previousAssetBalance)
-                .minus(new BigNumber(gasPrice * receipt.gasUsed))
-            )
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentInvestorBalance.toNumber().should.equal(
+                previousInvestorBalance
+                .plus(assetValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
     })
     
     describe('Refuse Investment', () => {
         
-        it('should add an investment - second', async () => {
+        it('should add an investment', async () => {
             await firstAsset.invest(investor, {from: investor, value: assetValue})
         })
     
@@ -212,6 +228,8 @@ describe('Contract: InvestmentAsset ', async () => {
         })
     
         it('should refuse a pending investment', async () => {
+            const previousAssetBalance = await getBalance(firstAsset.address);
+            const previousInvestorBalance = await getBalance(investor);
             const {logs} = await firstAsset.refuseInvestment({ from: creditCompany })
             let event = logs.find(e => e.event === 'Refused')
             expect(event.args).to.include.all.keys([
@@ -219,13 +237,21 @@ describe('Contract: InvestmentAsset ', async () => {
                 '_investor',
                 '_value',
             ]);
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentInvestorBalance = await getBalance(investor);
+            currentInvestorBalance.toNumber().should.equal(
+                previousInvestorBalance
+                .plus(assetValue)
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
     
     })
 
     describe('Withdraw Funds', () => {
 
-        it('should add an investment - third', async () => {
+        it('should add an investment', async () => {
             await firstAsset.invest(investor,{from: investor, value: assetValue})
         })
     
@@ -235,13 +261,25 @@ describe('Contract: InvestmentAsset ', async () => {
         })
     
         it('should accept a pending investment and withdraw funds', async () => {
-            const {logs} = await firstAsset.withdrawFunds( { from: creditCompany })
+            const previousAssetBalance = await getBalance(firstAsset.address);
+            const previousCreditCompanyBalance = await getBalance(creditCompany);
+            const { logs, receipt } = await firstAsset.withdrawFunds( { from: creditCompany })
             const event = logs.find(e => e.event === 'Withdrawal');
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
                 '_value',
             ]);
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentCreditCompanyBalance = await getBalance(creditCompany);
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentCreditCompanyBalance.toNumber().should.equal(
+                previousCreditCompanyBalance
+                .plus(assetValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
           
     })
@@ -295,13 +333,25 @@ describe('Contract: InvestmentAsset ', async () => {
         })
 
         it("should buy an asset by using the protocol", async () => {
-            const {logs} = await protocol.buyAsset(assetsAddress[1], {from: secondInvestor, value: sellValue})
+            const previousAssetBalance = await getBalance(assetsAddress[1]);
+            const previousBuyerBalance = await getBalance(secondInvestor);
+            const { logs, receipt } = await protocol.buyAsset(assetsAddress[1], {from: secondInvestor, value: sellValue})
             const event = logs.find(e => e.event === 'Bought')
             expect(event.args).to.include.all.keys([
                 '_buyer',
                 '_asset',
                 '_value'
             ])
+            const currentAssetBalance = await getBalance(assetsAddress[1]);
+            const currentBuyerBalance = await getBalance(secondInvestor);
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentBuyerBalance.toNumber().should.equal(
+                previousBuyerBalance
+                .minus(sellValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.plus(sellValue).toNumber())
         })
     })
 
@@ -313,13 +363,25 @@ describe('Contract: InvestmentAsset ', async () => {
         })
 
         it("should cancel a sale", async () => {
-            const {logs} = await firstAsset.cancelSale({from: secondInvestor})
+            const previousAssetBalance = await getBalance(firstAsset.address);
+            const previousBuyerBalance = await getBalance(secondInvestor);
+            const { logs, receipt } = await firstAsset.cancelSale({from: secondInvestor})
             const event = logs.find(e => e.event === 'Canceled')
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
                 '_value'
             ])
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentBuyerBalance = await getBalance(secondInvestor);
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentBuyerBalance.toNumber().should.equal(
+                previousBuyerBalance
+                .plus(sellValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
     })
 
@@ -341,13 +403,24 @@ describe('Contract: InvestmentAsset ', async () => {
         })
 
         it("should refuse a sale", async () => {
-            const {logs} = await firstAsset.refuseSale({from: investor})
+            const previousAssetBalance = await getBalance(firstAsset.address);
+            const previousBuyerBalance = await getBalance(secondInvestor);
+            const { logs, receipt } = await firstAsset.refuseSale({from: investor})
             const event = logs.find(e => e.event === 'Refused')
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
                 '_value'
             ])
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentBuyerBalance = await getBalance(secondInvestor);
+            currentBuyerBalance.toNumber().should.equal(
+                previousBuyerBalance
+                .plus(sellValue)
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(sellValue).toNumber())
+
         })
     })
 
@@ -362,13 +435,25 @@ describe('Contract: InvestmentAsset ', async () => {
         })
 
         it("should accept a sale", async () => {
-            const {logs} = await firstAsset.acceptSale({from: investor})
+            const previousAssetBalance = await getBalance(firstAsset.address);
+            const previousSellerBalance = await getBalance(investor);
+            const { logs, receipt } = await firstAsset.acceptSale({from: investor})
             const event = logs.find(e => e.event === 'Withdrawal')
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
                 '_value'
             ])
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentSellerBalance = await getBalance(investor);
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentSellerBalance.toNumber().should.equal(
+                previousSellerBalance
+                .plus(sellValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(sellValue).toNumber())
         })
     })
 
@@ -387,12 +472,24 @@ describe('Contract: InvestmentAsset ', async () => {
         })
     
         it("should send the token fuel to the asset's investor", async () => {
-            const {logs} =  await firstAsset.requireTokenFuel({ from: secondInvestor })
+            const previousInvestorTokenBalance = await token.balanceOf(secondInvestor);
+            const previousAssetTokenBalance = await token.balanceOf(firstAsset.address);
+            const { logs } =  await firstAsset.requireTokenFuel({ from: secondInvestor })
             const event = logs.find(e => e.event === 'TokenWithdrawal');
             expect(event.args).to.include.all.keys([
                 '_to',
                 '_amount'
             ]);
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentSellerBalance = await getBalance(investor);
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentSellerBalance.toNumber().should.equal(
+                previousSellerBalance
+                .plus(sellValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(sellValue).toNumber())
         })  
     })
 
@@ -404,7 +501,9 @@ describe('Contract: InvestmentAsset ', async () => {
         })
     
         it('should return the investment with delay', async () => {
-            const {logs} = await firstAsset.returnInvestment({ from: creditCompany, value: returnValue })
+            const previousAssetBalance = await getBalance(firstAsset.address);
+            const previousInvestorBalance = await getBalance(secondInvestor);
+            const { logs, receipt } = await firstAsset.returnInvestment({ from: creditCompany, value: returnValue })
             const event = logs.find(e => e.event === 'Returned');
             expect(event.args).to.include.all.keys([
                 '_owner',
@@ -413,6 +512,16 @@ describe('Contract: InvestmentAsset ', async () => {
                 '_delayed'
             ]);
             assert.equal(event.args._delayed,true,"The investment must be returned with delay");
+            const currentAssetBalance = await getBalance(firstAsset.address);
+            const currentInvestorBalance = await getBalance(secondInvestor);
+            const gasUsed = new BigNumber(receipt.gasUsed);
+            currentInvestorBalance.toNumber().should.equal(
+                previousInvestorBalance
+                .plus(assetValue)
+                .minus(gasPrice.times(gasUsed))
+                .toNumber()
+            );
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
         
     })
@@ -427,12 +536,12 @@ describe('Contract: InvestmentAsset ', async () => {
             );
         })  
         
-        it('should add an investment - fourth', async () => {
+        it('should add an investment', async () => {
             secondAsset = await AssetLibrary.at(assetsAddress[2]);
             await secondAsset.invest(investor,{from: investor, value: assetValue})
         })
     
-        it('should accept a pending investment and withdraw funds - second', async () => {
+        it('should accept a pending investment and withdraw funds', async () => {
             const {logs} =  await secondAsset.withdrawFunds({from: creditCompany})
             const event = logs.find(e => e.event === 'Withdrawal');
             expect(event.args).to.include.all.keys([
@@ -476,11 +585,11 @@ describe('Contract: InvestmentAsset ', async () => {
             );
         }) 
     
-        it('should add an investment - fifth', async () => {
+        it('should add an investment', async () => {
             await thirdAsset.invest(investor, { from: investor, value: assetValue })
         })
     
-        it('should accept a pending investment and withdraw funds - third', async () => {
+        it('should accept a pending investment and withdraw funds', async () => {
             const {logs} =  await thirdAsset.withdrawFunds({from: creditCompany})
             const event = logs.find(e => e.event === 'Withdrawal');
             expect(event.args).to.include.all.keys([
