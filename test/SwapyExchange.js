@@ -381,7 +381,7 @@ describe('Contract: InvestmentAsset ', async () => {
                 .minus(gasPrice.times(gasUsed))
                 .toNumber()
             );
-            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
+            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(sellValue).toNumber())
         })
     })
 
@@ -474,22 +474,22 @@ describe('Contract: InvestmentAsset ', async () => {
         it("should send the token fuel to the asset's investor", async () => {
             const previousInvestorTokenBalance = await token.balanceOf(secondInvestor);
             const previousAssetTokenBalance = await token.balanceOf(firstAsset.address);
-            const { logs } =  await firstAsset.requireTokenFuel({ from: secondInvestor })
+            const { logs, receipt } =  await firstAsset.requireTokenFuel({ from: secondInvestor })
             const event = logs.find(e => e.event === 'TokenWithdrawal');
             expect(event.args).to.include.all.keys([
                 '_to',
                 '_amount'
             ]);
-            const currentAssetBalance = await getBalance(firstAsset.address);
-            const currentSellerBalance = await getBalance(investor);
-            const gasUsed = new BigNumber(receipt.gasUsed);
-            currentSellerBalance.toNumber().should.equal(
-                previousSellerBalance
-                .plus(sellValue)
-                .minus(gasPrice.times(gasUsed))
+            const currentInvestorTokenBalance = await getBalance(secondInvestor);
+            const currentAssetTokenBalance = await getBalance(firstAsset.address);
+            console.log(previousInvestorTokenBalance.plus(assetFuel));
+            console.log(currentInvestorTokenBalance);
+            currentInvestorTokenBalance.toNumber().should.equal(
+                previousInvestorTokenBalance
+                .plus(assetFuel)
                 .toNumber()
             );
-            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(sellValue).toNumber())
+            currentAssetTokenBalance.toNumber().should.equal(previousAssetTokenBalance.minus(assetFuel).toNumber())
         })  
     })
 
@@ -501,7 +501,6 @@ describe('Contract: InvestmentAsset ', async () => {
         })
     
         it('should return the investment with delay', async () => {
-            const previousAssetBalance = await getBalance(firstAsset.address);
             const previousInvestorBalance = await getBalance(secondInvestor);
             const { logs, receipt } = await firstAsset.returnInvestment({ from: creditCompany, value: returnValue })
             const event = logs.find(e => e.event === 'Returned');
@@ -512,16 +511,12 @@ describe('Contract: InvestmentAsset ', async () => {
                 '_delayed'
             ]);
             assert.equal(event.args._delayed,true,"The investment must be returned with delay");
-            const currentAssetBalance = await getBalance(firstAsset.address);
             const currentInvestorBalance = await getBalance(secondInvestor);
-            const gasUsed = new BigNumber(receipt.gasUsed);
             currentInvestorBalance.toNumber().should.equal(
                 previousInvestorBalance
-                .plus(assetValue)
-                .minus(gasPrice.times(gasUsed))
+                .plus(returnValue)
                 .toNumber()
             );
-            currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
         
     })
