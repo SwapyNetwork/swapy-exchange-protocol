@@ -22,8 +22,6 @@ contract InvestmentAsset {
     address public investor;
     // Protocol version
     string public protocolVersion;
-    // Contractual terms hash of investment
-    bytes public assetTermsHash;
     // investment timestamp
     uint public investedAt;
     
@@ -60,7 +58,6 @@ contract InvestmentAsset {
         string _protocolVersion,
         string _currency,
         uint256 _value,
-        bytes _assetTermsHash,
         uint _paybackDays,
         uint _grossReturn,
         address _token)
@@ -74,7 +71,6 @@ contract InvestmentAsset {
         protocolVersion = _protocolVersion;
         currency = _currency;
         value = _value;
-        assetTermsHash = _assetTermsHash;
         paybackDays = _paybackDays;
         grossReturn = _grossReturn;
         status = Status.AVAILABLE;
@@ -85,9 +81,9 @@ contract InvestmentAsset {
     function getAsset()
         public
         constant
-        returns(address, string, uint256, uint256, uint256, Status, address, string, bytes, uint, uint256)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, uint, uint256)
     {
-        return (owner, currency, value, paybackDays, grossReturn, status, investor, protocolVersion, assetTermsHash, investedAt, tokenFuel);
+        return (owner, currency, value, paybackDays, grossReturn, status, investor, protocolVersion, investedAt, tokenFuel);
     }
 
     function () payable 

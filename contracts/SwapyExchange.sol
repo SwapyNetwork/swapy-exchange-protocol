@@ -45,12 +45,11 @@ contract SwapyExchange {
       uint256 _paybackDays,
       uint256 _grossReturn,
       string _currency,
-      bytes _offerTermsHash,
       uint256[] _assets)
     public
     returns(bool)
   {
-    address[] memory newAssets = createOfferAssets(_assets, _currency, _offerTermsHash, _paybackDays, _grossReturn);
+    address[] memory newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn);
     Offers(msg.sender, VERSION, newAssets);
     return true;
   }
@@ -58,7 +57,6 @@ contract SwapyExchange {
   function createOfferAssets(
       uint256[] _assets,
       string _currency,
-      bytes _offerTermsHash,
       uint _paybackDays,
       uint _grossReturn)
     internal
@@ -73,7 +71,6 @@ contract SwapyExchange {
         VERSION,
         _currency,
         _assets[index],
-        _offerTermsHash,
         _paybackDays,
         _grossReturn,
         token

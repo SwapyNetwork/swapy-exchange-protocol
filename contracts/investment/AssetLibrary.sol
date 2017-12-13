@@ -22,8 +22,6 @@ contract AssetLibrary is AssetEvents {
     address public investor;
     // Protocol version
     string public protocolVersion;
-    // Contractual terms hash of investment
-    bytes public assetTermsHash;
     // investment timestamp
     uint public investedAt;
     
