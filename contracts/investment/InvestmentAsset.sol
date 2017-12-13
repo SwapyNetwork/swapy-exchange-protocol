@@ -79,7 +79,7 @@ contract InvestmentAsset {
     }
 
     function getAsset()
-        public
+        external
         constant
         returns(address, string, uint256, uint256, uint256, Status, address, string, uint, uint256)
     {
@@ -87,7 +87,7 @@ contract InvestmentAsset {
     }
 
     function () payable 
-        public
+        external
     {
         require(assetLibrary.delegatecall(msg.data));
     }

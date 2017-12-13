@@ -46,7 +46,7 @@ contract SwapyExchange {
       uint256 _grossReturn,
       string _currency,
       uint256[] _assets)
-    public
+    external
     returns(bool)
   {
     address[] memory newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn);
@@ -80,7 +80,7 @@ contract SwapyExchange {
   }
 
   function invest(address[] _assets) payable
-    public
+    external
     returns(bool)
   {
     uint256 assetValue = msg.value / _assets.length;
@@ -92,7 +92,7 @@ contract SwapyExchange {
   }
 
   function sellAsset(address _asset, uint256 _value)
-    public
+    external
     returns(bool)
   {
     InvestmentAsset asset = InvestmentAsset(_asset);
@@ -103,7 +103,7 @@ contract SwapyExchange {
   }
 
   function buyAsset(address _asset) payable
-    public
+    external
     returns(bool)
   {
     uint256 assetValue = msg.value;
