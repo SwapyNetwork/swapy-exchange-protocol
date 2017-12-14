@@ -22,8 +22,6 @@ contract AssetLibrary is AssetEvents {
     address public investor;
     // Protocol version
     string public protocolVersion;
-    // Contractual terms hash of investment
-    bytes public assetTermsHash;
     // investment timestamp
     uint public investedAt;
     
@@ -83,7 +81,7 @@ contract AssetLibrary is AssetEvents {
 
     function isDelayed()
         view
-        public
+        internal
         returns(bool)
     {
         return now > investedAt + paybackDays * 1 days;
@@ -119,7 +117,7 @@ contract AssetLibrary is AssetEvents {
     // Add investment interest in this asset and retain the funds within the smart contract
     function invest(address _investor) payable
          hasStatus(Status.AVAILABLE)
-         public
+         external
          returns(bool)
     {
         investor = _investor;
@@ -133,7 +131,7 @@ contract AssetLibrary is AssetEvents {
     function cancelInvestment()
         onlyInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        public
+        external
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
@@ -145,7 +143,7 @@ contract AssetLibrary is AssetEvents {
     function withdrawFunds()
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        public
+        external
         returns(bool)
     {
         uint256 _value = this.balance;
@@ -159,7 +157,7 @@ contract AssetLibrary is AssetEvents {
     function refuseInvestment()
         onlyOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        public
+        external
         returns(bool)
     {
         var (currentInvestor, investedValue) = makeAvailable();
@@ -170,7 +168,7 @@ contract AssetLibrary is AssetEvents {
     function sell(uint256 _sellValue) 
         authorizedToSell
         hasStatus(Status.INVESTED)
-        public
+        external
         returns(bool)
     {
         sellData.value = _sellValue;
@@ -182,7 +180,7 @@ contract AssetLibrary is AssetEvents {
     function cancelSellOrder() 
         authorizedToSell
         hasStatus(Status.FOR_SALE)
-        public
+        external
         returns(bool)
     {       
         sellData.value = uint256(0);
@@ -193,7 +191,7 @@ contract AssetLibrary is AssetEvents {
 
     function buy(address _buyer) payable
         hasStatus(Status.FOR_SALE)
-        public
+        external
         returns(bool)
     {
         sellData.buyer = _buyer;
@@ -204,7 +202,7 @@ contract AssetLibrary is AssetEvents {
 
      function cancelSale()
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
-        public
+        external
         returns(bool)
     {
         require(msg.sender == protocol || msg.sender == sellData.buyer);
@@ -221,7 +219,7 @@ contract AssetLibrary is AssetEvents {
     function refuseSale()
         authorizedToSell
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
-        public 
+        external 
         returns(bool)
     {
         address buyer = sellData.buyer;
@@ -237,7 +235,7 @@ contract AssetLibrary is AssetEvents {
     function acceptSale()
         authorizedToSell
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
-        public
+        external
         returns(bool)
     {
         address currentInvestor = investor;
@@ -254,7 +252,7 @@ contract AssetLibrary is AssetEvents {
     function returnInvestment() payable
         onlyOwner
         hasStatus(Status.INVESTED)
-        public
+        external
         returns(bool)
     {
         investor.transfer(msg.value);
@@ -271,7 +269,7 @@ contract AssetLibrary is AssetEvents {
     function supplyFuel(uint256 _amount)
         onlyOwner
         hasStatus(Status.AVAILABLE)
-        public
+        external
         returns(bool)
     {
         assert(token.balanceOf(this) == tokenFuel + _amount);
@@ -284,7 +282,7 @@ contract AssetLibrary is AssetEvents {
         onlyInvestor
         hasStatus(Status.INVESTED)
         onlyDelayed
-        public
+        external
         returns(bool)
     {   
         return withdrawTokens(investor, tokenFuel);
