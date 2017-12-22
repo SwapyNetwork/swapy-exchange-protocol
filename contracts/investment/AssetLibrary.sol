@@ -14,6 +14,8 @@ contract AssetLibrary is AssetEvents {
     string public currency;
     // Asset fixed value
     uint256 public value;
+    //Value bought
+    uint256 public boughtValue;
     // period to return the investment
     uint256 public paybackDays;
     // Gross return of investment
@@ -24,19 +26,19 @@ contract AssetLibrary is AssetEvents {
     string public protocolVersion;
     // investment timestamp
     uint public investedAt;
-    
+
     // asset fuel
     Token public token;
     uint256 public tokenFuel;
-    
+
     // sell data
     struct Sell {
         uint256 value;
-        address buyer;  
+        address buyer;
     }
 
     Sell sellData;
-    
+
     // possible stages of an asset
     enum Status {
         AVAILABLE,
@@ -86,7 +88,7 @@ contract AssetLibrary is AssetEvents {
     {
         return now > investedAt + paybackDays * 1 days;
     }
-    
+
     // Refund and remove the current investor and make the asset available for investments
     function makeAvailable()
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -102,7 +104,7 @@ contract AssetLibrary is AssetEvents {
         return (currentInvestor, investedValue);
     }
 
-    
+
     function withdrawTokens(address _recipient, uint256 _amount)
         private
         returns(bool)
@@ -112,7 +114,7 @@ contract AssetLibrary is AssetEvents {
         TokenWithdrawal(_recipient, _amount);
         tokenFuel -= _amount;
         return true;
-    }     
+    }
 
     // Add investment interest in this asset and retain the funds within the smart contract
     function invest(address _investor) payable
@@ -165,7 +167,7 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    function sell(uint256 _sellValue) 
+    function sell(uint256 _sellValue)
         authorizedToSell
         hasStatus(Status.INVESTED)
         external
@@ -177,12 +179,12 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    function cancelSellOrder() 
+    function cancelSellOrder()
         authorizedToSell
         hasStatus(Status.FOR_SALE)
         external
         returns(bool)
-    {       
+    {
         sellData.value = uint256(0);
         status = Status.INVESTED;
         CanceledSell(investor, value);
@@ -219,7 +221,7 @@ contract AssetLibrary is AssetEvents {
     function refuseSale()
         authorizedToSell
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
-        external 
+        external
         returns(bool)
     {
         address buyer = sellData.buyer;
@@ -229,7 +231,7 @@ contract AssetLibrary is AssetEvents {
         status = Status.FOR_SALE;
         Refused(investor, buyer, _value);
         return true;
-    }  
+    }
 
     // Withdraw funds, clear the sell data and change investor's address
     function acceptSale()
@@ -243,11 +245,12 @@ contract AssetLibrary is AssetEvents {
         currentInvestor.transfer(_value);
         status = Status.INVESTED;
         investor = sellData.buyer;
+        boughtValue = sellData.value;
         sellData.buyer = address(0);
         sellData.value = uint256(0);
         Withdrawal(currentInvestor, investor, _value);
         return true;
-    }      
+    }
 
     function returnInvestment() payable
         onlyOwner
@@ -259,7 +262,7 @@ contract AssetLibrary is AssetEvents {
         bool _isDelayed = isDelayed();
         status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
         if(tokenFuel > 0){
-            address recipient = _isDelayed ? investor : owner;          
+            address recipient = _isDelayed ? investor : owner;
             withdrawTokens(recipient, tokenFuel);
         }
         Returned(owner, investor, msg.value, _isDelayed);
@@ -275,16 +278,16 @@ contract AssetLibrary is AssetEvents {
         assert(token.balanceOf(this) == tokenFuel + _amount);
         tokenFuel += _amount;
         Supplied(owner, _amount, tokenFuel);
-        return true; 
+        return true;
     }
 
-    function requireTokenFuel() 
+    function requireTokenFuel()
         onlyInvestor
         hasStatus(Status.INVESTED)
         onlyDelayed
         external
         returns(bool)
-    {   
+    {
         return withdrawTokens(investor, tokenFuel);
     }
 

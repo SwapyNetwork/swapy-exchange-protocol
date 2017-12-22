@@ -2,7 +2,7 @@
 // helpers
 const increaseTime  = require('./helpers/increaseTime')
 const { getBalance, getGasPrice } = require('./helpers/web3')
-const ether = require('./helpers/ether') 
+const ether = require('./helpers/ether')
 
 const BigNumber = web3.BigNumber
 const should = require('chai')
@@ -32,7 +32,7 @@ const AVAILABLE = new BigNumber(0)
 const PENDING_OWNER_AGREEMENT = new BigNumber(1)
 const INVESTED = new BigNumber(2)
 const FOR_SALE = new BigNumber(3)
-const PENDING_INVESTOR_AGREEMENT = new BigNumber(4) 
+const PENDING_INVESTOR_AGREEMENT = new BigNumber(4)
 const RETURNED = new BigNumber(5)
 const DELAYED_RETURN = new BigNumber(6)
 
@@ -53,23 +53,24 @@ let Swapy = null
 let secondInvestor = null
 // Util
 let gasPrice = null
+let sellValue = null;
 
 
 contract('SwapyExchange', async accounts => {
 
     before( async () => {
-   
+
         Swapy = accounts[0]
         creditCompany = accounts[1]
         investor = accounts[2]
         secondInvestor = accounts[3]
         gasPrice = await getGasPrice()
-        gasPrice = new BigNumber(gasPrice)        
+        gasPrice = new BigNumber(gasPrice)
         const library = await AssetLibrary.new({ from: Swapy })
         token  = await Token.new({from: Swapy})
         protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy })
         await token.transfer(creditCompany, offerFuel, {from: Swapy})
-   
+
     })
 
     it("should have a version", async () => {
@@ -96,9 +97,9 @@ contract('SwapyExchange', async accounts => {
             assetsAddress = args._assets
             assert.equal(args._from, creditCompany, 'The credit company must be the offer owner')
             assert.equal(args._assets.length, assets.length, 'The count of created assets must be equal the count of sent')
-  
+
         })
-    
+
         it("should add an investment by using the protocol", async () => {
             const assets = [assetsAddress[0]]
             // balances before invest
@@ -128,20 +129,23 @@ contract('SwapyExchange', async accounts => {
             currentAssetBalance.toNumber().should.equal(previousAssetBalance.plus(assetValue).toNumber())
         })
     })
-    
+
 })
 
-describe('Contract: InvestmentAsset ', async () => {
-   
-    const periodAfterInvestment = new BigNumber(1/2)
-    await increaseTime(86400 * payback * periodAfterInvestment.toNumber())
-    const returnOnPeriod = returnValue.minus(assetValue).times(periodAfterInvestment)
-    const sellValue = assetValue.plus(returnOnPeriod)
+context('Contract: InvestmentAsset ', () => {
+
+    before(async() => {
+      const periodAfterInvestment = new BigNumber(1/2)
+      await increaseTime(86400 * payback * periodAfterInvestment.toNumber())
+      const returnOnPeriod = returnValue.minus(assetValue).times(periodAfterInvestment)
+      sellValue = assetValue.plus(returnOnPeriod)
+    })
+
 
     it('should return the asset when calling getAsset', async () => {
         const asset = await InvestmentAsset.at(assetsAddress[0])
         const assetValues = await asset.getAsset()
-        assert.equal(assetValues.length, 11, "The asset must have 11 variables")
+        assert.equal(assetValues.length, 13, "The asset must have 13 variables")
         assert.equal(assetValues[0], creditCompany, "The asset owner must be the creditCompany")
     })
 
@@ -160,9 +164,9 @@ describe('Contract: InvestmentAsset ', async () => {
                '_amount',
                '_assetFuel'
             ])
-        })  
+        })
     })
-    
+
     context('Invest', () => {
         it('should add an investment by using the asset', async () => {
             const previousAssetBalance = await getBalance(firstAsset.address)
@@ -189,7 +193,7 @@ describe('Contract: InvestmentAsset ', async () => {
             )
             currentAssetBalance.toNumber().should.equal(previousAssetBalance.plus(assetValue).toNumber())
         })
-    
+
         it("should deny an investment if the asset isn't available", async () => {
             await firstAsset.invest(investor,{from: investor, value: assetValue})
                 .should.be.rejectedWith('VM Exception')
@@ -201,7 +205,7 @@ describe('Contract: InvestmentAsset ', async () => {
             await firstAsset.cancelInvestment({from: creditCompany})
                 .should.be.rejectedWith('VM Exception')
         })
-    
+
         it('should cancel a pending investment', async () => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousInvestorBalance = await getBalance(investor)
@@ -224,18 +228,18 @@ describe('Contract: InvestmentAsset ', async () => {
             currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
     })
-    
+
     context('Refuse Investment', () => {
-        
+
         it('should add an investment', async () => {
             await firstAsset.invest(investor, {from: investor, value: assetValue})
         })
-    
+
         it("should deny a refusement if the user isn't the asset owner", async () => {
             await firstAsset.refuseInvestment( { from: investor })
             .should.be.rejectedWith('VM Exception')
         })
-    
+
         it('should refuse a pending investment', async () => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousInvestorBalance = await getBalance(investor)
@@ -255,7 +259,7 @@ describe('Contract: InvestmentAsset ', async () => {
             )
             currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
-    
+
     })
 
     context('Withdraw Funds', () => {
@@ -263,12 +267,12 @@ describe('Contract: InvestmentAsset ', async () => {
         it('should add an investment', async () => {
             await firstAsset.invest(investor,{from: investor, value: assetValue})
         })
-    
+
         it("should deny a withdrawal if the user isn't the asset owner", async () => {
-            await firstAsset.withdrawFunds({ from: investor }) 
+            await firstAsset.withdrawFunds({ from: investor })
             .should.be.rejectedWith('VM Exception')
         })
-    
+
         it('should accept a pending investment and withdraw funds', async () => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousCreditCompanyBalance = await getBalance(creditCompany)
@@ -277,7 +281,7 @@ describe('Contract: InvestmentAsset ', async () => {
             const currentCreditCompanyBalance = await getBalance(creditCompany)
             const gasUsed = new BigNumber(receipt.gasUsed)
             const event = logs.find(e => e.event === 'Withdrawal')
-            
+
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
@@ -291,11 +295,11 @@ describe('Contract: InvestmentAsset ', async () => {
             )
             currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(assetValue).toNumber())
         })
-          
+
     })
 
     context('Sell', () => {
-        
+
         it("should deny a sell order if the user isn't the investor", async() => {
             await protocol.sellAsset(assetsAddress[1], sellValue, {from: creditCompany})
             .should.be.rejectedWith('VM Exception')
@@ -304,7 +308,7 @@ describe('Contract: InvestmentAsset ', async () => {
         it('should sell an asset by using the protocol', async() => {
             const {logs} = await protocol.sellAsset(assetsAddress[1], sellValue, {from: investor})
             const event = logs.find(e => e.event === 'ForSale')
-            
+
             expect(event.args).to.include.all.keys([
                 '_investor',
                 '_asset',
@@ -315,7 +319,7 @@ describe('Contract: InvestmentAsset ', async () => {
     })
 
     context('Cancel sell order', () => {
-      
+
         it("should deny a sell order cancelment if the user isn't the investor", async () => {
             await firstAsset.cancelSellOrder({from: creditCompany})
             .should.be.rejectedWith('VM Exception')
@@ -324,17 +328,17 @@ describe('Contract: InvestmentAsset ', async () => {
         it("should cancel a sell", async () => {
             const {logs} = await firstAsset.cancelSellOrder({from: investor})
             const event = logs.find(e => e.event === 'CanceledSell')
-            
+
             expect(event.args).to.include.all.keys([
                 '_investor',
                 '_value'
             ])
         })
-    
+
     })
 
     context('Buy', () => {
-        
+
         it("should sell an asset by using the asset", async() => {
             const {logs} = await firstAsset.sell(sellValue, {from: investor})
             const event = logs.find(e => e.event === 'ForSale')
@@ -368,7 +372,7 @@ describe('Contract: InvestmentAsset ', async () => {
     })
 
     context('Cancel sale', () => {
-        
+
         it("should deny a sale cancelment if the user isnt't the buyer", async () => {
             await firstAsset.cancelSale({from: investor})
             .should.be.rejectedWith('VM Exception')
@@ -398,7 +402,7 @@ describe('Contract: InvestmentAsset ', async () => {
     })
 
     context('Refuse sale', () => {
-        
+
         it("should buy an asset by using the asset", async () => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousBuyerBalance = await getBalance(secondInvestor)
@@ -420,7 +424,7 @@ describe('Contract: InvestmentAsset ', async () => {
             )
             currentAssetBalance.toNumber().should.equal(previousAssetBalance.plus(sellValue).toNumber())
         })
-        
+
         it("should deny a sale refusement if the user isnt't the investor", async () => {
             await firstAsset.refuseSale({from: secondInvestor})
             .should.be.rejectedWith('VM Exception')
@@ -449,7 +453,7 @@ describe('Contract: InvestmentAsset ', async () => {
     })
 
     context('Accept sale and withdraw funds', () => {
-       
+
         it("should buy an asset", async () => {
            await firstAsset.buy(secondInvestor, { value: sellValue })
         })
@@ -461,6 +465,9 @@ describe('Contract: InvestmentAsset ', async () => {
         it("should accept a sale", async () => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousSellerBalance = await getBalance(investor)
+            const asset = await InvestmentAsset.at(firstAsset.address);
+            const assetValues = await asset.getAsset();
+            const sellValue = assetValues[11];
             const { logs, receipt } = await firstAsset.acceptSale({from: investor})
             const event = logs.find(e => e.event === 'Withdrawal')
             expect(event.args).to.include.all.keys([
@@ -478,6 +485,8 @@ describe('Contract: InvestmentAsset ', async () => {
                 .toNumber()
             )
             currentAssetBalance.toNumber().should.equal(previousAssetBalance.minus(sellValue).toNumber())
+            const boughtValue = await firstAsset.boughtValue.call();
+            sellValue.toNumber().should.equal(boughtValue.toNumber());
         })
     })
 
@@ -487,14 +496,14 @@ describe('Contract: InvestmentAsset ', async () => {
             await firstAsset.requireTokenFuel({ from: secondInvestor })
                 .should.be.rejectedWith('VM Exception')
         })
-    
+
         it("should deny the token fuel request if the user isn't the investor", async () => {
             // simulate a long period after the funds transfer
             await increaseTime(16416000)
             await firstAsset.requireTokenFuel({ from: creditCompany })
                .should.be.rejectedWith('VM Exception')
         })
-    
+
         it("should send the token fuel to the asset's investor", async () => {
             const previousInvestorTokenBalance = await token.balanceOf(secondInvestor)
             const previousAssetTokenBalance = await token.balanceOf(firstAsset.address)
@@ -512,16 +521,16 @@ describe('Contract: InvestmentAsset ', async () => {
                 .toNumber()
             )
             currentAssetTokenBalance.toNumber().should.equal(previousAssetTokenBalance.minus(assetFuel).toNumber())
-        })  
+        })
     })
 
     context('Delayed return without remaining tokens', () => {
-    
+
         it("should deny an investment return if the user isn't the asset owner", async () => {
-            await firstAsset.returnInvestment({ from: secondInvestor, value: returnValue }) 
+            await firstAsset.returnInvestment({ from: secondInvestor, value: returnValue })
                 .should.be.rejectedWith('VM Exception')
         })
-    
+
         it('should return the investment with delay', async () => {
             const previousInvestorBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.returnInvestment({ from: creditCompany, value: returnValue })
@@ -540,25 +549,25 @@ describe('Contract: InvestmentAsset ', async () => {
                 .toNumber()
             )
         })
-        
+
     })
-   
+
     context('Delayed return with remaining tokens', () => {
         it("should supply tokens to the second asset", async () => {
             await token.transfer(assetsAddress[2], assetFuel, {from: creditCompany})
             secondAsset = await AssetLibrary.at(assetsAddress[2])
             await secondAsset.supplyFuel(assetFuel, { from: creditCompany })
-        })  
-        
+        })
+
         it('should add an investment', async () => {
             secondAsset = await AssetLibrary.at(assetsAddress[2])
             await secondAsset.invest(investor,{from: investor, value: assetValue})
         })
-    
+
         it('should accept a pending investment and withdraw funds', async () => {
             await secondAsset.withdrawFunds({from: creditCompany})
         })
-    
+
         it("should return the investment with delay and send tokens to the asset's investor", async () => {
             // simulate a long period after the funds transfer
             await increaseTime(16416000)
@@ -589,16 +598,16 @@ describe('Contract: InvestmentAsset ', async () => {
             await token.transfer(assetsAddress[3], assetFuel, {from: creditCompany})
             thirdAsset = await AssetLibrary.at(assetsAddress[3])
             await thirdAsset.supplyFuel(assetFuel, { from: creditCompany })
-        }) 
-    
+        })
+
         it('should add an investment', async () => {
             await thirdAsset.invest(investor, { from: investor, value: assetValue })
         })
-    
+
         it('should accept a pending investment and withdraw funds', async () => {
             await thirdAsset.withdrawFunds({from: creditCompany})
         })
-        
+
         it("should return the investment correctly and send tokens to the asset's owner", async () => {
             const previousCreditCompanyTokenBalance = await token.balanceOf(creditCompany)
             const previousAssetTokenBalance = await token.balanceOf(thirdAsset.address)

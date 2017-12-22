@@ -14,6 +14,8 @@ contract InvestmentAsset {
     string public currency;
     // Asset value
     uint256 public value;
+    //Value bought
+    uint256 public boughtValue;
     // period to return the investment
     uint256 public paybackDays;
     // Gross return of investment
@@ -24,15 +26,15 @@ contract InvestmentAsset {
     string public protocolVersion;
     // investment timestamp
     uint public investedAt;
-    
+
     // Fuel
     Token public token;
     uint256 public tokenFuel;
-    
+
     // sell data
     struct Sell {
         uint256 value;
-        address buyer;  
+        address buyer;
     }
     Sell sellData;
 
@@ -65,12 +67,13 @@ contract InvestmentAsset {
     {
         // set the library to delegate methods
         assetLibrary = _library;
-        // init asset 
+        // init asset
         protocol = _protocol;
         owner = _owner;
         protocolVersion = _protocolVersion;
         currency = _currency;
         value = _value;
+        boughtValue = 0;
         paybackDays = _paybackDays;
         grossReturn = _grossReturn;
         status = Status.AVAILABLE;
@@ -81,12 +84,12 @@ contract InvestmentAsset {
     function getAsset()
         external
         constant
-        returns(address, string, uint256, uint256, uint256, Status, address, string, uint, uint256)
+        returns(address, string, uint256, uint256, uint256, Status, address, string, uint, uint256, address, uint256, uint256)
     {
-        return (owner, currency, value, paybackDays, grossReturn, status, investor, protocolVersion, investedAt, tokenFuel);
+        return (owner, currency, value, paybackDays, grossReturn, status, investor, protocolVersion, investedAt, tokenFuel, sellData.buyer, sellData.value, boughtValue);
     }
 
-    function () payable 
+    function () payable
         external
     {
         require(assetLibrary.delegatecall(msg.data));
