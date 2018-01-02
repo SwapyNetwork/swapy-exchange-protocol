@@ -69,7 +69,7 @@ contract('SwapyExchange', async accounts => {
         const library = await AssetLibrary.new({ from: Swapy })
         token  = await Token.new({from: Swapy})
         protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy })
-        await token.transfer(creditCompany, offerFuel, {from: Swapy})
+        await token.mint(creditCompany, offerFuel, {from: Swapy})
 
     })
 

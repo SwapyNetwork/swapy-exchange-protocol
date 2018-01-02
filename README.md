@@ -42,9 +42,9 @@ For setup your wallet configuration, addresses and blockchain node provider to d
 
 sample.env
 ```
-export WALLET_ADDRESS="0x43...F0932X"
 export NETWORK_ID=...
 export DEV_NETWORK_ID=...
+export TOKEN_ADDRESS=...
 export PROVIDER_URL="https://yourfavoriteprovider.../..."
 export WALLET_MNEMONIC="twelve words mnemonic ... potato bread coconut pencil"
 ```
@@ -53,7 +53,7 @@ Use your own provider. Some known networks below:
 
 | Network   | Description        | URL                         |
 |-----------|--------------------|-----------------------------|
-| Mainnet   | production network | https://mainnet.infura.io   |
+| Mainnet   | main network       | https://mainnet.infura.io   |
 | Ropsten   | test network       | https://ropsten.infura.io   |
 | INFURAnet | test network       | https://infuranet.infura.io |
 | Kovan     | test network       | https://kovan.infura.io     |
@@ -73,6 +73,9 @@ Use a NETWORK_ID that matches with your network:
 * 42: Kovan, the public Parity Ethereum testnet
 * 7762959: Musicoin, the music blockchain
 * etc
+
+The value of TOKEN_ADDRESS depends on the network. We created the [Swapy Token Faucet](https://github.com/SwapyNetwork/swapy-test-faucet) to distribute an ERC20 Token and support our testnet releases. Follow the repos description to use a deployed Token, e.g., Ropsten and Infura, or make your
+own deploy to another network.
 
 After that, make available your environment file inside the bash context:
 ```
