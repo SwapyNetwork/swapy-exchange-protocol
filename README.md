@@ -42,7 +42,6 @@ For setup your wallet configuration, addresses and blockchain node provider to d
 
 sample.env
 ```
-export WALLET_ADDRESS="0x43...F0932X"
 export NETWORK_ID=...
 export DEV_NETWORK_ID=...
 export PROVIDER_URL="https://yourfavoriteprovider.../..."
