@@ -44,6 +44,7 @@ sample.env
 ```
 export NETWORK_ID=...
 export DEV_NETWORK_ID=...
+export TOKEN_ADDRESS=...
 export PROVIDER_URL="https://yourfavoriteprovider.../..."
 export WALLET_MNEMONIC="twelve words mnemonic ... potato bread coconut pencil"
 ```
@@ -72,6 +73,9 @@ Use a NETWORK_ID that matches with your network:
 * 42: Kovan, the public Parity Ethereum testnet
 * 7762959: Musicoin, the music blockchain
 * etc
+
+The value of TOKEN_ADDRESS depends on the network. We created the Swapy Token Faucet to distributte an ERC20 Token and support our testnet
+releases. 
 
 After that, make available your environment file inside the bash context:
 ```
