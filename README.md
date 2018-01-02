@@ -52,7 +52,7 @@ Use your own provider. Some known networks below:
 
 | Network   | Description        | URL                         |
 |-----------|--------------------|-----------------------------|
-| Mainnet   | production network | https://mainnet.infura.io   |
+| Mainnet   | main network       | https://mainnet.infura.io   |
 | Ropsten   | test network       | https://ropsten.infura.io   |
 | INFURAnet | test network       | https://infuranet.infura.io |
 | Kovan     | test network       | https://kovan.infura.io     |

@@ -1,22 +1,11 @@
 pragma solidity ^0.4.18;
 
-import "zeppelin-solidity/contracts/token/StandardToken.sol";
+import "zeppelin-solidity/contracts/token/MintableToken.sol";
 
-contract Token is StandardToken {
+contract Token is MintableToken {
     
-    string public constant name = "SwapyBeta";
-    string public constant symbol = "SWBETA";
+    string public constant name = "SWAPY";
+    string public constant symbol = "SWAPY";
     uint8 public constant decimals = 18;
 
-    uint256 public constant INITIAL_SUPPLY = 1000000000000 * (10 ** uint256(decimals));
-
-    /**
-     * @dev Constructor that gives msg.sender all of existing tokens.
-    */
-    function Token()
-        public
-    {
-        totalSupply = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;  
-    }
 } 
