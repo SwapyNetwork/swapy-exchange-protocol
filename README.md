@@ -74,8 +74,8 @@ Use a NETWORK_ID that matches with your network:
 * 7762959: Musicoin, the music blockchain
 * etc
 
-The value of TOKEN_ADDRESS depends on the network. We created the Swapy Token Faucet to distributte an ERC20 Token and support our testnet
-releases. 
+The value of TOKEN_ADDRESS depends on the network. We created the [Swapy Token Faucet](https://github.com/SwapyNetwork/swapy-test-faucet) to distribute an ERC20 Token and support our testnet releases. Follow the repos description to use a deployed Token, e.g., Ropsten and Infura, or make your
+own deploy to another network.
 
 After that, make available your environment file inside the bash context:
 ```
