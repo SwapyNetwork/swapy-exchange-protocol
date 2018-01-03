@@ -151,7 +151,7 @@ context('Contract: InvestmentAsset ', () => {
 
     context('Token Supply', () => {
         it("should supply tokens as fuel to the first asset", async () => {
-            await token.transfer(assetsAddress[1], assetFuel, {from: creditCompany})
+            await token.approve(assetsAddress[1], assetFuel, {from: creditCompany})
             firstAsset = await AssetLibrary.at(assetsAddress[1])
             const {logs} = await firstAsset.supplyFuel(
                 assetFuel,
@@ -554,7 +554,7 @@ context('Contract: InvestmentAsset ', () => {
 
     context('Delayed return with remaining tokens', () => {
         it("should supply tokens to the second asset", async () => {
-            await token.transfer(assetsAddress[2], assetFuel, {from: creditCompany})
+            await token.approve(assetsAddress[2], assetFuel, {from: creditCompany})
             secondAsset = await AssetLibrary.at(assetsAddress[2])
             await secondAsset.supplyFuel(assetFuel, { from: creditCompany })
         })
@@ -595,7 +595,7 @@ context('Contract: InvestmentAsset ', () => {
 
     context('Correct return with remaining tokens', () => {
         it("should supply tokens to the third asset", async () => {
-            await token.transfer(assetsAddress[3], assetFuel, {from: creditCompany})
+            await token.approve(assetsAddress[3], assetFuel, {from: creditCompany})
             thirdAsset = await AssetLibrary.at(assetsAddress[3])
             await thirdAsset.supplyFuel(assetFuel, { from: creditCompany })
         })

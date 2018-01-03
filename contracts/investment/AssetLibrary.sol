@@ -275,7 +275,7 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        assert(token.balanceOf(this) == tokenFuel + _amount);
+        require(token.transferFrom(msg.sender, this, _amount));
         tokenFuel += _amount;
         Supplied(owner, _amount, tokenFuel);
         return true;
