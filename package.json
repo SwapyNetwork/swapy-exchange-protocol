@@ -10,8 +10,8 @@
     "compile": "truffle compile",
     "migrate": "truffle migrate --network custom",
     "migrate.hard": "truffle migrate --network custom --reset",
-    "migrate.test": "truffle migrate --network test",
-    "migrate.test.hard": "truffle migrate --network test --reset"
+    "migrate.dev": "truffle migrate --network dev",
+    "migrate.dev.hard": "truffle migrate --network dev --reset"
   },
   "dependencies": {
     "bip39": "^2.4.0",
