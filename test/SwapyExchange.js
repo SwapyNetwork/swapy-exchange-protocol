@@ -46,6 +46,7 @@ let assetsAddress = []
 let firstAsset = null
 let secondAsset = null
 let thirdAsset = null
+let fourthAsset = null
 // Agents
 let investor = null
 let creditCompany = null
@@ -628,6 +629,44 @@ context('Contract: InvestmentAsset ', () => {
                 .toNumber()
             )
             currentAssetTokenBalance.toNumber().should.equal(previousAssetTokenBalance.minus(assetFuel).toNumber())
+        })
+    })
+
+    context('Return the investment when the asset is being sold and refund the buyer', () => {
+        it('should add an investment', async () => {
+            fourthAsset = await AssetLibrary.at(assetsAddress[4])
+            await fourthAsset.invest(investor,{ from: investor, value: assetValue })
+        })
+
+        it('should accept a pending investment and withdraw funds', async () => {
+            await fourthAsset.withdrawFunds({from: creditCompany})
+        })
+
+        it('should sell the asset', async () => {
+            await fourthAsset.sell(sellValue, {from: investor})
+        })
+        
+        it('should buy the asset', async () => {
+            await fourthAsset.buy(secondInvestor, { value: sellValue })
+        })
+        it("should return the investment to the investor and refund the buyer", async () => {
+            const previousInvestorBalance = await getBalance(investor)
+            const previousBuyerBalance = await getBalance(secondInvestor)
+            const { logs } = await fourthAsset.returnInvestment({ from: creditCompany, value: returnValue })
+            const event = logs.find(e => e.event === 'Returned')
+            assert.equal(event.args._investor, investor, "The investment must be returned to the asset's investor")
+            const currentInvestorBalance = await getBalance(investor)
+            const currentBuyerBalance = await getBalance(secondInvestor)
+            currentBuyerBalance.toNumber().should.equal(
+                previousBuyerBalance
+                .plus(sellValue)
+                .toNumber()
+            )
+            currentInvestorBalance.toNumber().should.equal(
+                previousInvestorBalance
+                .plus(returnValue)
+                .toNumber()        
+            )
         })
     })
 
