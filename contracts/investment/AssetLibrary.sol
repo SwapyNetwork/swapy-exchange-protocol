@@ -254,10 +254,13 @@ contract AssetLibrary is AssetEvents {
 
     function returnInvestment() payable
         onlyOwner
-        hasStatus(Status.INVESTED)
         external
         returns(bool)
     {
+        assert(status == Status.INVESTED || status == Status.FOR_SALE || status == Status.PENDING_INVESTOR_AGREEMENT);
+        if (status == Status.PENDING_INVESTOR_AGREEMENT) {
+            sellData.buyer.transfer(this.balance - msg.value);
+        }
         investor.transfer(msg.value);
         bool _isDelayed = isDelayed();
         status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
