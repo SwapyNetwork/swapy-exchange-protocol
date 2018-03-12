@@ -1,6 +1,7 @@
 pragma solidity ^0.4.18;
 
 import './investment/InvestmentAsset.sol';
+import './investment/AssetLibrary.sol';
 
 contract SwapyExchange {
 
@@ -85,20 +86,72 @@ contract SwapyExchange {
   {
     uint256 assetValue = msg.value / _assets.length;
     for (uint index = 0; index < _assets.length; index++) {
-      require(_assets[index].call.value(assetValue)(bytes4(keccak256("invest(address)")), msg.sender));
+      AssetLibrary asset = AssetLibrary(_assets[index]);  
+      require(asset.invest.value(assetValue)(msg.sender));
     }
     Investments(msg.sender, _assets, msg.value);
     return true;
   }
 
-  function sellAsset(address _asset, uint256 _value)
+  function withdrawFunds(address[] _assets) 
     external
     returns(bool)
   {
-    InvestmentAsset asset = InvestmentAsset(_asset);
-    require(msg.sender == asset.investor());
-    require(_asset.call(bytes4(keccak256("sell(uint256)")), _value));
-    ForSale(msg.sender, _asset, _value);
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        require(msg.sender == asset.owner());
+        require(asset.withdrawFunds());
+    }
+    return true;
+  }
+  
+  function refuseInvestment(address[] _assets) 
+    external
+    returns(bool)
+  {
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        require(msg.sender == asset.owner());
+        require(asset.refuseInvestment());
+    }
+    return true;
+  }
+
+  function cancelInvestment(address[] _assets) 
+    external
+    returns(bool)
+  {
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        require(msg.sender == asset.investor());
+        require(asset.cancelInvestment());
+    }
+    return true;
+  }
+
+  function sellAssets(address[] _assets, uint256[] _values)
+    external
+    returns(bool)
+  {
+    require(_assets.length == _values.length);
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        require(msg.sender == asset.investor());
+        require(asset.sell(_values[index]));
+    }  
+    ForSale(msg.sender, _assets, _values);
+    return true;
+  }
+  
+  function cancelSellOrder(address[] _assets) 
+    external
+    returns(bool)
+  {
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        require(msg.sender == asset.investor());
+        require(asset.cancelSellOrder());
+    }
     return true;
   }
 
@@ -107,8 +160,46 @@ contract SwapyExchange {
     returns(bool)
   {
     uint256 assetValue = msg.value;
-    require(_asset.call.value(assetValue)(bytes4(keccak256("buy(address)")), msg.sender));
+    AssetLibrary asset = AssetLibrary(_asset);
+    require(asset.buy.value(assetValue)(msg.sender));
     Bought(msg.sender, _asset, msg.value);
+    return true;
+  }
+  
+  function acceptSale(address[] _assets) 
+    external
+    returns(bool)
+  {
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        require(msg.sender == asset.investor());
+        require(asset.acceptSale());
+    }
+    return true;
+  }
+  
+  function refuseSale(address[] _assets) 
+    external
+    returns(bool)
+  {
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        require(msg.sender == asset.investor());
+        require(asset.refuseSale());
+    }
+    return true;
+  }
+
+  function cancelSale(address[] _assets) 
+    external
+    returns(bool)
+  {
+    for(uint index = 0; index < _assets.length; index++){
+        AssetLibrary asset = AssetLibrary(_assets[index]);
+        Sell sellData = asset.sellData();
+        require(msg.sender == sellData.buyer);
+        require(asset.cancelSale());
+    }
     return true;
   }
 

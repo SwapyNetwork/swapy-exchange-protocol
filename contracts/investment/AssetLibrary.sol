@@ -37,7 +37,7 @@ contract AssetLibrary is AssetEvents {
         address buyer;
     }
 
-    Sell sellData;
+    Sell public sellData;
 
     // possible stages of an asset
     enum Status {
@@ -95,11 +95,11 @@ contract AssetLibrary is AssetEvents {
         private
         returns(address, uint256)
     {
+        status = Status.AVAILABLE;
         uint256 investedValue = this.balance;
         investor.transfer(investedValue);
         address currentInvestor = investor;
         investor = address(0);
-        status = Status.AVAILABLE;
         investedAt = uint(0);
         return (currentInvestor, investedValue);
     }
@@ -122,9 +122,9 @@ contract AssetLibrary is AssetEvents {
          external
          returns(bool)
     {
+        status = Status.PENDING_OWNER_AGREEMENT;
         investor = _investor;
         investedAt = now;
-        status = Status.PENDING_OWNER_AGREEMENT;
         Invested(owner, investor, this.balance);
         return true;
     }
@@ -148,9 +148,9 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
+        status = Status.INVESTED;
         uint256 _value = this.balance;
         owner.transfer(_value);
-        status = Status.INVESTED;
         Withdrawal(owner, investor, _value);
         return true;
     }
@@ -173,8 +173,8 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        sellData.value = _sellValue;
         status = Status.FOR_SALE;
+        sellData.value = _sellValue;
         ForSale(msg.sender, _sellValue);
         return true;
     }
@@ -185,8 +185,8 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        sellData.value = uint256(0);
         status = Status.INVESTED;
+        sellData.value = uint256(0);
         CanceledSell(investor, value);
         return true;
     }
@@ -196,8 +196,8 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        sellData.buyer = _buyer;
         status = Status.PENDING_INVESTOR_AGREEMENT;
+        sellData.buyer = _buyer;
         Invested(investor, _buyer, msg.value);
         return true;
     }
@@ -208,11 +208,11 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         require(msg.sender == protocol || msg.sender == sellData.buyer);
+        status = Status.FOR_SALE;
         address buyer = sellData.buyer;
         uint256 _value = this.balance;
         buyer.transfer(_value);
         sellData.buyer = address(0);
-        status = Status.FOR_SALE;
         Canceled(investor, buyer, _value);
         return true;
     }
@@ -224,11 +224,11 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
+        status = Status.FOR_SALE;
         address buyer = sellData.buyer;
         uint256 _value = this.balance;
         buyer.transfer(_value);
         sellData.buyer = address(0);
-        status = Status.FOR_SALE;
         Refused(investor, buyer, _value);
         return true;
     }
@@ -240,10 +240,10 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
+        status = Status.INVESTED;
         address currentInvestor = investor;
         uint256 _value = this.balance;
         currentInvestor.transfer(_value);
-        status = Status.INVESTED;
         investor = sellData.buyer;
         boughtValue = sellData.value;
         sellData.buyer = address(0);
@@ -261,9 +261,9 @@ contract AssetLibrary is AssetEvents {
         if (status == Status.PENDING_INVESTOR_AGREEMENT) {
             sellData.buyer.transfer(this.balance - msg.value);
         }
-        investor.transfer(msg.value);
         bool _isDelayed = isDelayed();
         status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
+        investor.transfer(msg.value);
         if(tokenFuel > 0){
             address recipient = _isDelayed ? investor : owner;
             withdrawTokens(recipient, tokenFuel);
