@@ -69,17 +69,20 @@ contract AssetLibrary is AssetEvents {
         _;
     }
 
-    // The asset can be selled by using the protocol or directly by the current investor
-    modifier authorizedToSell() {
+    modifier protocolOrInvestor() {
         require(msg.sender == investor || msg.sender == protocol);
         _;
     }
+
+    modifier protocolOrOwner() {
+        require(msg.sender == owner || msg.sender == protocol);
+        _;
+    }    
 
     modifier onlyDelayed(){
         require(isDelayed());
         _;
     }
-
 
     function isDelayed()
         view
@@ -131,7 +134,7 @@ contract AssetLibrary is AssetEvents {
 
     // Cancel the pending investment
     function cancelInvestment()
-        onlyInvestor
+        protocolOrInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         external
         returns(bool)
@@ -143,7 +146,7 @@ contract AssetLibrary is AssetEvents {
 
     // Accept the investor as the asset buyer and withdraw funds
     function withdrawFunds()
-        onlyOwner
+        protocolOrOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         external
         returns(bool)
@@ -157,7 +160,7 @@ contract AssetLibrary is AssetEvents {
 
     // Refuse the pending investment
     function refuseInvestment()
-        onlyOwner
+        protocolOrOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         external
         returns(bool)
@@ -168,7 +171,7 @@ contract AssetLibrary is AssetEvents {
     }
 
     function sell(uint256 _sellValue)
-        authorizedToSell
+        protocolOrInvestor
         hasStatus(Status.INVESTED)
         external
         returns(bool)
@@ -180,7 +183,7 @@ contract AssetLibrary is AssetEvents {
     }
 
     function cancelSellOrder()
-        authorizedToSell
+        protocolOrInvestor
         hasStatus(Status.FOR_SALE)
         external
         returns(bool)
@@ -219,7 +222,7 @@ contract AssetLibrary is AssetEvents {
 
     // Refunds asset's buyer and became available for sale again
     function refuseSale()
-        authorizedToSell
+        protocolOrInvestor
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
         external
         returns(bool)
@@ -235,7 +238,7 @@ contract AssetLibrary is AssetEvents {
 
     // Withdraw funds, clear the sell data and change investor's address
     function acceptSale()
-        authorizedToSell
+        protocolOrInvestor
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
         external
         returns(bool)

@@ -302,12 +302,12 @@ context('Contract: InvestmentAsset ', () => {
     context('Sell', () => {
 
         it("should deny a sell order if the user isn't the investor", async() => {
-            await protocol.sellAsset(assetsAddress[1], sellValue, {from: creditCompany})
+            await protocol.sellAssets([assetsAddress[1]], [sellValue], {from: creditCompany})
             .should.be.rejectedWith('VM Exception')
         })
 
         it('should sell an asset by using the protocol', async() => {
-            const {logs} = await protocol.sellAsset(assetsAddress[1], sellValue, {from: investor})
+            const {logs} = await protocol.sellAssets([assetsAddress[1]], [sellValue], {from: investor})
             const event = logs.find(e => e.event === 'ForSale')
 
             expect(event.args).to.include.all.keys([

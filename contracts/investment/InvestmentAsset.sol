@@ -36,7 +36,7 @@ contract InvestmentAsset {
         uint256 value;
         address buyer;
     }
-    Sell sellData;
+    Sell public sellData;
 
     // possible stages of an asset
     enum Status {

@@ -24,8 +24,8 @@ contract SwapyExchange {
 
   event ForSale(
     address indexed _investor,
-    address _asset,
-    uint256 _value
+    address[] _asset,
+    uint256[] _value
   );
 
   event Bought(
@@ -170,7 +170,7 @@ contract SwapyExchange {
     external
     returns(bool)
   {
-    for(uint index = 0; index < _assets.length; index++){
+    for(uint index = 0; index < _assets.length; index++) {
         AssetLibrary asset = AssetLibrary(_assets[index]);
         require(msg.sender == asset.investor());
         require(asset.acceptSale());
@@ -182,7 +182,7 @@ contract SwapyExchange {
     external
     returns(bool)
   {
-    for(uint index = 0; index < _assets.length; index++){
+    for(uint index = 0; index < _assets.length; index++) {
         AssetLibrary asset = AssetLibrary(_assets[index]);
         require(msg.sender == asset.investor());
         require(asset.refuseSale());
@@ -194,10 +194,10 @@ contract SwapyExchange {
     external
     returns(bool)
   {
-    for(uint index = 0; index < _assets.length; index++){
+    for(uint index = 0; index < _assets.length; index++) {
         AssetLibrary asset = AssetLibrary(_assets[index]);
-        Sell sellData = asset.sellData();
-        require(msg.sender == sellData.buyer);
+        var (,buyer) = asset.sellData();
+        require(msg.sender == buyer);
         require(asset.cancelSale());
     }
     return true;
