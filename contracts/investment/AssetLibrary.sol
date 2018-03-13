@@ -261,11 +261,12 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         assert(status == Status.INVESTED || status == Status.FOR_SALE || status == Status.PENDING_INVESTOR_AGREEMENT);
-        if (status == Status.PENDING_INVESTOR_AGREEMENT) {
-            sellData.buyer.transfer(this.balance - msg.value);
-        }
+        Status currentStatus = status;
         bool _isDelayed = isDelayed();
         status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
+        if (currentStatus == Status.PENDING_INVESTOR_AGREEMENT) {
+            sellData.buyer.transfer(this.balance - msg.value);
+        }
         investor.transfer(msg.value);
         if(tokenFuel > 0){
             address recipient = _isDelayed ? investor : owner;
