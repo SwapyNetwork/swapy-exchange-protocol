@@ -24,8 +24,8 @@ contract SwapyExchange {
 
   event ForSale(
     address indexed _investor,
-    address[] _asset,
-    uint256[] _value
+    address[] _assets,
+    uint256[] _values
   );
 
   event Bought(
