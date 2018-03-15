@@ -10,31 +10,21 @@ const should = require('chai')
     .should()
 const expect = require('chai').expect
 
-
 // --- Handled contracts
 const SwapyExchange = artifacts.require("./SwapyExchange.sol")
 const AssetLibrary = artifacts.require("./investment/AssetLibrary.sol")
-const InvestmentAsset = artifacts.require("./investment/InvestmentAsset.sol")
 const Token = artifacts.require("./token/Token.sol")
 
 // --- Test constants
 const payback = new BigNumber(12)
 const grossReturn = new BigNumber(500)
 const assetValue = ether(5)
+
 // returned value =  invested value + return on investment
 const returnValue = new BigNumber(1 + grossReturn.toNumber()/10000).times(assetValue)
 const assets = [500,500,500,500,500]
 const offerFuel = new BigNumber(5000)
-const assetFuel = offerFuel.dividedBy(new BigNumber(assets.length))
 const currency = "USD"
-// asset status
-const AVAILABLE = new BigNumber(0)
-const PENDING_OWNER_AGREEMENT = new BigNumber(1)
-const INVESTED = new BigNumber(2)
-const FOR_SALE = new BigNumber(3)
-const PENDING_INVESTOR_AGREEMENT = new BigNumber(4)
-const RETURNED = new BigNumber(5)
-const DELAYED_RETURN = new BigNumber(6)
 
 // --- Test variables
 // Contracts
@@ -43,10 +33,6 @@ let library = null
 let protocol = null
 // Assets
 let assetsAddress = []
-let firstAsset = null
-let secondAsset = null
-let thirdAsset = null
-let fourthAsset = null
 // Agents
 let investor = null
 let creditCompany = null
@@ -97,11 +83,7 @@ contract('SwapyExchange', async accounts => {
             )
             const event = logs.find(e => e.event === 'Offers')
             const args = event.args
-            expect(args).to.include.all.keys([
-                '_from',
-                '_protocolVersion',
-                '_assets'
-            ])
+            expect(args).to.include.all.keys([ '_from', '_protocolVersion', '_assets' ])
             assetsAddress = args._assets
             assert.equal(args._from, creditCompany, 'The credit company must be the offer owner')
             assert.equal(args._assets.length, assets.length, 'The count of created assets must be equal the count of sent')
@@ -191,7 +173,7 @@ contract('SwapyExchange', async accounts => {
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
             }
             const previousInvestorBalance = await getBalance(investor)
-            await protocol.refuseInvestment( assets, { from: creditCompany })
+            await protocol.refuseInvestment(assets, { from: creditCompany })
             // balances after invest
             let currentAssetsBalance = new BigNumber(0)
             for(let assetAddress of assets){
@@ -386,7 +368,7 @@ contract('SwapyExchange', async accounts => {
             const previousSellerBalance = await getBalance(investor)
             const { receipt } = await protocol.acceptSale(assets, { from: investor })
             let currentAssetsBalance = new BigNumber(0)
-            for(let assetAddress of assets){
+            for(let assetAddress of assets)  { 
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
             }

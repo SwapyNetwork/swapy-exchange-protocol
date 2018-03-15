@@ -56,11 +56,6 @@ let secondInvestor = null
 let gasPrice = null
 let sellValue = null
 
-contract('InvestmentAsset', accounts => {})
-
-/*
- 
-
 contract('InvestmentAsset', accounts => {
 
     before(async() => {
@@ -256,17 +251,16 @@ contract('InvestmentAsset', accounts => {
     context('Sell', () => {
 
         it("should deny a sell order if the user isn't the investor", async() => {
-            await protocol.sellAssets([assetsAddress[1]], [sellValue], {from: creditCompany})
+            await firstAsset.sell(sellValue, {from: creditCompany})
             .should.be.rejectedWith('VM Exception')
         })
 
-        it('should sell an asset by using the protocol', async() => {
-            const {logs} = await protocol.sellAssets([assetsAddress[1]], [sellValue], {from: investor})
+        it('should sell an asset', async() => {
+            const {logs} = await firstAsset.sell(sellValue, { from: investor })
             const event = logs.find(e => e.event === 'ForSale')
 
             expect(event.args).to.include.all.keys([
                 '_investor',
-                '_asset',
                 '_value'
             ])
         })
@@ -293,26 +287,14 @@ contract('InvestmentAsset', accounts => {
     })
 
     context('Buy', () => {
-
-        it("should sell an asset by using the asset", async() => {
-            const {logs} = await firstAsset.sell(sellValue, {from: investor})
-            const event = logs.find(e => e.event === 'ForSale')
-            expect(event.args).to.include.all.keys([
-                '_investor',
-                '_value'
-            ])
-        })
-
-        it("should buy an asset by using the protocol", async () => {
+        
+        it("should buy an asset", async () => {
+            await firstAsset.sell(sellValue, {from: investor})
             const previousAssetBalance = await getBalance(assetsAddress[1])
             const previousBuyerBalance = await getBalance(secondInvestor)
-            const { logs, receipt } = await protocol.buyAsset(assetsAddress[1], {from: secondInvestor, value: sellValue})
-            const event = logs.find(e => e.event === 'Bought')
-            expect(event.args).to.include.all.keys([
-                '_buyer',
-                '_asset',
-                '_value'
-            ])
+            const { logs, receipt } = await firstAsset.buy(secondInvestor, { from: secondInvestor, value: sellValue })
+            const event = logs.find(e => e.event === 'Invested')
+            expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(assetsAddress[1])
             const currentBuyerBalance = await getBalance(secondInvestor)
             const gasUsed = new BigNumber(receipt.gasUsed)
@@ -338,11 +320,7 @@ contract('InvestmentAsset', accounts => {
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.cancelSale({from: secondInvestor})
             const event = logs.find(e => e.event === 'Canceled')
-            expect(event.args).to.include.all.keys([
-                '_owner',
-                '_investor',
-                '_value'
-            ])
+            expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentBuyerBalance = await getBalance(secondInvestor)
             const gasUsed = new BigNumber(receipt.gasUsed)
@@ -358,16 +336,12 @@ contract('InvestmentAsset', accounts => {
 
     context('Refuse sale', () => {
 
-        it("should buy an asset by using the asset", async () => {
+        it("should buy an asset", async () => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.buy(secondInvestor, { from: secondInvestor, value: sellValue })
             const event = logs.find(e => e.event === 'Invested')
-            expect(event.args).to.include.all.keys([
-                '_owner',
-                '_investor',
-                '_value'
-            ])
+            expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentBuyerBalance = await getBalance(secondInvestor)
             const gasUsed = new BigNumber(receipt.gasUsed)
@@ -390,11 +364,7 @@ contract('InvestmentAsset', accounts => {
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.refuseSale({from: investor})
             const event = logs.find(e => e.event === 'Refused')
-            expect(event.args).to.include.all.keys([
-                '_owner',
-                '_investor',
-                '_value'
-            ])
+            expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentBuyerBalance = await getBalance(secondInvestor)
             currentBuyerBalance.toNumber().should.equal(
@@ -409,10 +379,8 @@ contract('InvestmentAsset', accounts => {
 
     context('Accept sale and withdraw funds', () => {
 
-        it("should buy an asset", async () => {
-           await firstAsset.buy(secondInvestor, { value: sellValue })
-        })
         it("should deny a sale acceptment if the user isnt't the investor", async () => {
+            await firstAsset.buy(secondInvestor, { value: sellValue })
             await firstAsset.acceptSale({from: secondInvestor})
             .should.be.rejectedWith('VM Exception')
         })
@@ -425,11 +393,7 @@ contract('InvestmentAsset', accounts => {
             const sellValue = assetValues[11];
             const { logs, receipt } = await firstAsset.acceptSale({from: investor})
             const event = logs.find(e => e.event === 'Withdrawal')
-            expect(event.args).to.include.all.keys([
-                '_owner',
-                '_investor',
-                '_value'
-            ])
+            expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentSellerBalance = await getBalance(investor)
             const gasUsed = new BigNumber(receipt.gasUsed)
@@ -447,6 +411,7 @@ contract('InvestmentAsset', accounts => {
 
 
     context("Require Asset's Fuel", () => {
+
         it("should deny the token fuel request if the return of investment isn't delayed", async () => {
             await firstAsset.requireTokenFuel({ from: secondInvestor })
                 .should.be.rejectedWith('VM Exception')
@@ -568,12 +533,7 @@ contract('InvestmentAsset', accounts => {
             const previousAssetTokenBalance = await token.balanceOf(thirdAsset.address)
             const { logs } = await thirdAsset.returnInvestment({ from: creditCompany, value: returnValue })
             const event = logs.find(e => e.event === 'Returned')
-            expect(event.args).to.include.all.keys([
-                '_owner',
-                '_investor',
-                '_value',
-                '_delayed'
-            ])
+            expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value', '_delayed' ])
             assert.equal(event.args._delayed,false,"The investment must be returned without delay")
             const currentCreditCompanyTokenBalance = await token.balanceOf(creditCompany)
             const currentAssetTokenBalance = await token.balanceOf(thirdAsset.address)
@@ -625,5 +585,3 @@ contract('InvestmentAsset', accounts => {
     })
 
 })
-
-*/
