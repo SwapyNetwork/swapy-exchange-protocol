@@ -2,9 +2,12 @@ pragma solidity ^0.4.18;
 
 import './AssetEvents.sol';
 import '../token/Token.sol';
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 // Defines methods and control modifiers for an investment
 contract AssetLibrary is AssetEvents {
+
+    using SafeMath for uint256;
 
     // Asset owner
     address public owner;
@@ -115,7 +118,7 @@ contract AssetLibrary is AssetEvents {
         assert(tokenFuel >= _amount);
         require(token.transfer(_recipient, _amount));
         TokenWithdrawal(_recipient, _amount);
-        tokenFuel -= _amount;
+        tokenFuel = tokenFuel.sub(_amount);
         return true;
     }
 
@@ -205,7 +208,7 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-     function cancelSale()
+    function cancelSale()
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
         external
         returns(bool)
@@ -264,14 +267,14 @@ contract AssetLibrary is AssetEvents {
         Status currentStatus = status;
         bool _isDelayed = isDelayed();
         status = _isDelayed ? Status.DELAYED_RETURN : Status.RETURNED;
-        if (currentStatus == Status.PENDING_INVESTOR_AGREEMENT) {
-            sellData.buyer.transfer(this.balance - msg.value);
-        }
-        investor.transfer(msg.value);
         if(tokenFuel > 0){
             address recipient = _isDelayed ? investor : owner;
             withdrawTokens(recipient, tokenFuel);
         }
+        if (currentStatus == Status.PENDING_INVESTOR_AGREEMENT) {
+            sellData.buyer.transfer(this.balance.sub(msg.value));
+        }
+        investor.transfer(msg.value);
         Returned(owner, investor, msg.value, _isDelayed);
         return true;
     }
@@ -283,7 +286,7 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         require(token.transferFrom(msg.sender, this, _amount));
-        tokenFuel += _amount;
+        tokenFuel = tokenFuel.add(_amount);
         Supplied(owner, _amount, tokenFuel);
         return true;
     }

@@ -102,7 +102,7 @@ contract('SwapyExchange', async accounts => {
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
             }
             const previousInvestorBalance = await getBalance(investor)
-            const { logs, receipt } = await protocol.invest( assets, { value: assetValue * assets.length, from: investor })
+            const { logs, receipt } = await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
             // balances after invest
             let currentAssetsBalance = new BigNumber(0)
             for(let assetAddress of assets){
@@ -159,7 +159,7 @@ contract('SwapyExchange', async accounts => {
 
         it("should deny an investment refusement if the user isn't the owner", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
-            await protocol.invest( assets, { value: assetValue * assets.length, from: investor })
+            await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
             await protocol.refuseInvestment(assets, { from: investor })
                 .should.be.rejectedWith('VM Exception')
         })
@@ -191,7 +191,7 @@ contract('SwapyExchange', async accounts => {
 
         it("should deny an investment withdrawal if the user isn't the owner", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
-            await protocol.invest( assets, { value: assetValue * assets.length, from: investor })
+            await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
             await protocol.withdrawFunds(assets, { from: investor })
                 .should.be.rejectedWith('VM Exception')
         })
