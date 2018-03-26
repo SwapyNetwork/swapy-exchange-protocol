@@ -3,6 +3,7 @@
 const increaseTime  = require('./helpers/increaseTime')
 const { getBalance, getGasPrice } = require('./helpers/web3')
 const ether = require('./helpers/ether')
+const wei = require('./helpers/wei')
 
 const BigNumber = web3.BigNumber
 const should = require('chai')
@@ -18,12 +19,12 @@ const Token = artifacts.require("./token/Token.sol")
 // --- Test constants
 const payback = new BigNumber(12)
 const grossReturn = new BigNumber(500)
-const assetValue = ether(5)
+const assetValue = wei('5619977145426276000')
 
 // returned value =  invested value + return on investment
 const returnValue = new BigNumber(1 + grossReturn.toNumber()/10000).times(assetValue)
 const assets = [500,500,500,500,500]
-const offerFuel = new BigNumber(5000)
+const offerFuel = new BigNumber('5000')
 const currency = "USD"
 
 // --- Test variables
@@ -59,7 +60,7 @@ contract('SwapyExchange', async accounts => {
         await token.mint(creditCompany, offerFuel, {from: Swapy})
 
         // payback and sell constants
-        const periodAfterInvestment = new BigNumber(1/2)
+        const periodAfterInvestment = new BigNumber('0.5')
         await increaseTime(86400 * payback * periodAfterInvestment.toNumber())
         const returnOnPeriod = returnValue.minus(assetValue).times(periodAfterInvestment)
         sellValue = assetValue.plus(returnOnPeriod)
@@ -96,15 +97,15 @@ contract('SwapyExchange', async accounts => {
         it("should add an investment of many assets", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             // balances before invest
-            let previousAssetsBalance = new BigNumber(0)
+            let previousAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
             }
             const previousInvestorBalance = await getBalance(investor)
-            const { logs, receipt } = await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
+            const { logs, receipt } = await protocol.invest( assets, assetValue, { value: assetValue.times(new BigNumber(assets.length)), from: investor })
             // balances after invest
-            let currentAssetsBalance = new BigNumber(0)
+            let currentAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
@@ -116,11 +117,11 @@ contract('SwapyExchange', async accounts => {
             expect(args).to.include.all.keys([ '_investor', '_assets', '_value' ])
             currentInvestorBalance.toNumber().should.equal(
                 previousInvestorBalance
-                .minus(assetValue * assets.length)
+                .minus(assetValue.times(new BigNumber(assets.length)))
                 .minus(gasPrice.times(gasUsed))
                 .toNumber()
             )
-            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.plus(assetValue * assets.length).toNumber())
+            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.plus(assetValue.times(new BigNumber(assets.length))).toNumber())
         })
 
         it("should deny a cancelment if the user isn't the investor", async () => {
@@ -132,7 +133,7 @@ contract('SwapyExchange', async accounts => {
         it("should cancel an investment on many assets", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             // balances before invest
-            let previousAssetsBalance = new BigNumber(0)
+            let previousAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
@@ -140,7 +141,7 @@ contract('SwapyExchange', async accounts => {
             const previousInvestorBalance = await getBalance(investor)
             const { receipt } = await protocol.cancelInvestment( assets, { from: investor })
             // balances after invest
-            let currentAssetsBalance = new BigNumber(0)
+            let currentAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
@@ -149,17 +150,17 @@ contract('SwapyExchange', async accounts => {
             const gasUsed = new BigNumber(receipt.gasUsed)
             currentInvestorBalance.toNumber().should.equal(
                 previousInvestorBalance
-                .plus(assetValue * assets.length)
+                .plus(assetValue.times(new BigNumber(assets.length)))
                 .minus(gasPrice.times(gasUsed))
                 .toNumber()
             )
-            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(assetValue * assets.length).toNumber())
+            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(assetValue.times(new BigNumber(assets.length))).toNumber())
 
         })
 
         it("should deny an investment refusement if the user isn't the owner", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
-            await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
+            await protocol.invest( assets, assetValue, { value: assetValue.times(new BigNumber(assets.length)), from: investor })
             await protocol.refuseInvestment(assets, { from: investor })
                 .should.be.rejectedWith('VM Exception')
         })
@@ -167,7 +168,7 @@ contract('SwapyExchange', async accounts => {
         it("should refuse an investment on many assets", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             // balances before invest
-            let previousAssetsBalance = new BigNumber(0)
+            let previousAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
@@ -175,7 +176,7 @@ contract('SwapyExchange', async accounts => {
             const previousInvestorBalance = await getBalance(investor)
             await protocol.refuseInvestment(assets, { from: creditCompany })
             // balances after invest
-            let currentAssetsBalance = new BigNumber(0)
+            let currentAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
@@ -183,15 +184,15 @@ contract('SwapyExchange', async accounts => {
             const currentInvestorBalance = await getBalance(investor)
             currentInvestorBalance.toNumber().should.equal(
                 previousInvestorBalance
-                .plus(assetValue * assets.length)
+                .plus(assetValue.times(new BigNumber(assets.length)))
                 .toNumber()
             )
-            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(assetValue * assets.length).toNumber())
+            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(assetValue.times(new BigNumber(assets.length))).toNumber())
         })
 
         it("should deny an investment withdrawal if the user isn't the owner", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
-            await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
+            await protocol.invest( assets, assetValue, { value: assetValue.times(new BigNumber(assets.length)), from: investor })
             await protocol.withdrawFunds(assets, { from: investor })
                 .should.be.rejectedWith('VM Exception')
         })
@@ -199,7 +200,7 @@ contract('SwapyExchange', async accounts => {
         it("should withdraw funds on many assets", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             // balances before invest
-            let previousAssetsBalance = new BigNumber(0)
+            let previousAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
@@ -207,7 +208,7 @@ contract('SwapyExchange', async accounts => {
             const previousCreditCompanyBalance = await getBalance(creditCompany)
             const {receipt} = await protocol.withdrawFunds( assets, { from: creditCompany })
             // balances after invest
-            let currentAssetsBalance = new BigNumber(0)
+            let currentAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
@@ -216,11 +217,11 @@ contract('SwapyExchange', async accounts => {
             const gasUsed = new BigNumber(receipt.gasUsed)
             currentCreditCompanyBalance.toNumber().should.equal(
                 previousCreditCompanyBalance
-                .plus(assetValue * assets.length)
+                .plus(assetValue.times(new BigNumber(assets.length)))
                 .minus(gasPrice.times(gasUsed))
                 .toNumber()
             )
-            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(assetValue * assets.length).toNumber())
+            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(assetValue.times(new BigNumber(assets.length))).toNumber())
         })
 
     })
@@ -288,14 +289,14 @@ contract('SwapyExchange', async accounts => {
             await protocol.buyAsset(assets[2], { from: secondInvestor, value: sellValue })
             await protocol.buyAsset(assets[3], { from: secondInvestor, value: sellValue })
             await protocol.buyAsset(assets[4], { from: secondInvestor, value: sellValue })
-            let previousAssetsBalance = new BigNumber(0)
+            let previousAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
             }
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { receipt } = await protocol.cancelSale(assets, { from: secondInvestor })
-            let currentAssetsBalance = new BigNumber(0)
+            let currentAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
@@ -304,11 +305,11 @@ contract('SwapyExchange', async accounts => {
             const gasUsed = new BigNumber(receipt.gasUsed)
             currentBuyerBalance.toNumber().should.equal(
                 previousBuyerBalance
-                .plus(sellValue * assets.length)
+                .plus(sellValue.times(new BigNumber(assets.length)))
                 .minus(gasPrice.times(gasUsed))
                 .toNumber()
             )
-            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(sellValue * assets.length).toNumber())
+            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(sellValue.times(new BigNumber(assets.length))).toNumber())
         })
 
         it("should deny a sale refusement if the user isn't the investor", async () => {
@@ -325,14 +326,14 @@ contract('SwapyExchange', async accounts => {
 
         it("should refuse many sales", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
-            let previousAssetsBalance = new BigNumber(0)
+            let previousAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
             }
             const previousBuyerBalance = await getBalance(secondInvestor)
             await protocol.refuseSale(assets, { from: investor })
-            let currentAssetsBalance = new BigNumber(0)
+            let currentAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
@@ -340,10 +341,10 @@ contract('SwapyExchange', async accounts => {
             const currentBuyerBalance = await getBalance(secondInvestor)
             currentBuyerBalance.toNumber().should.equal(
                 previousBuyerBalance
-                .plus(sellValue * assets.length)
+                .plus(sellValue.times(new BigNumber(assets.length)))
                 .toNumber()
             )
-            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(sellValue * assets.length).toNumber())
+            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(sellValue.times(new BigNumber(assets.length))).toNumber())
         })
 
         it("should deny a sale acceptment if the user isnt't the investor", async () => {
@@ -360,14 +361,14 @@ contract('SwapyExchange', async accounts => {
 
         it("should accept many sales", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
-            let previousAssetsBalance = new BigNumber(0)
+            let previousAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets){
                 let assetBalance = await getBalance(assetAddress)
                 previousAssetsBalance = previousAssetsBalance.plus(assetBalance)
             }
             const previousSellerBalance = await getBalance(investor)
             const { receipt } = await protocol.acceptSale(assets, { from: investor })
-            let currentAssetsBalance = new BigNumber(0)
+            let currentAssetsBalance = new BigNumber('0')
             for(let assetAddress of assets)  { 
                 let assetBalance = await getBalance(assetAddress)
                 currentAssetsBalance = currentAssetsBalance.plus(assetBalance)
@@ -376,11 +377,11 @@ contract('SwapyExchange', async accounts => {
             const gasUsed = new BigNumber(receipt.gasUsed)
             currentSellerBalance.toNumber().should.equal(
                 previousSellerBalance
-                .plus(sellValue * assets.length)
+                .plus(sellValue.times(new BigNumber(assets.length)))
                 .minus(gasPrice.times(gasUsed))
                 .toNumber()
             )
-            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(sellValue * assets.length).toNumber())
+            currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(sellValue.times(new BigNumber(assets.length))).toNumber())
         })
     
     })
