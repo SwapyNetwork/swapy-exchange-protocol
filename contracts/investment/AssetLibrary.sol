@@ -292,7 +292,7 @@ contract AssetLibrary is AssetEvents {
     }
 
     function requireTokenFuel()
-        onlyInvestor
+        protocolOrInvestor
         hasStatus(Status.INVESTED)
         onlyDelayed
         external

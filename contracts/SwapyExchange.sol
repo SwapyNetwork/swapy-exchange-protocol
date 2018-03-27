@@ -218,5 +218,18 @@ contract SwapyExchange {
         }
         return true;
     }
+    
+    function requireTokenFuel(address[] _assets) 
+        notEmpty(_assets)
+        external
+        returns(bool)
+    {
+        for(uint index = 0; index < _assets.length; index++) {
+            AssetLibrary asset = AssetLibrary(_assets[index]);
+            require(msg.sender == asset.investor());
+            require(asset.requireTokenFuel());
+        }
+        return true;
+    }
 
 }
