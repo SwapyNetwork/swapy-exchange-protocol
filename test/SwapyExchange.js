@@ -24,6 +24,7 @@ const assetValue = ether(5)
 const returnValue = new BigNumber(1 + grossReturn.toNumber()/10000).times(assetValue)
 const assets = [500,500,500,500,500]
 const offerFuel = new BigNumber(5000)
+const assetFuel = offerFuel.dividedBy(new BigNumber(assets.length))
 const currency = "USD"
 
 // --- Test variables
@@ -31,6 +32,11 @@ const currency = "USD"
 let token = null
 let library = null
 let protocol = null
+let firstAsset = null
+let secondAsset = null
+let thirdAsset = null
+let fourthAsset = null
+let fifthAsset = null
 // Assets
 let assetsAddress = []
 // Agents
@@ -87,7 +93,21 @@ contract('SwapyExchange', async accounts => {
             assetsAddress = args._assets
             assert.equal(args._from, creditCompany, 'The credit company must be the offer owner')
             assert.equal(args._assets.length, assets.length, 'The count of created assets must be equal the count of sent')
-
+            firstAsset = await AssetLibrary.at(assetsAddress[0])
+            secondAsset = await AssetLibrary.at(assetsAddress[1])
+            thirdAsset = await AssetLibrary.at(assetsAddress[2])
+            fourthAsset = await AssetLibrary.at(assetsAddress[3])
+            fifthAsset = await AssetLibrary.at(assetsAddress[4])
+            await token.approve(assetsAddress[0], assetFuel, {from: creditCompany})
+            await token.approve(assetsAddress[1], assetFuel, {from: creditCompany})
+            await token.approve(assetsAddress[2], assetFuel, {from: creditCompany})
+            await token.approve(assetsAddress[3], assetFuel, {from: creditCompany})
+            await token.approve(assetsAddress[4], assetFuel, {from: creditCompany})
+            await firstAsset.supplyFuel(assetFuel, { from: creditCompany })
+            await secondAsset.supplyFuel(assetFuel, { from: creditCompany })
+            await thirdAsset.supplyFuel(assetFuel, { from: creditCompany })
+            await fourthAsset.supplyFuel(assetFuel, { from: creditCompany })
+            await fifthAsset.supplyFuel(assetFuel, { from: creditCompany })
         })
     })
 
@@ -223,6 +243,38 @@ contract('SwapyExchange', async accounts => {
             currentAssetsBalance.toNumber().should.equal(previousAssetsBalance.minus(assetValue * assets.length).toNumber())
         })
 
+        it("should deny collateral tokens request if the user isn't the investor", async() => {
+            // simulate a long period after the funds transfer
+            await increaseTime(16416000)
+            const assets = [assetsAddress[0], assetsAddress[1]]
+            await protocol.requireTokenFuel(assets, { from: creditCompany })
+            .should.be.rejectedWith('VM Exception')
+        })
+
+        it("should request collateral tokens of many assets", async() => {
+            const assets = [assetsAddress[0], assetsAddress[1]]
+            const previousInvestorTokenBalance = await token.balanceOf(investor)
+            let previousAssetsTokenBalance = new BigNumber(0)
+            for(let assetAddress of assets){
+                let assetBalance = await token.balanceOf(assetAddress)
+                previousAssetsTokenBalance = previousAssetsTokenBalance.plus(assetBalance)
+            }
+            await protocol.requireTokenFuel(assets, { from: investor })
+            // balances after invest
+            let currentInvestorTokenBalance = await token.balanceOf(investor)
+            let currentAssetsTokenBalance = new BigNumber(0)
+            for(let assetAddress of assets){
+                let assetBalance = await token.balanceOf(assetAddress)
+                currentAssetsTokenBalance = currentAssetsTokenBalance.plus(assetBalance)
+            }
+            currentInvestorTokenBalance.toNumber().should.equal(
+                previousInvestorTokenBalance
+                .plus(assetFuel.times(new BigNumber(assets.length)))
+                .toNumber()
+            )
+            currentAssetsTokenBalance.toNumber().should.equal(previousAssetsTokenBalance.minus(assetFuel.times(new BigNumber(assets.length))).toNumber())
+        })
+
     })
 
     context('Market Place', () => {
@@ -239,7 +291,7 @@ contract('SwapyExchange', async accounts => {
             const values = [sellValue, sellValue, sellValue, sellValue, sellValue]
             const { logs } = await protocol.sellAssets(assets, values, { from: investor })
             const event = logs.find(e => e.event === 'ForSale')
-            expect(event.args).to.include.all.keys([ '_investor', '_assets', '_values' ])
+            expect(event.args).to.include.all.keys([ '_investor', '_asset', '_value' ])
         })
 
         it("should deny a sell order cancelment if the user isn't the investor", async () => {
