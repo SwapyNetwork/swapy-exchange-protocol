@@ -8,13 +8,13 @@ contract SwapyExchange {
     using SafeMath for uint256;
     
     // Protocol version
-    string constant public VERSION = "1.0.0";
+    bytes8 constant public VERSION = "1.0.0";
     address public assetLibrary;
     address public token;
     
     event Offers(
         address indexed _from,
-        string _protocolVersion,
+        bytes8 _protocolVersion,
         address[] _assets
     );
 
@@ -52,7 +52,7 @@ contract SwapyExchange {
     function createOffer(
         uint256 _paybackDays,
         uint256 _grossReturn,
-        string _currency,
+        bytes5 _currency,
         uint256[] _assets)
         external
         returns(bool)
@@ -64,7 +64,7 @@ contract SwapyExchange {
 
     function createOfferAssets(
         uint256[] _assets,
-        string _currency,
+        bytes5 _currency,
         uint _paybackDays,
         uint _grossReturn)
         internal

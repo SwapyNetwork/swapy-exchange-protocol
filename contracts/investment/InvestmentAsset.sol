@@ -11,7 +11,7 @@ contract InvestmentAsset {
     // Protocol
     address public protocol;
     // Asset currency
-    string public currency;
+    bytes5 public currency;
     // Asset value
     uint256 public value;
     //Value bought
@@ -23,7 +23,7 @@ contract InvestmentAsset {
     // Asset buyer
     address public investor;
     // Protocol version
-    string public protocolVersion;
+    bytes8 public protocolVersion;
     // investment timestamp
     uint public investedAt;
 
@@ -57,8 +57,8 @@ contract InvestmentAsset {
         address _library,
         address _protocol,
         address _owner,
-        string _protocolVersion,
-        string _currency,
+        bytes8 _protocolVersion,
+        bytes5 _currency,
         uint256 _value,
         uint _paybackDays,
         uint _grossReturn,
@@ -84,7 +84,7 @@ contract InvestmentAsset {
     function getAsset()
         external
         constant
-        returns(address, string, uint256, uint256, uint256, Status, address, string, uint, uint256, address, uint256, uint256)
+        returns(address, bytes5, uint256, uint256, uint256, Status, address, bytes8, uint, uint256, address, uint256, uint256)
     {
         return (owner, currency, value, paybackDays, grossReturn, status, investor, protocolVersion, investedAt, tokenFuel, sellData.buyer, sellData.value, boughtValue);
     }

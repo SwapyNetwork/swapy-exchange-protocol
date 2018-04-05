@@ -14,7 +14,7 @@ contract AssetLibrary is AssetEvents {
     // Protocol
     address public protocol;
     // Asset currency
-    string public currency;
+    bytes5 public currency;
     // Asset fixed value
     uint256 public value;
     //Value bought
@@ -26,7 +26,7 @@ contract AssetLibrary is AssetEvents {
     // Asset buyer
     address public investor;
     // Protocol version
-    string public protocolVersion;
+    bytes8 public protocolVersion;
     // investment timestamp
     uint public investedAt;
 
@@ -73,12 +73,12 @@ contract AssetLibrary is AssetEvents {
     }
 
     modifier protocolOrInvestor() {
-        require(msg.sender == investor || msg.sender == protocol);
+        require(msg.sender == protocol || msg.sender == investor);
         _;
     }
 
     modifier protocolOrOwner() {
-        require(msg.sender == owner || msg.sender == protocol);
+        require(msg.sender == protocol || msg.sender == owner);
         _;
     }    
 
@@ -103,10 +103,10 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.AVAILABLE;
         uint256 investedValue = this.balance;
-        investor.transfer(investedValue);
         address currentInvestor = investor;
         investor = address(0);
         investedAt = uint(0);
+        currentInvestor.transfer(investedValue);
         return (currentInvestor, investedValue);
     }
 
@@ -116,9 +116,9 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         assert(tokenFuel >= _amount);
+        tokenFuel = tokenFuel.sub(_amount);
         require(token.transfer(_recipient, _amount));
         TokenWithdrawal(_recipient, _amount);
-        tokenFuel = tokenFuel.sub(_amount);
         return true;
     }
 
@@ -249,11 +249,11 @@ contract AssetLibrary is AssetEvents {
         status = Status.INVESTED;
         address currentInvestor = investor;
         uint256 _value = this.balance;
-        currentInvestor.transfer(_value);
         investor = sellData.buyer;
         boughtValue = sellData.value;
         sellData.buyer = address(0);
         sellData.value = uint256(0);
+        currentInvestor.transfer(_value);
         Withdrawal(currentInvestor, investor, _value);
         return true;
     }
