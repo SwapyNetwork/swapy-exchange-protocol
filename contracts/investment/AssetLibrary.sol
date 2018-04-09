@@ -4,11 +4,19 @@ import './AssetEvents.sol';
 import '../token/Token.sol';
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
-// Defines methods and control modifiers for an investment
+/**
+ * @title Asset Library
+ * @dev Defines the behavior of a fundraising asset. Designed to receive InvestmentAsset's calls and work on its storage
+ */
 contract AssetLibrary is AssetEvents {
-
+    /**
+     * Add safety checks for uint operations
+     */
     using SafeMath for uint256;
 
+    /**
+     * Storage
+     */
     // Asset owner
     address public owner;
     // Protocol
@@ -34,7 +42,7 @@ contract AssetLibrary is AssetEvents {
     Token public token;
     uint256 public tokenFuel;
 
-    // sell data
+    // sale structure
     struct Sell {
         uint256 value;
         address buyer;
@@ -53,40 +61,42 @@ contract AssetLibrary is AssetEvents {
         DELAYED_RETURN
     }
     Status public status;
-
+   
+    /**
+     * Modifiers   
+     */
     // Checks the current asset's status
     modifier hasStatus(Status _status) {
         assert(status == _status);
         _;
     }
-
     // Checks if the owner is the caller
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
     // Checks if the investor is the caller
     modifier onlyInvestor() {
         require(msg.sender == investor);
         _;
     }
-
     modifier protocolOrInvestor() {
         require(msg.sender == protocol || msg.sender == investor);
         _;
     }
-
     modifier protocolOrOwner() {
         require(msg.sender == protocol || msg.sender == owner);
         _;
     }    
-
     modifier onlyDelayed(){
         require(isDelayed());
         _;
     }
 
+    /**
+     * @dev Returns true if the return of investment is delayed according to the investment date and payback period 
+     * @return Delay verification
+     */ 
     function isDelayed()
         view
         internal
@@ -95,7 +105,10 @@ contract AssetLibrary is AssetEvents {
         return now > investedAt + paybackDays * 1 days;
     }
 
-    // Refund and remove the current investor and make the asset available for investments
+     /**
+     * @dev Refund investor, clear investment values and become available 
+     * @return A tuple with the old investor and the refunded value
+     */ 
     function makeAvailable()
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         private
@@ -110,7 +123,12 @@ contract AssetLibrary is AssetEvents {
         return (currentInvestor, investedValue);
     }
 
-
+     /**
+     * @dev Withdraw collateral tokens
+     * @param _recipient Address to send tokens
+     * @param _amount Tokens amount
+     * @return Success
+     */
     function withdrawTokens(address _recipient, uint256 _amount)
         private
         returns(bool)
@@ -122,7 +140,11 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    // Add investment interest in this asset and retain the funds within the smart contract
+    /**
+     * @dev Add investment interest and retain pending funds within the asset 
+     * @param _investor Pending Investor
+     * @return Success
+     */ 
     function invest(address _investor) payable
          hasStatus(Status.AVAILABLE)
          external
@@ -135,7 +157,10 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    // Cancel the pending investment
+    /**
+     * @dev Cancel a pending investment made
+     * @return Success
+     */ 
     function cancelInvestment()
         protocolOrInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -147,7 +172,10 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    // Accept the investor as the asset buyer and withdraw funds
+    /**
+     * @dev Accept the investor as the asset buyer and withdraw funds
+     * @return Success
+     */ 
     function withdrawFunds()
         protocolOrOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -161,7 +189,10 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    // Refuse the pending investment
+    /**
+     * @dev Refuse a pending investment
+     * @return Success
+     */
     function refuseInvestment()
         protocolOrOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -173,6 +204,11 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+    /**
+     * @dev Put this asset for sale.
+     * @param _sellValue Sale value
+     * @return Success
+     */ 
     function sell(uint256 _sellValue)
         protocolOrInvestor
         hasStatus(Status.INVESTED)
@@ -185,6 +221,10 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+    /**
+     * @dev Remove the asset from market place
+     * @return Success
+     */
     function cancelSellOrder()
         protocolOrInvestor
         hasStatus(Status.FOR_SALE)
@@ -197,6 +237,11 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+    /**
+     * @dev Buy the asset on market place
+     * @param _buyer Address of pending buyer
+     * @return Success
+     */
     function buy(address _buyer) payable
         hasStatus(Status.FOR_SALE)
         external
@@ -208,6 +253,10 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+    /**
+     * @dev Cancel a purchase made
+     * @return Success
+     */
     function cancelSale()
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
         external
@@ -222,8 +271,11 @@ contract AssetLibrary is AssetEvents {
         Canceled(investor, buyer, _value);
         return true;
     }
-
-    // Refunds asset's buyer and became available for sale again
+   
+    /**
+     * @dev Refuse purchase on market place and refunds the pending buyer
+     * @return Success
+     */
     function refuseSale()
         protocolOrInvestor
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
@@ -239,7 +291,10 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
-    // Withdraw funds, clear the sell data and change investor's address
+    /**
+     * @dev Accept purchase. Withdraw funds, clear the sell data and change investor
+     * @return Success
+     */
     function acceptSale()
         protocolOrInvestor
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
@@ -258,6 +313,11 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+    /**
+     * @dev Return investment. Refunds pending buyer if the asset is for sale and handle remaining collateral tokens according to 
+     * the period of return
+     * @return Success
+     */
     function returnInvestment() payable
         onlyOwner
         external
@@ -279,6 +339,11 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+    /**
+     * @dev Supply collateral tokens to the asset 
+     * @param _amount Token amount
+     * @return Success
+     */
     function supplyFuel(uint256 _amount)
         onlyOwner
         hasStatus(Status.AVAILABLE)
@@ -291,6 +356,10 @@ contract AssetLibrary is AssetEvents {
         return true;
     }
 
+    /**
+     * @dev Require collateral tokens of the investment made
+     * @return Success
+     */
     function requireTokenFuel()
         protocolOrInvestor
         hasStatus(Status.INVESTED)

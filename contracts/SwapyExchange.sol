@@ -4,43 +4,47 @@ import "./investment/InvestmentAsset.sol";
 import "./investment/AssetLibrary.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
+/**
+ * @title Swapy Exchange Protocol 
+ * @dev Allows the creation of fundraising offers and many actions with them
+ */
 contract SwapyExchange {
+    /**
+     * Add safety checks for uint operations
+     */
     using SafeMath for uint256;
     
-    // Protocol version
+    /**
+     * Constants
+     */
     bytes8 constant public VERSION = "1.0.0";
+    
+    /**
+     * Storage
+     */
     address public assetLibrary;
     address public token;
     
-    event Offers(
-        address indexed _from,
-        bytes8 _protocolVersion,
-        address[] _assets
-    );
+    /**
+     * Events   
+     */
+    event Offers(address indexed _from, bytes8 _protocolVersion, address[] _assets);
+    event Investments(address indexed _investor, address[] _assets, uint256 _value);
+    event ForSale(address indexed _investor, address _asset, uint256 _value);
+    event Bought(address indexed _buyer, address _asset, uint256 _value);
 
-    event Investments(
-        address indexed _investor,
-        address[] _assets,
-        uint256 _value
-    );
-
-    event ForSale(
-        address indexed _investor,
-        address _asset,
-        uint256 _value
-    );
-
-    event Bought(
-        address indexed _buyer,
-        address _asset,
-        uint256 _value
-    );
-
+    /**
+     * Modifiers   
+     */
     modifier notEmpty(address[] _assets){
         require(_assets.length > 0);
         _;
     }
 
+    /**
+     * @param _assetLibrary Address of library that contains asset's logic
+     * @param _token Address of Swapy Token
+     */   
     function SwapyExchange(address _assetLibrary, address _token)
         public
     {
@@ -48,7 +52,14 @@ contract SwapyExchange {
         token = _token;
     }
 
-    // Creates a new investment offer
+    /**
+     * @dev create a fundraising offer
+     * @param _paybackDays Period in days until the return of investment
+     * @param _grossReturn Gross return on investment
+     * @param _currency Fundraising base currency, i.e, USD
+     * @param _assets Asset's values.
+     * @return Success
+     */ 
     function createOffer(
         uint256 _paybackDays,
         uint256 _grossReturn,
@@ -62,6 +73,14 @@ contract SwapyExchange {
         return true;
     }
 
+    /**
+     * @dev Create fundraising assets
+     * @param _assets Asset's values. The length will determine the number of assets composes the fundraising
+     * @param _currency Fundraising base currency, i.e, USD
+     * @param _paybackDays Period in days until the return of investment
+     * @param _grossReturn Gross return on investment
+     * @return Address of assets created
+     */ 
     function createOfferAssets(
         uint256[] _assets,
         bytes5 _currency,
@@ -86,7 +105,12 @@ contract SwapyExchange {
         }
         return newAssets;
     }
-
+    /**
+     * @dev Invest in fundraising assets
+     * @param _assets Asset addresses
+     * @param value Asset unit value, i.e, _assets.length = 5 and msg.value = 5 ETH, then _value must be equal 1 ETH
+     * @return Success
+     */ 
     function invest(address[] _assets, uint256 value) payable
         notEmpty(_assets)
         external
@@ -101,6 +125,11 @@ contract SwapyExchange {
         return true;
     }
 
+    /**
+     * @dev Withdraw investments
+     * @param _assets Asset addresses
+     * @return Success
+     */ 
     function withdrawFunds(address[] _assets) 
         notEmpty(_assets)
         external
@@ -114,6 +143,11 @@ contract SwapyExchange {
         return true;
     }
     
+    /**
+     * @dev Refuse investments
+     * @param _assets Asset addresses
+     * @return Success
+     */ 
     function refuseInvestment(address[] _assets) 
         notEmpty(_assets)
         external
@@ -127,6 +161,11 @@ contract SwapyExchange {
         return true;
     }
 
+    /**
+     * @dev Cancel investments made
+     * @param _assets Asset addresses
+     * @return Success
+     */ 
     function cancelInvestment(address[] _assets) 
         notEmpty(_assets)
         external
@@ -140,6 +179,12 @@ contract SwapyExchange {
         return true;
     }
 
+    /**
+     * @dev Put invested assets for sale.
+     * @param _assets Asset addresses
+     * @param _values Sale values. _assets[0] => _values[0], ..., _assets[n] => _values[n]
+     * @return Success
+     */ 
     function sellAssets(address[] _assets, uint256[] _values)
         notEmpty(_assets)
         external
@@ -155,6 +200,11 @@ contract SwapyExchange {
         return true;
     }
     
+    /**
+     * @dev Remove available assets from market place
+     * @param _assets Asset addresses
+     * @return Success
+     */ 
     function cancelSellOrder(address[] _assets)
         notEmpty(_assets) 
         external
@@ -168,6 +218,11 @@ contract SwapyExchange {
         return true;
     }
 
+    /**
+     * @dev Buy an available asset on market place
+     * @param _asset Asset address
+     * @return Success
+     */
     function buyAsset(address _asset) payable
         external
         returns(bool)
@@ -179,6 +234,11 @@ contract SwapyExchange {
         return true;
     }
     
+    /**
+     * @dev Accept purchases on market place
+     * @param _assets Asset addresses
+     * @return Success
+     */
     function acceptSale(address[] _assets) 
         notEmpty(_assets)
         external
@@ -192,6 +252,11 @@ contract SwapyExchange {
         return true;
     }
     
+    /**
+     * @dev Refuse purchases on market place
+     * @param _assets Asset addresses
+     * @return Success
+     */
     function refuseSale(address[] _assets) 
         notEmpty(_assets)
         external
@@ -205,6 +270,11 @@ contract SwapyExchange {
         return true;
     }
 
+    /**
+     * @dev Cancel purchases made
+     * @param _assets Asset addresses
+     * @return Success
+     */
     function cancelSale(address[] _assets) 
         notEmpty(_assets)
         external
@@ -219,6 +289,11 @@ contract SwapyExchange {
         return true;
     }
     
+    /**
+     * @dev Require collateral of investments made
+     * @param _assets Asset addresses
+     * @return Success
+     */
     function requireTokenFuel(address[] _assets) 
         notEmpty(_assets)
         external
