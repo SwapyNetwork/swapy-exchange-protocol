@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import './AssetEvents.sol';
 import '../token/Token.sol';
@@ -115,7 +115,7 @@ contract AssetLibrary is AssetEvents {
         returns(address, uint256)
     {
         status = Status.AVAILABLE;
-        uint256 investedValue = this.balance;
+        uint256 investedValue = address(this).balance;
         address currentInvestor = investor;
         investor = address(0);
         investedAt = uint(0);
@@ -136,7 +136,7 @@ contract AssetLibrary is AssetEvents {
         assert(tokenFuel >= _amount);
         tokenFuel = tokenFuel.sub(_amount);
         require(token.transfer(_recipient, _amount));
-        TokenWithdrawal(_recipient, _amount);
+        emit TokenWithdrawal(_recipient, _amount);
         return true;
     }
 
@@ -153,7 +153,7 @@ contract AssetLibrary is AssetEvents {
         status = Status.PENDING_OWNER_AGREEMENT;
         investor = _investor;
         investedAt = now;
-        Invested(owner, investor, this.balance);
+        emit Invested(owner, investor, address(this).balance);
         return true;
     }
 
@@ -167,8 +167,10 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        var (currentInvestor, investedValue) = makeAvailable();
-        Canceled(owner, currentInvestor, investedValue);
+        address currentInvestor;
+        uint256 investedValue;
+        (currentInvestor, investedValue) = makeAvailable();
+        emit Canceled(owner, currentInvestor, investedValue);
         return true;
     }
 
@@ -183,9 +185,9 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         status = Status.INVESTED;
-        uint256 _value = this.balance;
+        uint256 _value = address(this).balance;
         owner.transfer(_value);
-        Withdrawal(owner, investor, _value);
+        emit Withdrawal(owner, investor, _value);
         return true;
     }
 
@@ -199,8 +201,10 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        var (currentInvestor, investedValue) = makeAvailable();
-        Refused(owner, currentInvestor, investedValue);
+        address currentInvestor;
+        uint256 investedValue;
+        (currentInvestor, investedValue) = makeAvailable();
+        emit Refused(owner, currentInvestor, investedValue);
         return true;
     }
 
@@ -217,7 +221,7 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.FOR_SALE;
         sellData.value = _sellValue;
-        ForSale(msg.sender, _sellValue);
+        emit ForSale(msg.sender, _sellValue);
         return true;
     }
 
@@ -233,7 +237,7 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.INVESTED;
         sellData.value = uint256(0);
-        CanceledSell(investor, value);
+        emit CanceledSell(investor, value);
         return true;
     }
 
@@ -249,7 +253,7 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.PENDING_INVESTOR_AGREEMENT;
         sellData.buyer = _buyer;
-        Invested(investor, _buyer, msg.value);
+        emit Invested(investor, _buyer, msg.value);
         return true;
     }
 
@@ -265,10 +269,10 @@ contract AssetLibrary is AssetEvents {
         require(msg.sender == protocol || msg.sender == sellData.buyer);
         status = Status.FOR_SALE;
         address buyer = sellData.buyer;
-        uint256 _value = this.balance;
+        uint256 _value = address(this).balance;
         buyer.transfer(_value);
         sellData.buyer = address(0);
-        Canceled(investor, buyer, _value);
+        emit Canceled(investor, buyer, _value);
         return true;
     }
    
@@ -284,10 +288,10 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.FOR_SALE;
         address buyer = sellData.buyer;
-        uint256 _value = this.balance;
+        uint256 _value = address(this).balance;
         buyer.transfer(_value);
         sellData.buyer = address(0);
-        Refused(investor, buyer, _value);
+        emit Refused(investor, buyer, _value);
         return true;
     }
 
@@ -303,13 +307,13 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.INVESTED;
         address currentInvestor = investor;
-        uint256 _value = this.balance;
+        uint256 _value = address(this).balance;
         investor = sellData.buyer;
         boughtValue = sellData.value;
         sellData.buyer = address(0);
         sellData.value = uint256(0);
         currentInvestor.transfer(_value);
-        Withdrawal(currentInvestor, investor, _value);
+        emit Withdrawal(currentInvestor, investor, _value);
         return true;
     }
 
@@ -332,10 +336,10 @@ contract AssetLibrary is AssetEvents {
             withdrawTokens(recipient, tokenFuel);
         }
         if (currentStatus == Status.PENDING_INVESTOR_AGREEMENT) {
-            sellData.buyer.transfer(this.balance.sub(msg.value));
+            sellData.buyer.transfer(address(this).balance.sub(msg.value));
         }
         investor.transfer(msg.value);
-        Returned(owner, investor, msg.value, _isDelayed);
+        emit Returned(owner, investor, msg.value, _isDelayed);
         return true;
     }
 
@@ -352,7 +356,7 @@ contract AssetLibrary is AssetEvents {
     {
         require(token.transferFrom(msg.sender, this, _amount));
         tokenFuel = tokenFuel.add(_amount);
-        Supplied(owner, _amount, tokenFuel);
+        emit Supplied(owner, _amount, tokenFuel);
         return true;
     }
 

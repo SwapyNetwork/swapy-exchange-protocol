@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 import "./investment/InvestmentAsset.sol";
 import "./investment/AssetLibrary.sol";
@@ -69,7 +69,7 @@ contract SwapyExchange {
         returns(bool)
     {
         address[] memory newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn);
-        Offers(msg.sender, VERSION, newAssets);
+        emit Offers(msg.sender, VERSION, newAssets);
         return true;
     }
 
@@ -121,7 +121,7 @@ contract SwapyExchange {
             AssetLibrary asset = AssetLibrary(_assets[index]);  
             require(asset.invest.value(value)(msg.sender));
         }
-        Investments(msg.sender, _assets, msg.value);
+        emit Investments(msg.sender, _assets, msg.value);
         return true;
     }
 
@@ -195,7 +195,7 @@ contract SwapyExchange {
             AssetLibrary asset = AssetLibrary(_assets[index]);
             require(msg.sender == asset.investor());
             require(asset.sell(_values[index]));
-            ForSale(msg.sender, _assets[index], _values[index]);
+            emit ForSale(msg.sender, _assets[index], _values[index]);
         }
         return true;
     }
@@ -230,7 +230,7 @@ contract SwapyExchange {
         uint256 assetValue = msg.value;
         AssetLibrary asset = AssetLibrary(_asset);
         require(asset.buy.value(assetValue)(msg.sender));
-        Bought(msg.sender, _asset, msg.value);
+        emit Bought(msg.sender, _asset, msg.value);
         return true;
     }
     
@@ -282,7 +282,8 @@ contract SwapyExchange {
     {
         for(uint index = 0; index < _assets.length; index++) {
             AssetLibrary asset = AssetLibrary(_assets[index]);
-            var (,buyer) = asset.sellData();
+            address buyer;
+            (,buyer) = asset.sellData();
             require(msg.sender == buyer);
             require(asset.cancelSale());
         }
