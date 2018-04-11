@@ -1,7 +1,7 @@
 pragma solidity ^0.4.21;
 
-import './AssetEvents.sol';
-import '../token/Token.sol';
+import "./AssetEvents.sol";
+import "../token/Token.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**

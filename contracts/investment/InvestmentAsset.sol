@@ -1,6 +1,6 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
-import '../token/Token.sol';
+import "../token/Token.sol";
 
 /**
  * @title Investment Asset 
