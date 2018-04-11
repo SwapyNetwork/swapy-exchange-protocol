@@ -20,8 +20,6 @@
     "chai-bignumber": "^2.0.2",
     "ethereumjs-wallet": "^0.6.0",
     "ganache-cli": "^6.0.3",
-    "python": "0.0.4",
-    "solc": "^0.4.19",
     "truffle": "^4.1.5",
     "truffle-hdwallet-provider": "0.0.3",
     "web3": "^0.18.4",
