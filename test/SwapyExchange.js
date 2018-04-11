@@ -87,7 +87,7 @@ contract('SwapyExchange', async accounts => {
                 assets,
                 {from: creditCompany}
             )
-            const event = logs.find(e => e.event === 'Offers')
+            const event = logs.find(e => e.event === 'LogOffers')
             const args = event.args
             expect(args).to.include.all.keys([ '_from', '_protocolVersion', '_assets' ])
             assetsAddress = args._assets
@@ -131,7 +131,7 @@ contract('SwapyExchange', async accounts => {
             }
             const currentInvestorBalance = await getBalance(investor)
             const gasUsed = new BigNumber(receipt.gasUsed)
-            const event = logs.find(e => e.event === 'Investments')
+            const event = logs.find(e => e.event === 'LogInvestments')
             const args = event.args
             expect(args).to.include.all.keys([ '_investor', '_assets', '_value' ])
             currentInvestorBalance.toNumber().should.equal(
@@ -290,7 +290,7 @@ contract('SwapyExchange', async accounts => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             const values = [sellValue, sellValue, sellValue, sellValue, sellValue]
             const { logs } = await protocol.sellAssets(assets, values, { from: investor })
-            const event = logs.find(e => e.event === 'ForSale')
+            const event = logs.find(e => e.event === 'LogForSale')
             expect(event.args).to.include.all.keys([ '_investor', '_asset', '_value' ])
         })
 
@@ -314,7 +314,7 @@ contract('SwapyExchange', async accounts => {
             const previousAssetBalance = await getBalance(asset)
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await protocol.buyAsset(asset, { from: secondInvestor, value: sellValue })
-            const event = logs.find(e => e.event === 'Bought')
+            const event = logs.find(e => e.event === 'LogBought')
             expect(event.args).to.include.all.keys([ '_buyer', '_asset', '_value' ])
             const currentAssetBalance = await getBalance(asset)
             const currentBuyerBalance = await getBalance(secondInvestor)

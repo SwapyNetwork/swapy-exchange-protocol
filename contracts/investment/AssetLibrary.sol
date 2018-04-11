@@ -136,7 +136,7 @@ contract AssetLibrary is AssetEvents {
         assert(tokenFuel >= _amount);
         tokenFuel = tokenFuel.sub(_amount);
         require(token.transfer(_recipient, _amount));
-        emit TokenWithdrawal(_recipient, _amount);
+        emit LogTokenWithdrawal(_recipient, _amount);
         return true;
     }
 
@@ -153,7 +153,7 @@ contract AssetLibrary is AssetEvents {
         status = Status.PENDING_OWNER_AGREEMENT;
         investor = _investor;
         investedAt = now;
-        emit Invested(owner, investor, address(this).balance);
+        emit LogInvested(owner, investor, address(this).balance);
         return true;
     }
 
@@ -170,7 +170,7 @@ contract AssetLibrary is AssetEvents {
         address currentInvestor;
         uint256 investedValue;
         (currentInvestor, investedValue) = makeAvailable();
-        emit Canceled(owner, currentInvestor, investedValue);
+        emit LogCanceled(owner, currentInvestor, investedValue);
         return true;
     }
 
@@ -187,7 +187,7 @@ contract AssetLibrary is AssetEvents {
         status = Status.INVESTED;
         uint256 _value = address(this).balance;
         owner.transfer(_value);
-        emit Withdrawal(owner, investor, _value);
+        emit LogWithdrawal(owner, investor, _value);
         return true;
     }
 
@@ -204,7 +204,7 @@ contract AssetLibrary is AssetEvents {
         address currentInvestor;
         uint256 investedValue;
         (currentInvestor, investedValue) = makeAvailable();
-        emit Refused(owner, currentInvestor, investedValue);
+        emit LogRefused(owner, currentInvestor, investedValue);
         return true;
     }
 
@@ -221,7 +221,7 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.FOR_SALE;
         sellData.value = _sellValue;
-        emit ForSale(msg.sender, _sellValue);
+        emit LogForSale(msg.sender, _sellValue);
         return true;
     }
 
@@ -237,7 +237,7 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.INVESTED;
         sellData.value = uint256(0);
-        emit CanceledSell(investor, value);
+        emit LogCanceledSell(investor, value);
         return true;
     }
 
@@ -253,7 +253,7 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.PENDING_INVESTOR_AGREEMENT;
         sellData.buyer = _buyer;
-        emit Invested(investor, _buyer, msg.value);
+        emit LogInvested(investor, _buyer, msg.value);
         return true;
     }
 
@@ -272,7 +272,7 @@ contract AssetLibrary is AssetEvents {
         uint256 _value = address(this).balance;
         buyer.transfer(_value);
         sellData.buyer = address(0);
-        emit Canceled(investor, buyer, _value);
+        emit LogCanceled(investor, buyer, _value);
         return true;
     }
    
@@ -291,7 +291,7 @@ contract AssetLibrary is AssetEvents {
         uint256 _value = address(this).balance;
         buyer.transfer(_value);
         sellData.buyer = address(0);
-        emit Refused(investor, buyer, _value);
+        emit LogRefused(investor, buyer, _value);
         return true;
     }
 
@@ -313,7 +313,7 @@ contract AssetLibrary is AssetEvents {
         sellData.buyer = address(0);
         sellData.value = uint256(0);
         currentInvestor.transfer(_value);
-        emit Withdrawal(currentInvestor, investor, _value);
+        emit LogWithdrawal(currentInvestor, investor, _value);
         return true;
     }
 
@@ -339,7 +339,7 @@ contract AssetLibrary is AssetEvents {
             sellData.buyer.transfer(address(this).balance.sub(msg.value));
         }
         investor.transfer(msg.value);
-        emit Returned(owner, investor, msg.value, _isDelayed);
+        emit LogReturned(owner, investor, msg.value, _isDelayed);
         return true;
     }
 
@@ -356,7 +356,7 @@ contract AssetLibrary is AssetEvents {
     {
         require(token.transferFrom(msg.sender, this, _amount));
         tokenFuel = tokenFuel.add(_amount);
-        emit Supplied(owner, _amount, tokenFuel);
+        emit LogSupplied(owner, _amount, tokenFuel);
         return true;
     }
 

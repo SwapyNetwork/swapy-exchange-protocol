@@ -28,10 +28,10 @@ contract SwapyExchange {
     /**
      * Events   
      */
-    event Offers(address indexed _from, bytes8 _protocolVersion, address[] _assets);
-    event Investments(address indexed _investor, address[] _assets, uint256 _value);
-    event ForSale(address indexed _investor, address _asset, uint256 _value);
-    event Bought(address indexed _buyer, address _asset, uint256 _value);
+    event LogOffers(address indexed _from, bytes8 _protocolVersion, address[] _assets);
+    event LogInvestments(address indexed _investor, address[] _assets, uint256 _value);
+    event LogForSale(address indexed _investor, address _asset, uint256 _value);
+    event LogBought(address indexed _buyer, address _asset, uint256 _value);
 
     /**
      * Modifiers   
@@ -69,7 +69,7 @@ contract SwapyExchange {
         returns(bool)
     {
         address[] memory newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn);
-        emit Offers(msg.sender, VERSION, newAssets);
+        emit LogOffers(msg.sender, VERSION, newAssets);
         return true;
     }
 
@@ -121,7 +121,7 @@ contract SwapyExchange {
             AssetLibrary asset = AssetLibrary(_assets[index]);  
             require(asset.invest.value(value)(msg.sender));
         }
-        emit Investments(msg.sender, _assets, msg.value);
+        emit LogInvestments(msg.sender, _assets, msg.value);
         return true;
     }
 
@@ -195,7 +195,7 @@ contract SwapyExchange {
             AssetLibrary asset = AssetLibrary(_assets[index]);
             require(msg.sender == asset.investor());
             require(asset.sell(_values[index]));
-            emit ForSale(msg.sender, _assets[index], _values[index]);
+            emit LogForSale(msg.sender, _assets[index], _values[index]);
         }
         return true;
     }
@@ -230,7 +230,7 @@ contract SwapyExchange {
         uint256 assetValue = msg.value;
         AssetLibrary asset = AssetLibrary(_asset);
         require(asset.buy.value(assetValue)(msg.sender));
-        emit Bought(msg.sender, _asset, msg.value);
+        emit LogBought(msg.sender, _asset, msg.value);
         return true;
     }
     
