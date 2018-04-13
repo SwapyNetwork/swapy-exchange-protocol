@@ -10,20 +10,20 @@ contract TestSwapyExchange {
     SwapyExchange protocol = SwapyExchange(DeployedAddresses.SwapyExchange());
     ThrowProxy throwProxy = new ThrowProxy(address(protocol)); 
     SwapyExchange throwableProtocol = SwapyExchange(address(throwProxy));
-    uint256[] _assets;
+    uint256[] _assetValues;
 
     // Testing the createOffer() function
-    function testUserCreateOffer() public {
-        _assets.push(uint256(500));
-        _assets.push(uint256(500));
-        _assets.push(uint256(500));
+    function testUserCanCreateOffer() public {
+        _assetValues.push(uint256(500));
+        _assetValues.push(uint256(500));
+        _assetValues.push(uint256(500));
         bool result = protocol.createOffer(
             uint256(360),
             uint256(10),
             bytes5("USD"),
-            _assets
+            _assetValues
         );
-        Assert.equal(result, true, "Five assets must be created");
+        Assert.equal(result, true, "Assets must be created");
     }
     
 }
