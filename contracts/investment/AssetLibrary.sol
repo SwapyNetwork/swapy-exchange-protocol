@@ -87,7 +87,12 @@ contract AssetLibrary is AssetEvents {
     modifier protocolOrOwner() {
         require(msg.sender == protocol || msg.sender == owner);
         _;
+    }
+    modifier isValidAddress(address _addr) {
+        require(_addr != 0);
+        _;
     }    
+    
     modifier onlyDelayed(){
         require(isDelayed());
         _;
@@ -146,9 +151,10 @@ contract AssetLibrary is AssetEvents {
      * @return Success
      */ 
     function invest(address _investor) payable
-         hasStatus(Status.AVAILABLE)
-         external
-         returns(bool)
+        isValidAddress(_investor)
+        hasStatus(Status.AVAILABLE)
+        external
+        returns(bool)
     {
         status = Status.PENDING_OWNER_AGREEMENT;
         investor = _investor;
@@ -247,6 +253,7 @@ contract AssetLibrary is AssetEvents {
      * @return Success
      */
     function buy(address _buyer) payable
+        isValidAddress(_buyer)
         hasStatus(Status.FOR_SALE)
         external
         returns(bool)
