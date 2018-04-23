@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "../token/Token.sol";
 
@@ -69,7 +69,7 @@ contract InvestmentAsset {
      * @param _grossReturn Gross return on investment
      * @param _token Collateral Token address
      */
-    function InvestmentAsset(
+    constructor(
         address _library,
         address _protocol,
         address _owner,
@@ -113,7 +113,7 @@ contract InvestmentAsset {
     function () payable
         external
     {
-        require(assetLibrary.delegatecall(msg.data));
+        require(assetLibrary.delegatecall(msg.data), "An error ocured when calling library");
     }
 
 }

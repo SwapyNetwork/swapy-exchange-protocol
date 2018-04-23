@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "./AssetEvents.sol";
 import "../token/Token.sol";
@@ -72,29 +72,29 @@ contract AssetLibrary is AssetEvents {
     }
     // Checks if the owner is the caller
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "The user isn't the owner");
         _;
     }
     // Checks if the investor is the caller
     modifier onlyInvestor() {
-        require(msg.sender == investor);
+        require(msg.sender == investor, "The user isn't the investor");
         _;
     }
     modifier protocolOrInvestor() {
-        require(msg.sender == protocol || msg.sender == investor);
+        require(msg.sender == protocol || msg.sender == investor, "The user isn't the protocol or investor");
         _;
     }
     modifier protocolOrOwner() {
-        require(msg.sender == protocol || msg.sender == owner);
+        require(msg.sender == protocol || msg.sender == owner, "The user isn't the protocol or owner");
         _;
     }
     modifier isValidAddress(address _addr) {
-        require(_addr != 0);
+        require(_addr != address(0), "Invalid address");
         _;
     }    
     
     modifier onlyDelayed(){
-        require(isDelayed());
+        require(isDelayed(), "The return of investment isn't dalayed");
         _;
     }
 
@@ -140,7 +140,7 @@ contract AssetLibrary is AssetEvents {
     {
         assert(tokenFuel >= _amount);
         tokenFuel = tokenFuel.sub(_amount);
-        require(token.transfer(_recipient, _amount));
+        require(token.transfer(_recipient, _amount), "An error ocured in tokens transfer");
         emit LogTokenWithdrawal(_recipient, _amount);
         return true;
     }
@@ -273,7 +273,7 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        require(msg.sender == protocol || msg.sender == sellData.buyer);
+        require(msg.sender == protocol || msg.sender == sellData.buyer, "The user isn't the protocol or buyer");
         status = Status.FOR_SALE;
         address buyer = sellData.buyer;
         uint256 _value = address(this).balance;
@@ -361,7 +361,7 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        require(token.transferFrom(msg.sender, this, _amount));
+        require(token.transferFrom(msg.sender, this, _amount), "An error ocured in tokens transfer");
         tokenFuel = tokenFuel.add(_amount);
         emit LogSupplied(owner, _amount, tokenFuel);
         return true;

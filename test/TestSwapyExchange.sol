@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
@@ -11,19 +11,20 @@ contract TestSwapyExchange {
     ThrowProxy throwProxy = new ThrowProxy(address(protocol)); 
     SwapyExchange throwableProtocol = SwapyExchange(address(throwProxy));
     uint256[] _assetValues;
+    address[] assets;
 
     // Testing the createOffer() function
     function testUserCanCreateOffer() public {
         _assetValues.push(uint256(500));
         _assetValues.push(uint256(500));
         _assetValues.push(uint256(500));
-        bool result = protocol.createOffer(
+        assets = protocol.createOffer(
             uint256(360),
             uint256(10),
             bytes5("USD"),
             _assetValues
         );
-        Assert.equal(result, true, "Assets must be created");
+        Assert.equal(assets.length, 3, "Assets must be created");
     }
     
 }

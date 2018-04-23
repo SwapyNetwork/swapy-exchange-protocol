@@ -1,7 +1,6 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 import "./investment/InvestmentAsset.sol";
-import "./investment/AssetLibrary.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
@@ -37,7 +36,7 @@ contract SwapyExchange {
      * Modifiers   
      */
     modifier notEmpty(address[] _assets){
-        require(_assets.length > 0);
+        require(_assets.length > 0, "Empty list of assets");
         _;
     }
 
@@ -45,7 +44,7 @@ contract SwapyExchange {
      * @param _assetLibrary Address of library that contains asset's logic
      * @param _token Address of Swapy Token
      */   
-    function SwapyExchange(address _assetLibrary, address _token)
+    constructor(address _assetLibrary, address _token)
         public
     {
         assetLibrary = _assetLibrary;
@@ -66,11 +65,10 @@ contract SwapyExchange {
         bytes5 _currency,
         uint256[] _assets)
         external
-        returns(bool)
+        returns(address[] newAssets)
     {
-        address[] memory newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn);
+        newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn);
         emit LogOffers(msg.sender, VERSION, newAssets);
-        return true;
     }
 
     /**
@@ -116,10 +114,13 @@ contract SwapyExchange {
         external
         returns(bool)
     {
-        require((value.mul(_assets.length) == msg.value) && value > 0);
+        require(
+            (value.mul(_assets.length) == msg.value) && value > 0,
+            "The value transfered doesn't match with the unit value times the number of assets"
+        );
         for (uint index = 0; index < _assets.length; index++) {
-            AssetLibrary asset = AssetLibrary(_assets[index]);  
-            require(asset.invest.value(value)(msg.sender));
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);  
+            require(address(asset).call.value(value)(abi.encodeWithSignature("invest(address)",address(msg.sender))), "An error ocured when investing");
         }
         emit LogInvestments(msg.sender, _assets, msg.value);
         return true;
@@ -136,9 +137,9 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++){
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.owner());
-            require(asset.withdrawFunds());
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.owner(), "The user isn't asset's owner");
+            require(address(asset).call(abi.encodeWithSignature("withdrawFunds()")), "An error ocured when withdrawing asset's funds");
         }
         return true;
     }
@@ -154,9 +155,9 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++){
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.owner());
-            require(asset.refuseInvestment());
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.owner(), "The user isn't asset's owner");
+            require(address(asset).call(abi.encodeWithSignature("refuseInvestment()")), "An error ocured when refusing investment");
         }
         return true;
     }
@@ -172,9 +173,9 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++){
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.investor());
-            require(asset.cancelInvestment());
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.investor(), "The user isn't asset's investor");
+            require(address(asset).call(abi.encodeWithSignature("cancelInvestment()")), "An error ocured when canceling investment");
         }
         return true;
     }
@@ -192,9 +193,9 @@ contract SwapyExchange {
     {
         require(_assets.length == _values.length);
         for(uint index = 0; index < _assets.length; index++){
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.investor());
-            require(asset.sell(_values[index]));
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.investor(), "The user isn't asset's investor");
+            require(address(asset).call(abi.encodeWithSignature("sell(uint256)",_values[index])), "An error ocured when puting the asset on sale");
             emit LogForSale(msg.sender, _assets[index], _values[index]);
         }
         return true;
@@ -211,9 +212,9 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++){
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.investor());
-            require(asset.cancelSellOrder());
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.investor(), "The user isn't asset's investor");
+            require(address(asset).call(abi.encodeWithSignature("cancelSellOrder()")), "An error ocured when removing the asset from market place");
         }
         return true;
     }
@@ -228,8 +229,8 @@ contract SwapyExchange {
         returns(bool)
     {
         uint256 assetValue = msg.value;
-        AssetLibrary asset = AssetLibrary(_asset);
-        require(asset.buy.value(assetValue)(msg.sender));
+        InvestmentAsset asset = InvestmentAsset(_asset);
+        require(address(asset).call.value(assetValue)(abi.encodeWithSignature("buy(address)",msg.sender)), "An error ocured when buying the asset");
         emit LogBought(msg.sender, _asset, msg.value);
         return true;
     }
@@ -245,9 +246,9 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++) {
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.investor());
-            require(asset.acceptSale());
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.investor(), "The user isn't asset's investor");
+            require(address(asset).call(abi.encodeWithSignature("acceptSale()")), "An error ocured when accepting sale");
         }
         return true;
     }
@@ -263,9 +264,9 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++) {
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.investor());
-            require(asset.refuseSale());
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.investor(), "The user isn't asset's investor");
+            require(address(asset).call(abi.encodeWithSignature("refuseSale()")), "An error ocured when refusing sale");
         }
         return true;
     }
@@ -281,11 +282,11 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++) {
-            AssetLibrary asset = AssetLibrary(_assets[index]);
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
             address buyer;
             (,buyer) = asset.sellData();
-            require(msg.sender == buyer);
-            require(asset.cancelSale());
+            require(msg.sender == buyer, "The user isn't asset's buyer");
+            require(address(asset).call(abi.encodeWithSignature("cancelSale()")), "An error ocured when canceling sale");
         }
         return true;
     }
@@ -301,9 +302,9 @@ contract SwapyExchange {
         returns(bool)
     {
         for(uint index = 0; index < _assets.length; index++) {
-            AssetLibrary asset = AssetLibrary(_assets[index]);
-            require(msg.sender == asset.investor());
-            require(asset.requireTokenFuel());
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);
+            require(msg.sender == asset.investor(), "The user isn't asset's investor");
+            require(address(asset).call(abi.encodeWithSignature("requireTokenFuel()")), "An ocured when requiring asset's collateral");
         }
         return true;
     }
