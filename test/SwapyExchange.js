@@ -213,7 +213,7 @@ contract('SwapyExchange', async accounts => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
             await protocol.withdrawFunds(assets, { from: investor })
-                .should.be.rejectedWith('VM Exception')
+            .should.be.rejectedWith('VM Exception')
         })
 
         it("should withdraw funds on many assets", async () => {
@@ -303,7 +303,7 @@ contract('SwapyExchange', async accounts => {
         it("should cancel a sell", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             const { receipt } = await protocol.cancelSellOrder(assets, { from: investor })
-            receipt.status.should.equal(1)
+            receipt.status.should.equal('0x01')
         })
 
         it("should buy an asset" , async () => {

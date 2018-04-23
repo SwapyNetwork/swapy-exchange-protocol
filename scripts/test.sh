@@ -30,7 +30,7 @@ start_testrpc() {
     --account="0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501209,1000000000000000000000000000000"
   )
 
-  node_modules/.bin/ganache-cli "${accounts[@]}" --g 100000000000 > /dev/null &
+  node_modules/.bin/ganache-cli "${accounts[@]}" --gasLimit 0xfffffffffff --g 100000000000 > /dev/null &
  
   testrpc_pid=$!
 }

@@ -4,20 +4,23 @@ import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/investment/InvestmentAsset.sol";
 import "../contracts/investment/AssetLibrary.sol";
+import "../contracts/SwapyExchange.sol";
 import "./helpers/ThrowProxy.sol";
 
 contract TestInvestmentAsset {
+    SwapyExchange protocol = SwapyExchange(DeployedAddresses.SwapyExchange());
+    address token = protocol.token();
 
     InvestmentAsset asset = new InvestmentAsset(
-        DeployedAddresses.AssetLibrary(),
-        DeployedAddresses.SwapyExchange(),
+        protocol.assetLibrary(),
+        address(protocol),
         address(this),
         bytes8("T-1.0.0"),
         bytes5("USD"),
         uint256(500),
         uint256(360),
         uint256(10),
-        DeployedAddresses.Token()
+        token
     );
 
     ThrowProxy throwProxy = new ThrowProxy(address(asset)); 
@@ -25,7 +28,7 @@ contract TestInvestmentAsset {
 
     // Truffle looks for `initialBalance` when it compiles the test suite 
     // and funds this test contract with the specified amount on deployment.
-    uint public initialBalance = 10 ether;
+    uint public initialBalance = 100 ether;
     
     // Testing invest() function
     function testUserCanInvest() public {
@@ -38,7 +41,7 @@ contract TestInvestmentAsset {
     
     // Testing cancelInvestment() function
     function testInvestorCanCancelInvestment() public {
-        bool result = address(asset).call(abi.encodeWithSignature("cancelInvestment()"));
+        bool result = address(asset).call(abi.encodeWithSignature("cancelInvestment"));
         Assert.equal(result, true, "Investment must be canceled");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isAvailable = currentStatus == InvestmentAsset.Status.AVAILABLE;
@@ -48,7 +51,7 @@ contract TestInvestmentAsset {
     // Testing refuseInvestment() function
     function testOwnerCanRefuseInvestment() public {
         address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
-        bool result = address(asset).call(abi.encodeWithSignature("refuseInvestment()"));
+        bool result = address(asset).call(abi.encodeWithSignature("refuseInvestment"));
         Assert.equal(result, true, "Investment must be refused");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isAvailable = currentStatus == InvestmentAsset.Status.AVAILABLE;
@@ -58,7 +61,7 @@ contract TestInvestmentAsset {
     // Testing withdrawFunds() function
     function testOwnerCanWithdrawFunds() public {
         address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
-        bool result = address(asset).call(abi.encodeWithSignature("withdrawFunds()"));
+        bool result = address(asset).call(abi.encodeWithSignature("withdrawFunds"));
         Assert.equal(result, true, "Investment must be accepted");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
@@ -67,7 +70,7 @@ contract TestInvestmentAsset {
 
     // Testing sell() function
     function testInvestorCanPutOnSale() public {
-        bool result = address(asset).call(abi.encodeWithSignature("sell()",uint256(525)));
+        bool result = address(asset).call(abi.encodeWithSignature("sell(uint256)",uint256(525)));
         Assert.equal(result, true, "Asset must be put up on sale");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isForSale = currentStatus == InvestmentAsset.Status.FOR_SALE;
@@ -76,7 +79,7 @@ contract TestInvestmentAsset {
 
     // Testing cancelSellOrder() function
     function testInvestorCanRemoveOnSale() public {
-        bool result = address(asset).call(abi.encodeWithSignature("cancelSellOrder()"));
+        bool result = address(asset).call(abi.encodeWithSignature("cancelSellOrder"));
         Assert.equal(result, true, "Asset must be removed for sale");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
@@ -95,7 +98,7 @@ contract TestInvestmentAsset {
 
     // Testing cancelSale() function
     function testBuyerCanCancelPurchase() public {
-        bool result = address(asset).call(abi.encodeWithSignature("cancelSale()"));
+        bool result = address(asset).call(abi.encodeWithSignature("cancelSale"));
         Assert.equal(result, true, "Purchase must be canceled");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isForSale = currentStatus == InvestmentAsset.Status.FOR_SALE;
@@ -104,7 +107,7 @@ contract TestInvestmentAsset {
 
     // Testing refuseSale() function
     function testInvestorCanRefusePurchase() public {
-        bool result = address(asset).call(abi.encodeWithSignature("refuseSale()"));
+        bool result = address(asset).call(abi.encodeWithSignature("refuseSale"));
         Assert.equal(result, true, "Purchase must be refused");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isForSale = currentStatus == InvestmentAsset.Status.FOR_SALE;
@@ -113,7 +116,7 @@ contract TestInvestmentAsset {
 
     // Testing acceptSale() function
     function testInvestorCanAcceptSale() public {
-        bool result = address(asset).call(abi.encodeWithSignature("acceptSale()"));
+        bool result = address(asset).call(abi.encodeWithSignature("acceptSale"));
         Assert.equal(result, true, "Sale must be accepted");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
