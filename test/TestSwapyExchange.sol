@@ -24,7 +24,7 @@ contract TestSwapyExchange {
             bytes5("USD"),
             _assetValues
         );
-        Assert.equal(assets.length, 3, "Assets must be created");
+        Assert.equal(assets.length, 3, "3 Assets must be created");
     }
     
 }

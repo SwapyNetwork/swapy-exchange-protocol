@@ -3,7 +3,6 @@ pragma solidity ^0.4.23;
 import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/investment/InvestmentAsset.sol";
-import "../contracts/investment/AssetLibrary.sol";
 import "../contracts/SwapyExchange.sol";
 import "./helpers/ThrowProxy.sol";
 
@@ -24,7 +23,7 @@ contract TestInvestmentAsset {
     );
 
     ThrowProxy throwProxy = new ThrowProxy(address(asset)); 
-    InvestmentAsset throwableAsset = InvestmentAsset(address(asset));
+    InvestmentAsset throwableAsset = InvestmentAsset(address(throwProxy));
 
     // Truffle looks for `initialBalance` when it compiles the test suite 
     // and funds this test contract with the specified amount on deployment.
@@ -34,7 +33,16 @@ contract TestInvestmentAsset {
         
     }
 
+    function shouldThrow(bool result) public {
+        Assert.isFalse(result, "Should throw an exception");
+    }
+
     // Testing invest() function
+    function testInvestorAddressMustBeValid() {
+        address(throwableAsset).call(abi.encodeWithSignature("invest(address)", address(0)));
+        throwProxy.shouldThrow();
+    }
+
     function testUserCanInvest() public {
         bool result = address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
         Assert.equal(result, true, "Asset must be invested");
@@ -44,6 +52,11 @@ contract TestInvestmentAsset {
     }
     
     // Testing cancelInvestment() function
+    function testOnlyInvestorCanCancelInvestment() public {
+        address(throwableAsset).call(abi.encodeWithSignature("cancelInvestment()"));
+        throwProxy.shouldThrow();
+    }
+
     function testInvestorCanCancelInvestment() public {
         bool result = address(asset).call(abi.encodeWithSignature("cancelInvestment()"));
         Assert.equal(result, true, "Investment must be canceled");
@@ -53,8 +66,13 @@ contract TestInvestmentAsset {
     }
     
     // Testing refuseInvestment() function
-    function testOwnerCanRefuseInvestment() public {
+    function testOnlyOwnerCanRefuseInvestment() public {
         address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
+        address(throwableAsset).call(abi.encodeWithSignature("refuseInvestment()"));
+        throwProxy.shouldThrow();
+    }
+    
+    function testOwnerCanRefuseInvestment() public {
         bool result = address(asset).call(abi.encodeWithSignature("refuseInvestment()"));
         Assert.equal(result, true, "Investment must be refused");
         InvestmentAsset.Status currentStatus = asset.status();
@@ -63,8 +81,13 @@ contract TestInvestmentAsset {
     }
 
     // Testing withdrawFunds() function
-    function testOwnerCanWithdrawFunds() public {
+    function testOnlyOwnerCanWithdrawFunds() public {
         address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
+        address(throwableAsset).call(abi.encodeWithSignature("withdrawFunds()"));
+        throwProxy.shouldThrow();
+    }
+    
+    function testOwnerCanWithdrawFunds() public {
         bool result = address(asset).call(abi.encodeWithSignature("withdrawFunds()"));
         Assert.equal(result, true, "Investment must be accepted");
         InvestmentAsset.Status currentStatus = asset.status();
@@ -73,6 +96,11 @@ contract TestInvestmentAsset {
     }
 
     // Testing sell() function
+    function testOnlyInvestorCanPutOnSale() public {
+        address(throwableAsset).call(abi.encodeWithSignature("sell(uint256)",uint256(525)));
+        throwProxy.shouldThrow();
+    }
+
     function testInvestorCanPutOnSale() public {
         bool result = address(asset).call(abi.encodeWithSignature("sell(uint256)",uint256(525)));
         Assert.equal(result, true, "Asset must be put up on sale");
@@ -82,6 +110,11 @@ contract TestInvestmentAsset {
     }
 
     // Testing cancelSellOrder() function
+    function testOnlyInvestorCanRemoveOnSale() public {
+        address(throwableAsset).call(abi.encodeWithSignature("cancelSellOrder()"));
+        throwProxy.shouldThrow();
+    }
+
     function testInvestorCanRemoveOnSale() public {
         bool result = address(asset).call(abi.encodeWithSignature("cancelSellOrder()"));
         Assert.equal(result, true, "Asset must be removed for sale");
@@ -91,8 +124,13 @@ contract TestInvestmentAsset {
     }
     
     // Testing buy() function
-    function testUserCanBuyAsset() public {
+    function testBuyerAddressMustBeValid() {
         address(asset).call(abi.encodeWithSignature("sell(uint256)", uint256(525)));
+        address(throwableAsset).call.value(1050 finney)(abi.encodeWithSignature("buyer(address)", address(0)));
+        throwProxy.shouldThrow();
+    }
+
+    function testUserCanBuyAsset() public {
         bool result = address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
         Assert.equal(result, true, "Asset must be bought");
         InvestmentAsset.Status currentStatus = asset.status();
@@ -101,6 +139,11 @@ contract TestInvestmentAsset {
     }
 
     // Testing cancelSale() function
+    function testOnlyBuyerCanCancelPurchase() public {
+        address(throwableAsset).call(abi.encodeWithSignature("cancelSale()"));
+        throwProxy.shouldThrow();
+    }
+
     function testBuyerCanCancelPurchase() public {
         bool result = address(asset).call(abi.encodeWithSignature("cancelSale()"));
         Assert.equal(result, true, "Purchase must be canceled");
@@ -110,8 +153,13 @@ contract TestInvestmentAsset {
     }
 
     // Testing refuseSale() function
-    function testInvestorCanRefusePurchase() public {
+    function testOnlyInvestorCanRefusePurchase() public {
         address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
+        address(throwableAsset).call(abi.encodeWithSignature("refuseSale()"));
+        throwProxy.shouldThrow();
+    }
+    
+    function testInvestorCanRefusePurchase() public {
         bool result = address(asset).call(abi.encodeWithSignature("refuseSale()"));
         Assert.equal(result, true, "Purchase must be refused");
         InvestmentAsset.Status currentStatus = asset.status();
@@ -120,8 +168,13 @@ contract TestInvestmentAsset {
     }
 
     // Testing acceptSale() function
-    function testInvestorCanAcceptSale() public {
+    function testOnlyInvestorCanAcceptSale() public {
         address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
+        address(throwableAsset).call(abi.encodeWithSignature("acceptSale()"));
+        throwProxy.shouldThrow();
+    }
+
+    function testInvestorCanAcceptSale() public {
         bool result = address(asset).call(abi.encodeWithSignature("acceptSale()"));
         Assert.equal(result, true, "Sale must be accepted");
         InvestmentAsset.Status currentStatus = asset.status();

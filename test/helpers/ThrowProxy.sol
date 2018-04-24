@@ -6,18 +6,25 @@ import "truffle/Assert.sol";
 contract ThrowProxy {
     address public target;
     bytes data;
+    uint256 value;
 
     constructor(address _target) public {
         target = _target;
     }
 
     //prime the data using the fallback function.
-    function() public {
+    function() public payable {
         data = msg.data;
+        value = msg.value;
     }
 
     function execute() public returns (bool) {
-        return target.call(data);
+        if(value > 0){
+            return target.call.value(value)(data);
+        }else {
+            return target.call(data);
+        }
+        
     }
 
     function shouldThrow() public {
