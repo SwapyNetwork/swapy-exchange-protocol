@@ -24,7 +24,6 @@ contract ThrowProxy {
         }else {
             return target.call(data);
         }
-        
     }
 
     function shouldThrow() public {

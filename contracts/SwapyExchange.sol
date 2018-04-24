@@ -191,7 +191,7 @@ contract SwapyExchange {
         external
         returns(bool)
     {
-        require(_assets.length == _values.length);
+        require(_assets.length == _values.length, "All the assets should have a value on sale");
         for(uint index = 0; index < _assets.length; index++){
             InvestmentAsset asset = InvestmentAsset(_assets[index]);
             require(msg.sender == asset.investor(), "The user isn't asset's investor");
