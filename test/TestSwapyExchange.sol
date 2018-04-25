@@ -82,7 +82,6 @@ contract TestSwapyExchange {
     }
 
     // Testing sell() function
-    
     function testOnlyInvestorCanPutOnSale() public {
         _assetValues[0] += 25;
         _assetValues[1] += 25;
@@ -128,34 +127,32 @@ contract TestSwapyExchange {
         Assert.equal(result, true, "Purchase must be canceled");
     }
 
-    // // Testing refuseSale() function
-    // function testOnlyInvestorCanRefusePurchase() public {
-    //     address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
-    //     address(throwableAsset).call(abi.encodeWithSignature("refuseSale()"));
-    //     throwProxy.shouldThrow();
-    // }
+    // Testing refuseSale() function
+    function testOnlyInvestorCanRefusePurchase() public {
+        protocol.buyAsset.value(1050 finney)(assets[0]);
+        protocol.buyAsset.value(1050 finney)(assets[1]);
+        protocol.buyAsset.value(1050 finney)(assets[2]);
+        address(throwableProtocol).call(abi.encodeWithSignature("refuseSale(address[])", assets));
+        throwProxy.shouldThrow();
+    }
     
-    // function testInvestorCanRefusePurchase() public {
-    //     bool result = address(asset).call(abi.encodeWithSignature("refuseSale()"));
-    //     Assert.equal(result, true, "Purchase must be refused");
-    //     InvestmentAsset.Status currentStatus = asset.status();
-    //     bool isForSale = currentStatus == InvestmentAsset.Status.FOR_SALE;
-    //     Assert.equal(isForSale, true, "The asset must be available on market place");
-    // }
+    function testInvestorCanRefusePurchase() public {
+        bool result = protocol.refuseSale(assets);
+        Assert.equal(result, true, "Purchases must be refused");
+    }
 
-    // // Testing acceptSale() function
-    // function testOnlyInvestorCanAcceptSale() public {
-    //     address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
-    //     address(throwableAsset).call(abi.encodeWithSignature("acceptSale()"));
-    //     throwProxy.shouldThrow();
-    // }
+    // Testing acceptSale() function
+    function testOnlyInvestorCanAcceptSale() public {
+        protocol.buyAsset.value(1050 finney)(assets[0]);
+        protocol.buyAsset.value(1050 finney)(assets[1]);
+        protocol.buyAsset.value(1050 finney)(assets[2]);
+        address(throwableProtocol).call(abi.encodeWithSignature("acceptSale(address[])", assets));
+        throwProxy.shouldThrow();
+    }
 
-    // function testInvestorCanAcceptSale() public {
-    //     bool result = address(asset).call(abi.encodeWithSignature("acceptSale()"));
-    //     Assert.equal(result, true, "Sale must be accepted");
-    //     InvestmentAsset.Status currentStatus = asset.status();
-    //     bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
-    //     Assert.equal(isInvested, true, "The asset must be invested");
-    // }
+    function testInvestorCanAcceptSale() public {
+        bool result = protocol.acceptSale(assets);
+        Assert.equal(result, true, "Sales must be accepted");
+    }
 
 }

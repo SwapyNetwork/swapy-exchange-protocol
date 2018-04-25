@@ -382,3 +382,4 @@ contract AssetLibrary is AssetEvents {
     }
 
 }
+
