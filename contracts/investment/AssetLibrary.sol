@@ -140,7 +140,7 @@ contract AssetLibrary is AssetEvents {
     {
         assert(tokenFuel >= _amount);
         tokenFuel = tokenFuel.sub(_amount);
-        require(token.transfer(_recipient, _amount), "An error ocured in tokens transfer");
+        require(token.transfer(_recipient, _amount), "An error ocurred in tokens transfer");
         emit LogTokenWithdrawal(_recipient, _amount);
         return true;
     }
@@ -277,8 +277,8 @@ contract AssetLibrary is AssetEvents {
         status = Status.FOR_SALE;
         address buyer = sellData.buyer;
         uint256 _value = address(this).balance;
-        buyer.transfer(_value);
         sellData.buyer = address(0);
+        buyer.transfer(_value);
         emit LogCanceled(investor, buyer, _value);
         return true;
     }
@@ -296,8 +296,8 @@ contract AssetLibrary is AssetEvents {
         status = Status.FOR_SALE;
         address buyer = sellData.buyer;
         uint256 _value = address(this).balance;
-        buyer.transfer(_value);
         sellData.buyer = address(0);
+        buyer.transfer(_value);
         emit LogRefused(investor, buyer, _value);
         return true;
     }
@@ -361,7 +361,7 @@ contract AssetLibrary is AssetEvents {
         external
         returns(bool)
     {
-        require(token.transferFrom(msg.sender, this, _amount), "An error ocured in tokens transfer");
+        require(token.transferFrom(msg.sender, this, _amount), "An error ocurred when sending tokens");
         tokenFuel = tokenFuel.add(_amount);
         emit LogSupplied(owner, _amount, tokenFuel);
         return true;

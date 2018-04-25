@@ -113,7 +113,7 @@ contract InvestmentAsset {
     function () payable
         external
     {
-        require(assetLibrary.delegatecall(msg.data), "An error ocured when calling library");
+        require(assetLibrary.delegatecall(msg.data), "An error ocurred when calling library");
     }
 
 }
