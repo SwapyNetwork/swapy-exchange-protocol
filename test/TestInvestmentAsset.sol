@@ -9,12 +9,16 @@ import "./helpers/ThrowProxy.sol";
 contract TestInvestmentAsset {
     SwapyExchange protocol = SwapyExchange(DeployedAddresses.SwapyExchange());
     address token = protocol.token();
+    bytes8 version = protocol.latestVersion();
+    address _library = protocol.getLibrary(version);
 
+    event Library(bytes8 version, address _lib);
+    
     InvestmentAsset asset = new InvestmentAsset(
-        protocol.assetLibrary(),
+        _library,
         address(protocol),
         address(this),
-        bytes8("T-1.0.0"),
+        version,
         bytes5("USD"),
         uint256(500),
         uint256(360),
@@ -39,6 +43,7 @@ contract TestInvestmentAsset {
 
     // Testing invest() function
     function testInvestorAddressMustBeValid() {
+        emit Library(version, _library);
         address(throwableAsset).call(abi.encodeWithSignature("invest(address)", address(0)));
         throwProxy.shouldThrow();
     }

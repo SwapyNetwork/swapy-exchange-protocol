@@ -20,19 +20,42 @@ contract TestSwapyExchange {
     function() payable public {
         
     }
-
+    
     // Testing the createOffer() function
-    function testUserCanCreateOffer() public {
+    function testUserCanCreateOfferWithoutVersion() public {
         _assetValues.push(uint256(500));
         _assetValues.push(uint256(500));
         _assetValues.push(uint256(500));
         assets = protocol.createOffer(
+            bytes8(0),
             uint256(360),
             uint256(10),
             bytes5("USD"),
             _assetValues
         );
         Assert.equal(assets.length, 3, "3 Assets must be created");
+    }
+    
+    function testUserCanCreateOfferWithVersion() public {
+        assets = protocol.createOffer(
+            bytes8("1.0.0"),
+            uint256(360),
+            uint256(10),
+            bytes5("USD"),
+            _assetValues
+        );
+        Assert.equal(assets.length, 3, "3 Assets must be created");
+    }
+
+    function testUserCannotCreateOfferWithAnInvalidVersion() public {
+        address(throwableProtocol).call(abi.encodeWithSignature("createOffer(bytes8,uint256,uint256,bytes5,uint256[])",
+            bytes8("3.0.0"),
+            uint256(360),
+            uint256(10),
+            bytes5("USD"),
+            _assetValues
+        ));
+        throwProxy.shouldThrow();
     }
     
     // testing invest() function

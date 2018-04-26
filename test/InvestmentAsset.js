@@ -69,16 +69,17 @@ contract('InvestmentAsset', accounts => {
         gasPrice = new BigNumber(gasPrice)
         const library = await AssetLibrary.new({ from: Swapy })
         token  = await Token.new({from: Swapy})
-        protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy })
+        protocol = await SwapyExchange.new( token.address, "1.0.0", library.address, { from: Swapy })
         await token.mint(creditCompany, offerFuel, {from: Swapy})
         
         // Creating assets by the protocol
         const {logs} = await protocol.createOffer(
+            "1.0.0",
             payback,
             grossReturn,
             currency,
             assets,
-            {from: creditCompany}
+            { from: creditCompany }
         )
         const event = logs.find(e => e.event === 'LogOffers')
         const args = event.args

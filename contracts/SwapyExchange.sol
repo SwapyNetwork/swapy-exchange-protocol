@@ -22,7 +22,7 @@ contract SwapyExchange {
      * Storage
      */
     mapping(bytes8 => address) libraries;
-    address owner;
+    address public owner;
     address public token;
     
     /**
@@ -32,6 +32,7 @@ contract SwapyExchange {
     event LogInvestments(address indexed _investor, address[] _assets, uint256 _value);
     event LogForSale(address indexed _investor, address _asset, uint256 _value);
     event LogBought(address indexed _buyer, address _asset, uint256 _value);
+    event LogVersioning(bytes8 _version, address _library);
 
     /**
      * Modifiers   
@@ -49,13 +50,41 @@ contract SwapyExchange {
     /**
      * @param _token Address of Swapy Token
      */   
-    constructor(address _token)
+    constructor(address _token, bytes8 _version, address _library)
         public
     {
         token = _token;
         owner = msg.sender;
+        setLibrary(_version, _library);
     }
 
+    /**
+     * @dev add a new protocol library - internal
+     * @param _version Version
+     * @param _library Library's address.
+     */
+    function setLibrary(
+        bytes8 _version,
+        address _library)
+        private
+    {
+        require(_version != bytes8(0), "Invalid version");
+        require(_library != address(0), "Invalid library address");
+        require(libraries[_version] == address(0), "Library version already added");
+        latestVersion = _version;
+        libraries[_version] = _library;
+        emit LogVersioning(_version, _library);
+    }
+
+    /**
+     * @dev retrieve library address of a version
+     * @param _version Version
+     * @return Address of library
+     */
+    function getLibrary(bytes8 _version) view public returns(address) {
+        require(libraries[_version] != address(0));
+        return libraries[_version];
+    }
     /**
      * @dev add a new protocol library
      * @param _version Version
@@ -69,9 +98,7 @@ contract SwapyExchange {
         external
         returns(bool)
     {
-        require(libraries[_version] == address(0));
-        libraries[_version] =  _library;
-        latestVersion = _version;
+        setLibrary(_version, _library);
         return true;
     }
 
@@ -84,17 +111,17 @@ contract SwapyExchange {
      * @return Success
      */ 
     function createOffer(
+        bytes8 _version,
         uint256 _paybackDays,
         uint256 _grossReturn,
         bytes5 _currency,
-        uint256[] _assets,
-        bytes8 _version)
+        uint256[] _assets)
         external
         returns(address[] newAssets)
     {
-        if(_version == bytes8(0)) _version = latestVersion;
-        else require(libraries[_version] != address(0))
-        newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn, _version);
+        bytes8 version = _version == bytes8(0) ? latestVersion : _version;
+        require(libraries[version] != address(0), "Library version doesn't exists");
+        newAssets = createOfferAssets(_assets, _currency, _paybackDays, _grossReturn, version);
         emit LogOffers(msg.sender, _version, newAssets);
     }
 

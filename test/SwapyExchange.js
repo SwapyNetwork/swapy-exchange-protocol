@@ -48,7 +48,6 @@ let secondInvestor = null
 let gasPrice = null
 let sellValue = null
 
-
 contract('SwapyExchange', async accounts => {
 
     before( async () => {
@@ -61,7 +60,7 @@ contract('SwapyExchange', async accounts => {
         gasPrice = new BigNumber(gasPrice)
         const library = await AssetLibrary.new({ from: Swapy })
         token  = await Token.new({from: Swapy})
-        protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy })
+        protocol = await SwapyExchange.new( token.address, "1.0.0", library.address, { from: Swapy })
         await token.mint(creditCompany, offerFuel, {from: Swapy})
 
         // payback and sell constants
@@ -73,7 +72,7 @@ contract('SwapyExchange', async accounts => {
     })
 
     it("should have a version", async () => {
-        const version = await protocol.VERSION.call()
+        const version = await protocol.latestVersion.call()
         should.exist(version)
     })
 
@@ -81,6 +80,7 @@ contract('SwapyExchange', async accounts => {
 
         it("should create an investment offer with assets", async () => {
             const {logs} = await protocol.createOffer(
+                "1.0.0",
                 payback,
                 grossReturn,
                 currency,
