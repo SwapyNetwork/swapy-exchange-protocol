@@ -36,6 +36,13 @@ contract SwapyExchange {
         uint256 _value
     );
 
+    event Returned(
+        address indexed _from,
+        address[] _assets,
+        uint256[] _values,
+        uint256 _value
+    );
+
     modifier notEmpty(address[] _assets){
         require(_assets.length > 0);
         _;
@@ -111,6 +118,25 @@ contract SwapyExchange {
             require(msg.sender == asset.owner());
             require(asset.withdrawFunds());
         }
+        return true;
+    }
+
+    function returnInvestment(address[] _assets, uint256[] _values) payable
+        notEmpty(_assets)
+        external
+        returns(bool)
+    {
+        uint256 total;
+        for (uint index = 0; index < _values.length; index++) {
+            total = total.add(_values[index]);
+        }
+        require((total == msg.value) && total > 0);
+        for (index = 0; index < _assets.length; index++) {
+            AssetLibrary asset = AssetLibrary(_assets[index]);  
+            require(msg.sender == asset.owner());
+            require(asset.returnInvestment.value(_values[index])());
+        }
+        Returned(msg.sender, _assets, _values, msg.value);
         return true;
     }
     
