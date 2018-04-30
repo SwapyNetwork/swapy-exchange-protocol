@@ -42,7 +42,7 @@ contract TestSwapyExchange_versioning {
     }
 
     function testOwnerCannotAddInvalidLibrary() public {
-        bool result = address(protocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("3.0.0"), address(0)));
+        bool result = address(protocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("4.0.0"), address(0)));
         shouldThrow(result);
     }
 }
