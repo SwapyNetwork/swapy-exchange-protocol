@@ -13,13 +13,12 @@ contract TestSwapyExchange_versioning {
     // and funds this test contract with the specified amount on deployment.
     uint public initialBalance = 10 ether;
 
-    function shouldThrow(bool execution) private {
+    function shouldThrow(bool execution) public {
         Assert.isFalse(execution, "Should throw an exception");
     }
     // Testing the addLibrary() function
     function testOnlyProtocolOwnerCanAddLibrary() public {
-        address lib2 = address(0x8f46cf5569aefa1acc1009290c8e043747172d45);
-        address(throwableProtocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("3.0.0"), lib2));
+        address(throwableProtocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("3.0.0"), address(0x8f46cf5569aefa1acc1009290c8e043747172d45)));
         throwProxy.shouldThrow();
     }
 
@@ -33,8 +32,12 @@ contract TestSwapyExchange_versioning {
     }
 
     function testOwnerCannotAddDuplicatedVersion() public {
-        address lib3 = address(0x9f46cf5569aefa1acc1009290c8e043747172d45);
-        bool result = address(protocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("3.0.0"), lib3));
+        bool result = address(protocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("3.0.0"), address(0x9f46cf5569aefa1acc1009290c8e043747172d45)));
+        shouldThrow(result);
+    }
+
+    function testOwnerCannotAddInvalidVersion() public {
+        bool result = address(protocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8(0), address(0x9f46cf5569aefa1acc1009290c8e043747172d45)));
         shouldThrow(result);
     }
 
@@ -42,7 +45,4 @@ contract TestSwapyExchange_versioning {
         bool result = address(protocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("3.0.0"), address(0)));
         shouldThrow(result);
     }
-
-
-
 }

@@ -37,12 +37,14 @@ module.exports = {
     dev : {
       host: "localhost",
       network_id: '*',
-      port: 8545
+      port: 8545,
+      gas: 7984452
     },
     test : {
       host: "localhost",
       network_id: '*',
-      port: 8545
+      port: 8545,
+      gas: 7984452
     }
   },
   rpc: {
