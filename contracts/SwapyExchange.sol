@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 import "./investment/InvestmentAsset.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @title Swapy Exchange Protocol 

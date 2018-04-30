@@ -12,8 +12,6 @@ contract TestInvestmentAsset {
     bytes8 version = protocol.latestVersion();
     address _library = protocol.getLibrary(version);
 
-    event Library(bytes8 version, address _lib);
-    
     InvestmentAsset asset = new InvestmentAsset(
         _library,
         address(protocol),
@@ -43,8 +41,7 @@ contract TestInvestmentAsset {
 
     // Testing invest() function
     function testInvestorAddressMustBeValid() {
-        emit Library(version, _library);
-        address(throwableAsset).call(abi.encodeWithSignature("invest(address)", address(0)));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("invest(address)", address(0)));
         throwProxy.shouldThrow();
     }
 
@@ -58,7 +55,7 @@ contract TestInvestmentAsset {
     
     // Testing cancelInvestment() function
     function testOnlyInvestorCanCancelInvestment() public {
-        address(throwableAsset).call(abi.encodeWithSignature("cancelInvestment()"));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("cancelInvestment()"));
         throwProxy.shouldThrow();
     }
 
@@ -73,7 +70,7 @@ contract TestInvestmentAsset {
     // Testing refuseInvestment() function
     function testOnlyOwnerCanRefuseInvestment() public {
         address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
-        address(throwableAsset).call(abi.encodeWithSignature("refuseInvestment()"));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("refuseInvestment()"));
         throwProxy.shouldThrow();
     }
     
@@ -88,7 +85,7 @@ contract TestInvestmentAsset {
     // Testing withdrawFunds() function
     function testOnlyOwnerCanWithdrawFunds() public {
         address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
-        address(throwableAsset).call(abi.encodeWithSignature("withdrawFunds()"));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("withdrawFunds()"));
         throwProxy.shouldThrow();
     }
     
@@ -102,7 +99,7 @@ contract TestInvestmentAsset {
 
     // Testing sell() function
     function testOnlyInvestorCanPutOnSale() public {
-        address(throwableAsset).call(abi.encodeWithSignature("sell(uint256)",uint256(525)));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("sell(uint256)",uint256(525)));
         throwProxy.shouldThrow();
     }
 
@@ -116,7 +113,7 @@ contract TestInvestmentAsset {
 
     // Testing cancelSellOrder() function
     function testOnlyInvestorCanRemoveOnSale() public {
-        address(throwableAsset).call(abi.encodeWithSignature("cancelSellOrder()"));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("cancelSellOrder()"));
         throwProxy.shouldThrow();
     }
 
@@ -131,7 +128,7 @@ contract TestInvestmentAsset {
     // Testing buy() function
     function testBuyerAddressMustBeValid() {
         address(asset).call(abi.encodeWithSignature("sell(uint256)", uint256(525)));
-        address(throwableAsset).call.value(1050 finney)(abi.encodeWithSignature("buyer(address)", address(0)));
+        bool result = address(throwableAsset).call.value(1050 finney)(abi.encodeWithSignature("buyer(address)", address(0)));
         throwProxy.shouldThrow();
     }
 
@@ -145,7 +142,7 @@ contract TestInvestmentAsset {
 
     // Testing cancelSale() function
     function testOnlyBuyerCanCancelPurchase() public {
-        address(throwableAsset).call(abi.encodeWithSignature("cancelSale()"));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("cancelSale()"));
         throwProxy.shouldThrow();
     }
 
@@ -160,7 +157,7 @@ contract TestInvestmentAsset {
     // Testing refuseSale() function
     function testOnlyInvestorCanRefusePurchase() public {
         address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
-        address(throwableAsset).call(abi.encodeWithSignature("refuseSale()"));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("refuseSale()"));
         throwProxy.shouldThrow();
     }
     
@@ -175,7 +172,7 @@ contract TestInvestmentAsset {
     // Testing acceptSale() function
     function testOnlyInvestorCanAcceptSale() public {
         address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
-        address(throwableAsset).call(abi.encodeWithSignature("acceptSale()"));
+        bool result = address(throwableAsset).call(abi.encodeWithSignature("acceptSale()"));
         throwProxy.shouldThrow();
     }
 

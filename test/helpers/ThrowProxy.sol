@@ -15,7 +15,9 @@ contract ThrowProxy {
     //prime the data using the fallback function.
     function() public payable {
         data = msg.data;
-        value = msg.value;
+        if(msg.value > 0){
+            value = msg.value;
+        }
     }
 
     function execute() public returns (bool) {

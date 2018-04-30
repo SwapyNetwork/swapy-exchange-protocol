@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 import "./AssetEvents.sol";
 import "../token/Token.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /**
  * @title Asset Library

@@ -18,7 +18,7 @@ contract TestSwapyExchange_actions {
 
     bytes msgData;
     function() payable public {
-        msgData = msg.data;
+
     }
 
     // Testing the createOffer() function
@@ -34,18 +34,26 @@ contract TestSwapyExchange_actions {
             _assetValues
         );
         Assert.equal(assets.length, 3, "3 Assets must be created");
+        bool isOwner = (InvestmentAsset(assets[0]).owner() == address(this)) 
+            && (InvestmentAsset(assets[1]).owner() == address(this)) 
+            && (InvestmentAsset(assets[2]).owner() == address(this));
+        Assert.equal(isOwner, true, "The test contract must be owner of the fundraising offer");
     }
     
-    // function testUserCanCreateOfferWithVersion() public {
-    //     assets = protocol.createOffer(
-    //         bytes8("1.0.0"),
-    //         uint256(360),
-    //         uint256(10),
-    //         bytes5("USD"),
-    //         _assetValues
-    //     );
-    //     Assert.equal(assets.length, 3, "3 Assets must be created");
-    // }
+    function testUserCanCreateOfferWithVersion() public {
+        assets = protocol.createOffer(
+            bytes8("1.0.0"),
+            uint256(360),
+            uint256(10),
+            bytes5("USD"),
+            _assetValues
+        );
+        Assert.equal(assets.length, 3, "3 Assets must be created");
+        bool isOwner = (InvestmentAsset(assets[0]).owner() == address(this)) 
+            && (InvestmentAsset(assets[1]).owner() == address(this)) 
+            && (InvestmentAsset(assets[2]).owner() == address(this));
+        Assert.equal(isOwner, true, "The test contract must be owner of the fundraising offer");
+    }
 
     function testUserCannotCreateOfferWithAnInvalidVersion() public {
         address(throwableProtocol).call(abi.encodeWithSignature("createOffer(bytes8,uint256,uint256,bytes5,uint256[])",
@@ -67,6 +75,10 @@ contract TestSwapyExchange_actions {
     function testUserCanInvest() public {
         bool result = protocol.invest.value(3 ether)(assets, 1 ether);
         Assert.equal(result, true, "Assets must be invested");
+        bool isInvestor = (InvestmentAsset(assets[0]).investor() == address(this)) 
+            && (InvestmentAsset(assets[1]).investor() == address(this)) 
+            && (InvestmentAsset(assets[2]).investor() == address(this));
+        Assert.equal(isInvestor, true, "The test contract must be the investor of these assets");
     }
     
     // Testing cancelInvestment() function
@@ -82,7 +94,7 @@ contract TestSwapyExchange_actions {
     
     // Testing refuseInvestment() function
     function testOnlyOwnerCanRefuseInvestment() public {
-        //protocol.invest.value(3 ether)(assets, 1 ether);
+        protocol.invest.value(3 ether)(assets, 1 ether);
         address(throwableProtocol).call(abi.encodeWithSignature("refuseInvestment(address[])", assets));
         throwProxy.shouldThrow();
     }
