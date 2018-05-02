@@ -33,6 +33,7 @@ contract SwapyExchange {
     event LogForSale(address indexed _investor, address _asset, uint256 _value);
     event LogBought(address indexed _buyer, address _asset, uint256 _value);
     event LogVersioning(bytes8 _version, address _library);
+    event LogReturned(address indexed _from, address[] _assets, uint256[] _values, uint256 _value);
 
     /**
      * Modifiers   
@@ -361,6 +362,31 @@ contract SwapyExchange {
             require(msg.sender == asset.investor(), "The user isn't asset's investor");
             require(address(asset).call(abi.encodeWithSignature("requireTokenFuel()")), "An error ocurred when requiring asset's collateral");
         }
+        return true;
+    }
+
+    /**
+     * @dev Return of investments
+     * @param _assets Asset addresses
+     * @param _values Asset's return values
+     * @return Success
+     */
+    function returnInvestment(address[] _assets, uint256[] _values) payable
+        notEmpty(_assets)
+        external
+        returns(bool)
+    {
+        uint256 total;
+        for (uint index = 0; index < _values.length; index++) {
+            total = total.add(_values[index]);
+        }
+        require((total == msg.value) && total > 0);
+        for (index = 0; index < _assets.length; index++) {
+            InvestmentAsset asset = InvestmentAsset(_assets[index]);  
+            require(msg.sender == asset.owner());
+            require(address(asset).call.value(_values[index])(abi.encodeWithSignature("returnInvestment()")));
+        }
+        emit LogReturned(msg.sender, _assets, _values, msg.value);
         return true;
     }
 

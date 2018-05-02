@@ -330,7 +330,7 @@ contract AssetLibrary is AssetEvents {
      * @return Success
      */
     function returnInvestment() payable
-        onlyOwner
+        protocolOrOwner
         external
         returns(bool)
     {
