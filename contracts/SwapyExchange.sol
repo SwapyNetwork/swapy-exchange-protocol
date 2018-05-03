@@ -384,7 +384,10 @@ contract SwapyExchange {
         for (index = 0; index < _assets.length; index++) {
             InvestmentAsset asset = InvestmentAsset(_assets[index]);  
             require(msg.sender == asset.owner());
-            require(address(asset).call.value(_values[index])(abi.encodeWithSignature("returnInvestment()")));
+            require(
+                address(asset).call.value(_values[index])(abi.encodeWithSignature("returnInvestment()")),
+                "An error ocurred when returning investment"
+            );
         }
         emit LogReturned(msg.sender, _assets, _values, msg.value);
         return true;

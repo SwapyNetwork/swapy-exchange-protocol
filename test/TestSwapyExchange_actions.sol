@@ -10,6 +10,7 @@ contract TestSwapyExchange_actions {
     ThrowProxy throwProxy = new ThrowProxy(address(protocol)); 
     SwapyExchange throwableProtocol = SwapyExchange(address(throwProxy));
     uint256[] _assetValues;
+    uint256[] _returnValues;
     address[] assets;
 
     // Truffle looks for `initialBalance` when it compiles the test suite 
@@ -19,6 +20,10 @@ contract TestSwapyExchange_actions {
     bytes msgData;
     function() payable public {
 
+    }
+
+    function shouldThrow(bool result) public {
+        Assert.isFalse(result, "Should throw an exception");
     }
 
     // Testing the createOffer() function
@@ -188,6 +193,34 @@ contract TestSwapyExchange_actions {
     function testInvestorCanAcceptSale() public {
         bool result = protocol.acceptSale(assets);
         Assert.equal(result, true, "Sales must be accepted");
+    }
+
+    //testing returnInvestment() function 
+    function testOnlyOwnerCanReturnInvestment() public {
+        _returnValues.push(1100 finney);
+        _returnValues.push(1100 finney);
+        _returnValues.push(1100 finney);
+        address(throwableProtocol)
+            .call
+            .value(3300 finney)
+            (abi.encodeWithSignature("returnInvestment(address[], uint256[])", assets, _returnValues));
+        throwProxy.shouldThrow();
+    }
+
+    function testReturnValuesAndFundsMustMatch() public {
+        bool result = address(protocol)
+            .call
+            .value(3299 finney)
+            (abi.encodeWithSignature("returnInvestment(address[], uint256[])", assets, _returnValues));
+        shouldThrow(result);
+    }
+
+    function testOwnerCanReturnInvestment() public {
+        bool result = address(throwableProtocol)
+            .call
+            .value(3300 finney)
+            (abi.encodeWithSignature("returnInvestment(address[], uint256[])", assets, _returnValues));
+        Assert.equal(result, true, "Investments must be returned");
     }
 
 }

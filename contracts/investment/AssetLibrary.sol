@@ -99,49 +99,19 @@ contract AssetLibrary is AssetEvents {
     }
 
     /**
-     * @dev Returns true if the return of investment is delayed according to the investment date and payback period 
-     * @return Delay verification
-     */ 
-    function isDelayed()
-        view
-        internal
-        returns(bool)
-    {
-        return now > investedAt + paybackDays * 1 days;
-    }
-
-     /**
-     * @dev Refund investor, clear investment values and become available 
-     * @return A tuple with the old investor and the refunded value
-     */ 
-    function makeAvailable()
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        private
-        returns(address, uint256)
-    {
-        status = Status.AVAILABLE;
-        uint256 investedValue = address(this).balance;
-        address currentInvestor = investor;
-        investor = address(0);
-        investedAt = uint(0);
-        currentInvestor.transfer(investedValue);
-        return (currentInvestor, investedValue);
-    }
-
-     /**
-     * @dev Withdraw collateral tokens
-     * @param _recipient Address to send tokens
-     * @param _amount Tokens amount
+     * @dev Supply collateral tokens to the asset 
+     * @param _amount Token amount
      * @return Success
      */
-    function withdrawTokens(address _recipient, uint256 _amount)
-        private
+    function supplyFuel(uint256 _amount)
+        onlyOwner
+        hasStatus(Status.AVAILABLE)
+        external
         returns(bool)
     {
-        assert(tokenFuel >= _amount);
-        tokenFuel = tokenFuel.sub(_amount);
-        require(token.transfer(_recipient, _amount), "An error ocurred in tokens transfer");
-        emit LogTokenWithdrawal(_recipient, _amount);
+        require(token.transferFrom(msg.sender, this, _amount), "An error ocurred when sending tokens");
+        tokenFuel = tokenFuel.add(_amount);
+        emit LogSupplied(owner, _amount, tokenFuel);
         return true;
     }
 
@@ -179,6 +149,23 @@ contract AssetLibrary is AssetEvents {
         emit LogCanceled(owner, currentInvestor, investedValue);
         return true;
     }
+   
+    /**
+     * @dev Refuse a pending investment
+     * @return Success
+     */
+    function refuseInvestment()
+        protocolOrOwner
+        hasStatus(Status.PENDING_OWNER_AGREEMENT)
+        external
+        returns(bool)
+    {
+        address currentInvestor;
+        uint256 investedValue;
+        (currentInvestor, investedValue) = makeAvailable();
+        emit LogRefused(owner, currentInvestor, investedValue);
+        return true;
+    }
 
     /**
      * @dev Accept the investor as the asset buyer and withdraw funds
@@ -194,23 +181,6 @@ contract AssetLibrary is AssetEvents {
         uint256 _value = address(this).balance;
         owner.transfer(_value);
         emit LogWithdrawal(owner, investor, _value);
-        return true;
-    }
-
-    /**
-     * @dev Refuse a pending investment
-     * @return Success
-     */
-    function refuseInvestment()
-        protocolOrOwner
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        external
-        returns(bool)
-    {
-        address currentInvestor;
-        uint256 investedValue;
-        (currentInvestor, investedValue) = makeAvailable();
-        emit LogRefused(owner, currentInvestor, investedValue);
         return true;
     }
 
@@ -325,6 +295,20 @@ contract AssetLibrary is AssetEvents {
     }
 
     /**
+     * @dev Require collateral tokens of the investment made
+     * @return Success
+     */
+    function requireTokenFuel()
+        protocolOrInvestor
+        hasStatus(Status.INVESTED)
+        onlyDelayed
+        external
+        returns(bool)
+    {
+        return withdrawTokens(investor, tokenFuel);
+    }
+
+    /**
      * @dev Return investment. Refunds pending buyer if the asset is for sale and handle remaining collateral tokens according to 
      * the period of return
      * @return Success
@@ -351,35 +335,49 @@ contract AssetLibrary is AssetEvents {
     }
 
     /**
-     * @dev Supply collateral tokens to the asset 
-     * @param _amount Token amount
+     * @dev Refund investor, clear investment values and become available 
+     * @return A tuple with the old investor and the refunded value
+     */ 
+    function makeAvailable()
+        private
+        returns(address, uint256)
+    {
+        status = Status.AVAILABLE;
+        uint256 investedValue = address(this).balance;
+        address currentInvestor = investor;
+        investor = address(0);
+        investedAt = uint(0);
+        currentInvestor.transfer(investedValue);
+        return (currentInvestor, investedValue);
+    }
+
+    /**
+     * @dev Withdraw collateral tokens
+     * @param _recipient Address to send tokens
+     * @param _amount Tokens amount
      * @return Success
      */
-    function supplyFuel(uint256 _amount)
-        onlyOwner
-        hasStatus(Status.AVAILABLE)
-        external
+    function withdrawTokens(address _recipient, uint256 _amount)
+        private
         returns(bool)
     {
-        require(token.transferFrom(msg.sender, this, _amount), "An error ocurred when sending tokens");
-        tokenFuel = tokenFuel.add(_amount);
-        emit LogSupplied(owner, _amount, tokenFuel);
+        assert(tokenFuel >= _amount);
+        tokenFuel = tokenFuel.sub(_amount);
+        require(token.transfer(_recipient, _amount), "An error ocurred in tokens transfer");
+        emit LogTokenWithdrawal(_recipient, _amount);
         return true;
     }
 
     /**
-     * @dev Require collateral tokens of the investment made
-     * @return Success
-     */
-    function requireTokenFuel()
-        protocolOrInvestor
-        hasStatus(Status.INVESTED)
-        onlyDelayed
-        external
+     * @dev Returns true if the return of investment is delayed according to the investment date and payback period 
+     * @return Delay verification
+     */ 
+    function isDelayed()
+        view
+        internal
         returns(bool)
     {
-        return withdrawTokens(investor, tokenFuel);
+        return now > investedAt + paybackDays * 1 days;
     }
-
 }
 

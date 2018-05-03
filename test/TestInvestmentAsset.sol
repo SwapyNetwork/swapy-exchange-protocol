@@ -184,4 +184,18 @@ contract TestInvestmentAsset {
         Assert.equal(isInvested, true, "The asset must be invested");
     }
 
+    // Testing returnInvestment() function
+    function testOnlyOwnerCanReturnInvestment() public {
+        address(throwableAsset).call.value(1100 finney)(abi.encodeWithSignature("returnInvestment()"));
+        throwProxy.shouldThrow();
+    }
+
+    function testOwnerCanReturnInvestment() public {
+        bool result = address(asset).call.value(1100 finney)(abi.encodeWithSignature("returnInvestment()"));
+        Assert.equal(result, true, "Investment must be returned");
+        InvestmentAsset.Status currentStatus = asset.status();
+        bool isReturned = currentStatus == InvestmentAsset.Status.RETURNED;
+        Assert.equal(isReturned, true, "The asset must be returned");
+    }
+
 }

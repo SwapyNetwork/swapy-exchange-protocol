@@ -16,6 +16,7 @@ contract TestSwapyExchange_versioning {
     function shouldThrow(bool execution) public {
         Assert.isFalse(execution, "Should throw an exception");
     }
+
     // Testing the addLibrary() function
     function testOnlyProtocolOwnerCanAddLibrary() public {
         address(throwableProtocol).call(abi.encodeWithSignature("addLibrary(bytes8,address)", bytes8("3.0.0"), address(0x8f46cf5569aefa1acc1009290c8e043747172d45)));
