@@ -46,11 +46,18 @@ contract TestInvestmentAsset {
     }
 
     function testUserCanInvest() public {
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
         bool result = address(asset).call.value(1 ether)(abi.encodeWithSignature("invest(address)", address(this)));
-        Assert.equal(result, true, "Asset must be invested");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isPending = currentStatus == InvestmentAsset.Status.PENDING_OWNER_AGREEMENT;
+        Assert.equal(result, true, "Asset must be invested");
         Assert.equal(isPending, true, "The asset must be locked for investments");
+        Assert.equal(
+            previousBalance - address(this).balance,
+            address(asset).balance - previousAssetBalance,
+            "balance changes must be equal"
+        );
     }
     
     // Testing cancelInvestment() function
@@ -60,11 +67,18 @@ contract TestInvestmentAsset {
     }
 
     function testInvestorCanCancelInvestment() public {
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
         bool result = address(asset).call(abi.encodeWithSignature("cancelInvestment()"));
-        Assert.equal(result, true, "Investment must be canceled");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isAvailable = currentStatus == InvestmentAsset.Status.AVAILABLE;
+        Assert.equal(result, true, "Investment must be canceled");
         Assert.equal(isAvailable, true, "The asset must be available for investments");
+        Assert.equal(
+            address(this).balance - previousBalance,
+            previousAssetBalance - address(asset).balance,
+            "balance changes must be equal"
+        );
     }
     
     // Testing refuseInvestment() function
@@ -75,11 +89,18 @@ contract TestInvestmentAsset {
     }
     
     function testOwnerCanRefuseInvestment() public {
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
         bool result = address(asset).call(abi.encodeWithSignature("refuseInvestment()"));
-        Assert.equal(result, true, "Investment must be refused");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isAvailable = currentStatus == InvestmentAsset.Status.AVAILABLE;
+        Assert.equal(result, true, "Investment must be refused");
         Assert.equal(isAvailable, true, "The asset must be available for investments");
+        Assert.equal(
+            address(this).balance - previousBalance,
+            previousAssetBalance - address(asset).balance,
+            "balance changes must be equal"
+        );
     }
 
     // Testing withdrawFunds() function
@@ -90,11 +111,18 @@ contract TestInvestmentAsset {
     }
     
     function testOwnerCanWithdrawFunds() public {
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
         bool result = address(asset).call(abi.encodeWithSignature("withdrawFunds()"));
-        Assert.equal(result, true, "Investment must be accepted");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
+        Assert.equal(result, true, "Investment must be accepted");
         Assert.equal(isInvested, true, "The asset must be invested");
+        Assert.equal(
+            address(this).balance - previousBalance,
+            previousAssetBalance - address(asset).balance,
+            "balance changes must be equal"
+        );
     }
 
     // Testing sell() function
@@ -133,11 +161,18 @@ contract TestInvestmentAsset {
     }
 
     function testUserCanBuyAsset() public {
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
         bool result = address(asset).call.value(1050 finney)(abi.encodeWithSignature("buy(address)", address(this)));
         Assert.equal(result, true, "Asset must be bought");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isPendingSale = currentStatus == InvestmentAsset.Status.PENDING_INVESTOR_AGREEMENT;
         Assert.equal(isPendingSale, true, "The asset must be locked on market place");
+        Assert.equal(
+            previousBalance - address(this).balance,
+            address(asset).balance - previousAssetBalance,
+            "balance changes must be equal"
+        );
     }
 
     // Testing cancelSale() function
@@ -177,11 +212,18 @@ contract TestInvestmentAsset {
     }
 
     function testInvestorCanAcceptSale() public {
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
         bool result = address(asset).call(abi.encodeWithSignature("acceptSale()"));
         Assert.equal(result, true, "Sale must be accepted");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
         Assert.equal(isInvested, true, "The asset must be invested");
+        Assert.equal(
+            address(this).balance - previousBalance,
+            previousAssetBalance - address(asset).balance,
+            "balance changes must be equal"
+        );
     }
 
     // Testing returnInvestment() function
@@ -191,11 +233,18 @@ contract TestInvestmentAsset {
     }
 
     function testOwnerCanReturnInvestment() public {
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
         bool result = address(asset).call.value(1100 finney)(abi.encodeWithSignature("returnInvestment()"));
         Assert.equal(result, true, "Investment must be returned");
         InvestmentAsset.Status currentStatus = asset.status();
         bool isReturned = currentStatus == InvestmentAsset.Status.RETURNED;
         Assert.equal(isReturned, true, "The asset must be returned");
+        Assert.equal(
+            address(this).balance - previousBalance,
+            previousAssetBalance - address(asset).balance,
+            "balance changes must be equal"
+        );
     }
 
 }
