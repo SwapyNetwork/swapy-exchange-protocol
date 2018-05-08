@@ -15,10 +15,7 @@ contract TestInvestmentAsset_investment {
     bytes8 version = protocol.latestVersion();
     address _library = protocol.getLibrary(version);
 
-
-    
-    AssetCall asset = new AssetCall(address(0));
-    InvestmentAsset assetInstance = asset.createAsset(
+    InvestmentAsset assetInstance = new InvestmentAsset(
         _library,
         address(protocol),
         address(this),
@@ -29,9 +26,10 @@ contract TestInvestmentAsset_investment {
         uint256(10),
         token
     );
+    
     ThrowProxy throwProxy = new ThrowProxy(address(assetInstance)); 
     AssetCall throwableAsset = new AssetCall(address(throwProxy));
-
+    AssetCall asset = new AssetCall(address(assetInstance));
     // Truffle looks for `initialBalance` when it compiles the test suite 
     // and funds this test contract with the specified amount on deployment.
     uint public initialBalance = 10 ether;
@@ -90,14 +88,14 @@ contract TestInvestmentAsset_investment {
     // Testing refuseInvestment() function
     function testOnlyOwnerCanRefuseInvestment() public {
         asset.invest(false);
-        bool result = throwableAsset.refuseInvestment();
+        bool result = refuseInvestment(address(throwProxy));
         throwProxy.shouldThrow();
     }
     
     function testOwnerCanRefuseInvestment() public {
         uint256 previousBalance = address(asset).balance;
         uint256 previousAssetBalance = address(assetInstance).balance;
-        bool result = asset.refuseInvestment();
+        bool result = refuseInvestment(address(assetInstance));
         InvestmentAsset.Status currentStatus = assetInstance.status();
         bool isAvailable = currentStatus == InvestmentAsset.Status.AVAILABLE;
         Assert.equal(result, true, "Investment must be refused");
@@ -112,14 +110,14 @@ contract TestInvestmentAsset_investment {
     // Testing withdrawFunds() function
     function testOnlyOwnerCanWithdrawFunds() public {
         asset.invest(false);
-        bool result = throwableAsset.withdrawFunds();
+        bool result = withdrawFunds(address(throwProxy));
         throwProxy.shouldThrow();
     }
     
     function testOwnerCanWithdrawFunds() public {
         uint256 previousBalance = address(asset).balance;
         uint256 previousAssetBalance = address(assetInstance).balance;
-        bool result = asset.withdrawFunds();
+        bool result = withdrawFunds(address(assetInstance));
         InvestmentAsset.Status currentStatus = assetInstance.status();
         bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
         Assert.equal(result, true, "Investment must be accepted");
@@ -134,14 +132,14 @@ contract TestInvestmentAsset_investment {
 
     // Testing returnInvestment() function
     function testOnlyOwnerCanReturnInvestment() public {
-        throwableAsset.returnInvestment();
+        returnInvestment(address(throwProxy));
         throwProxy.shouldThrow();
     }
 
     function testOwnerCanReturnInvestment() public {
         uint256 previousBalance = address(asset).balance;
         uint256 previousAssetBalance = address(assetInstance).balance;
-        bool result = asset.returnInvestment();
+        bool result = returnInvestment(address(assetInstance));
         Assert.equal(result, true, "Investment must be returned");
         InvestmentAsset.Status currentStatus = assetInstance.status();
         bool isReturned = currentStatus == InvestmentAsset.Status.RETURNED;
@@ -151,6 +149,18 @@ contract TestInvestmentAsset_investment {
             previousAssetBalance - address(assetInstance).balance,
             "balance changes must be equal"
         );
+    }
+
+    function refuseInvestment(address _asset) returns(bool) {
+        return _asset.call(abi.encodeWithSignature("refuseInvestment()"));
+    }
+
+    function withdrawFunds(address _asset) returns(bool) {
+        return _asset.call(abi.encodeWithSignature("withdrawFunds()"));
+    }
+
+    function returnInvestment(address _asset) payable returns(bool) {
+        return _asset.call(abi.encodeWithSignature("returnInvestment()"));
     }
 
 }

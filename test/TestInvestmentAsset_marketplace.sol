@@ -47,6 +47,7 @@ contract TestInvestmentAsset_marketplace {
      // Testing sell() function
     function testOnlyInvestorCanPutOnSale() public {
         asset.invest.value(1 ether)(false);
+        withdrawFunds(address(assetInstance));
         bool result = throwableAsset.sell(uint256(525));
         throwProxy.shouldThrow();
     }
@@ -76,7 +77,7 @@ contract TestInvestmentAsset_marketplace {
     // Testing buy() function
     function testBuyerAddressMustBeValid() {
         asset.sell(uint256(525));
-        bool result = throwableAsset.buy.value(1050 finney)(false);
+        bool result = throwableAsset.buy.value(1050 finney)(true);
         throwProxy.shouldThrow();
     }
 
@@ -132,7 +133,7 @@ contract TestInvestmentAsset_marketplace {
     }
 
     function testInvestorCanAcceptSale() public {
-        uint256 previousBalance = address(this).balance;
+        uint256 previousBalance = address(asset).balance;
         uint256 previousAssetBalance = address(assetInstance).balance;
         bool result = asset.acceptSale();
         Assert.equal(result, true, "Sale must be accepted");
@@ -140,10 +141,14 @@ contract TestInvestmentAsset_marketplace {
         bool isInvested = currentStatus == InvestmentAsset.Status.INVESTED;
         Assert.equal(isInvested, true, "The asset must be invested");
         Assert.equal(
-            address(this).balance - previousBalance,
+            address(asset).balance - previousBalance,
             previousAssetBalance - address(assetInstance).balance,
             "balance changes must be equal"
         );
+    }
+
+    function withdrawFunds(address _asset) returns(bool) {
+        return _asset.call(abi.encodeWithSignature("withdrawFunds()"));
     }
 
 }
