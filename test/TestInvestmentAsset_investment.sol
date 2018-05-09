@@ -48,6 +48,13 @@ contract TestInvestmentAsset_investment {
         throwProxy.shouldThrow();
     }
 
+    function testUnavailableActionsWhenAvaiable() public {
+        bool available = refuseInvestment(address(assetInstance)) &&
+            withdrawFunds(address(assetInstance)) && 
+            returnInvestment(address(assetInstance), 1100 finney) && 
+            asset.cancelInvestment();
+        Assert.isFalse(available, "Should not be executed");
+    }
 
     function testUserCanInvest() public {
         uint256 previousBalance = address(this).balance;
@@ -62,6 +69,12 @@ contract TestInvestmentAsset_investment {
             address(assetInstance).balance - previousAssetBalance,
             "balance changes must be equal"
         );
+    }
+
+    function testUnavailableActionsWhenPending() public {
+        bool available = asset.invest.value(1 ether)(false) && 
+            returnInvestment(address(assetInstance), 1100 finney);
+        Assert.isFalse(available, "Should not be executed");
     }
     
     // Testing cancelInvestment() function
@@ -115,7 +128,7 @@ contract TestInvestmentAsset_investment {
     }
     
     function testOwnerCanWithdrawFunds() public {
-        uint256 previousBalance = address(asset).balance;
+        uint256 previousBalance = address(this).balance;
         uint256 previousAssetBalance = address(assetInstance).balance;
         bool result = withdrawFunds(address(assetInstance));
         InvestmentAsset.Status currentStatus = assetInstance.status();
@@ -123,34 +136,50 @@ contract TestInvestmentAsset_investment {
         Assert.equal(result, true, "Investment must be accepted");
         Assert.equal(isInvested, true, "The asset must be invested");
         Assert.equal(
-            address(asset).balance - previousBalance,
+            address(this).balance - previousBalance,
             previousAssetBalance - address(assetInstance).balance,
             "balance changes must be equal"
         );
     }
 
+    function testUnavailableActionsWhenInvested() public {
+        bool available = asset.invest.value(1 ether)(false) && 
+            refuseInvestment(address(assetInstance)) &&
+            withdrawFunds(address(assetInstance)) && 
+            asset.cancelInvestment();
+        Assert.isFalse(available, "Should not be executed");
+    }
 
     // Testing returnInvestment() function
     function testOnlyOwnerCanReturnInvestment() public {
-        returnInvestment(address(throwProxy));
+        returnInvestment(address(throwProxy), 1100 finney);
         throwProxy.shouldThrow();
     }
 
     function testOwnerCanReturnInvestment() public {
-        uint256 previousBalance = address(asset).balance;
-        uint256 previousAssetBalance = address(assetInstance).balance;
-        bool result = returnInvestment(address(assetInstance));
+        uint256 previousBalance = address(this).balance;
+        uint256 previousAssetBalance = address(asset).balance;
+        bool result = returnInvestment(address(assetInstance), 1100 finney);
         Assert.equal(result, true, "Investment must be returned");
         InvestmentAsset.Status currentStatus = assetInstance.status();
         bool isReturned = currentStatus == InvestmentAsset.Status.RETURNED;
         Assert.equal(isReturned, true, "The asset must be returned");
         Assert.equal(
-            address(asset).balance - previousBalance,
-            previousAssetBalance - address(assetInstance).balance,
+            previousBalance - address(this).balance,
+            address(asset).balance - previousAssetBalance,
             "balance changes must be equal"
         );
     }
 
+    function testUnavailableActionsWhenReturned() public {
+        bool available = asset.invest.value(1 ether)(false) && 
+            refuseInvestment(address(assetInstance)) &&
+            withdrawFunds(address(assetInstance)) && 
+            returnInvestment(address(assetInstance), 1100 finney) && 
+            asset.cancelInvestment();
+        Assert.isFalse(available, "Should not be executed");
+    }
+    
     function refuseInvestment(address _asset) returns(bool) {
         return _asset.call(abi.encodeWithSignature("refuseInvestment()"));
     }
@@ -159,8 +188,8 @@ contract TestInvestmentAsset_investment {
         return _asset.call(abi.encodeWithSignature("withdrawFunds()"));
     }
 
-    function returnInvestment(address _asset) payable returns(bool) {
-        return _asset.call(abi.encodeWithSignature("returnInvestment()"));
+    function returnInvestment(address _asset, uint256 _value) payable returns(bool) {
+        return _asset.call.value(_value)(abi.encodeWithSignature("returnInvestment()"));
     }
 
 }
