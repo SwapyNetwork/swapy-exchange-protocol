@@ -43,11 +43,21 @@ contract TestInvestmentAsset_marketplace {
     function shouldThrow(bool result) public {
         Assert.isFalse(result, "Should throw an exception");
     }
-
-     // Testing sell() function
-    function testOnlyInvestorCanPutOnSale() public {
+    
+    function testUnavailableActionsWhenInvested() public {
         asset.invest.value(1 ether)(false);
         withdrawFunds(address(assetInstance));
+        bool available = asset.sell(uint256(525)) && 
+            asset.cancelSellOrder() &&
+            asset.buy.value(1050 finney)(true) &&
+            asset.cancelSale() && 
+            asset.refuseSale() &&
+            asset.acceptSale();
+        Assert.isFalse(available, "Should not be executed");
+    }
+
+    // Testing sell() function
+    function testOnlyInvestorCanPutOnSale() public {
         bool result = throwableAsset.sell(uint256(525));
         throwProxy.shouldThrow();
     }
@@ -58,6 +68,14 @@ contract TestInvestmentAsset_marketplace {
         InvestmentAsset.Status currentStatus = assetInstance.status();
         bool isForSale = currentStatus == InvestmentAsset.Status.FOR_SALE;
         Assert.equal(isForSale, true, "The asset must be available on market place");
+    }
+
+    function testUnavailableActionsWhenOnSale() public {
+        bool available = asset.sell(uint256(525)) && 
+            asset.cancelSale() && 
+            asset.refuseSale() &&
+            asset.acceptSale();
+        Assert.isFalse(available, "Should not be executed");
     }
 
     // Testing cancelSellOrder() function
@@ -94,6 +112,14 @@ contract TestInvestmentAsset_marketplace {
             address(assetInstance).balance - previousAssetBalance,
             "balance changes must be equal"
         );
+    }
+
+    function testUnavailableActionsWhenPendingSale() public {
+        bool available = withdrawFunds(address(assetInstance)) && 
+            asset.cancelInvestment() && 
+            asset.sell(uint256(525)) && 
+            asset.buy.value(1050 finney)(false);
+        Assert.isFalse(available, "Should not be executed");
     }
 
     // Testing cancelSale() function
