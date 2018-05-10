@@ -199,7 +199,7 @@ contract SwapyExchange {
         }
         return true;
     }
-    
+
     /**
      * @dev Refuse investments
      * @param _assets Asset addresses
