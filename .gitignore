@@ -33,3 +33,7 @@ UserInterfaceState.xcuserstate
 # Test coverage
 .nyc_output/
 coverage/
+
+# ignore lock files
+package-lock.json
+yarn.lock
