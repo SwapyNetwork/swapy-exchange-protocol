@@ -1,6 +1,6 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
-import "zeppelin-solidity/contracts/token/MintableToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 
 contract Token is MintableToken {
     

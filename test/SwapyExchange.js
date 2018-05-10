@@ -48,7 +48,6 @@ let secondInvestor = null
 let gasPrice = null
 let sellValue = null
 
-
 contract('SwapyExchange', async accounts => {
 
     before( async () => {
@@ -61,7 +60,7 @@ contract('SwapyExchange', async accounts => {
         gasPrice = new BigNumber(gasPrice)
         const library = await AssetLibrary.new({ from: Swapy })
         token  = await Token.new({from: Swapy})
-        protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy })
+        protocol = await SwapyExchange.new( token.address, "1.0.0", library.address, { from: Swapy })
         await token.mint(creditCompany, offerFuel, {from: Swapy})
 
         // payback and sell constants
@@ -73,7 +72,7 @@ contract('SwapyExchange', async accounts => {
     })
 
     it("should have a version", async () => {
-        const version = await protocol.VERSION.call()
+        const version = await protocol.latestVersion.call()
         should.exist(version)
     })
 
@@ -81,13 +80,14 @@ contract('SwapyExchange', async accounts => {
 
         it("should create an investment offer with assets", async () => {
             const {logs} = await protocol.createOffer(
+                "1.0.0",
                 payback,
                 grossReturn,
                 currency,
                 assets,
                 {from: creditCompany}
             )
-            const event = logs.find(e => e.event === 'Offers')
+            const event = logs.find(e => e.event === 'LogOffers')
             const args = event.args
             expect(args).to.include.all.keys([ '_from', '_protocolVersion', '_assets' ])
             assetsAddress = args._assets
@@ -131,7 +131,7 @@ contract('SwapyExchange', async accounts => {
             }
             const currentInvestorBalance = await getBalance(investor)
             const gasUsed = new BigNumber(receipt.gasUsed)
-            const event = logs.find(e => e.event === 'Investments')
+            const event = logs.find(e => e.event === 'LogInvestments')
             const args = event.args
             expect(args).to.include.all.keys([ '_investor', '_assets', '_value' ])
             currentInvestorBalance.toNumber().should.equal(
@@ -213,7 +213,7 @@ contract('SwapyExchange', async accounts => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             await protocol.invest( assets, assetValue, { value: assetValue * assets.length, from: investor })
             await protocol.withdrawFunds(assets, { from: investor })
-                .should.be.rejectedWith('VM Exception')
+            .should.be.rejectedWith('VM Exception')
         })
 
         it("should withdraw funds on many assets", async () => {
@@ -290,7 +290,7 @@ contract('SwapyExchange', async accounts => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             const values = [sellValue, sellValue, sellValue, sellValue, sellValue]
             const { logs } = await protocol.sellAssets(assets, values, { from: investor })
-            const event = logs.find(e => e.event === 'ForSale')
+            const event = logs.find(e => e.event === 'LogForSale')
             expect(event.args).to.include.all.keys([ '_investor', '_asset', '_value' ])
         })
 
@@ -303,7 +303,7 @@ contract('SwapyExchange', async accounts => {
         it("should cancel a sell", async () => {
             const assets = [assetsAddress[0], assetsAddress[1], assetsAddress[2], assetsAddress[3], assetsAddress[4]]
             const { receipt } = await protocol.cancelSellOrder(assets, { from: investor })
-            receipt.status.should.equal(1)
+            receipt.status.should.equal('0x01')
         })
 
         it("should buy an asset" , async () => {
@@ -314,7 +314,7 @@ contract('SwapyExchange', async accounts => {
             const previousAssetBalance = await getBalance(asset)
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await protocol.buyAsset(asset, { from: secondInvestor, value: sellValue })
-            const event = logs.find(e => e.event === 'Bought')
+            const event = logs.find(e => e.event === 'LogBought')
             expect(event.args).to.include.all.keys([ '_buyer', '_asset', '_value' ])
             const currentAssetBalance = await getBalance(asset)
             const currentBuyerBalance = await getBalance(secondInvestor)

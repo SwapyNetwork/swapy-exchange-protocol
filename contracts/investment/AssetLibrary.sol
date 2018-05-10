@@ -1,20 +1,28 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
-import './AssetEvents.sol';
-import '../token/Token.sol';
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./AssetEvents.sol";
+import "../token/Token.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
-// Defines methods and control modifiers for an investment
+/**
+ * @title Asset Library
+ * @dev Defines the behavior of a fundraising asset. Designed to receive InvestmentAsset's calls and work on its storage
+ */
 contract AssetLibrary is AssetEvents {
-
+    /**
+     * Add safety checks for uint operations
+     */
     using SafeMath for uint256;
 
+    /**
+     * Storage
+     */
     // Asset owner
     address public owner;
     // Protocol
     address public protocol;
     // Asset currency
-    string public currency;
+    bytes5 public currency;
     // Asset fixed value
     uint256 public value;
     //Value bought
@@ -26,7 +34,7 @@ contract AssetLibrary is AssetEvents {
     // Asset buyer
     address public investor;
     // Protocol version
-    string public protocolVersion;
+    bytes8 public protocolVersion;
     // investment timestamp
     uint public investedAt;
 
@@ -34,7 +42,7 @@ contract AssetLibrary is AssetEvents {
     Token public token;
     uint256 public tokenFuel;
 
-    // sell data
+    // sale structure
     struct Sell {
         uint256 value;
         address buyer;
@@ -53,101 +61,116 @@ contract AssetLibrary is AssetEvents {
         DELAYED_RETURN
     }
     Status public status;
-
+   
+    /**
+     * Modifiers   
+     */
     // Checks the current asset's status
     modifier hasStatus(Status _status) {
         assert(status == _status);
         _;
     }
-
     // Checks if the owner is the caller
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "The user isn't the owner");
         _;
     }
-
     // Checks if the investor is the caller
     modifier onlyInvestor() {
-        require(msg.sender == investor);
+        require(msg.sender == investor, "The user isn't the investor");
         _;
     }
-
     modifier protocolOrInvestor() {
-        require(msg.sender == investor || msg.sender == protocol);
+        require(msg.sender == protocol || msg.sender == investor, "The user isn't the protocol or investor");
         _;
     }
-
     modifier protocolOrOwner() {
-        require(msg.sender == owner || msg.sender == protocol);
+        require(msg.sender == protocol || msg.sender == owner, "The user isn't the protocol or owner");
+        _;
+    }
+    modifier isValidAddress(address _addr) {
+        require(_addr != address(0), "Invalid address");
         _;
     }    
-
+    
     modifier onlyDelayed(){
-        require(isDelayed());
+        require(isDelayed(), "The return of investment isn't dalayed");
         _;
     }
 
-    function isDelayed()
-        view
-        internal
+    /**
+     * @dev Supply collateral tokens to the asset 
+     * @param _amount Token amount
+     * @return Success
+     */
+    function supplyFuel(uint256 _amount)
+        onlyOwner
+        hasStatus(Status.AVAILABLE)
+        external
         returns(bool)
     {
-        return now > investedAt + paybackDays * 1 days;
-    }
-
-    // Refund and remove the current investor and make the asset available for investments
-    function makeAvailable()
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        private
-        returns(address, uint256)
-    {
-        status = Status.AVAILABLE;
-        uint256 investedValue = this.balance;
-        investor.transfer(investedValue);
-        address currentInvestor = investor;
-        investor = address(0);
-        investedAt = uint(0);
-        return (currentInvestor, investedValue);
-    }
-
-
-    function withdrawTokens(address _recipient, uint256 _amount)
-        private
-        returns(bool)
-    {
-        assert(tokenFuel >= _amount);
-        require(token.transfer(_recipient, _amount));
-        TokenWithdrawal(_recipient, _amount);
-        tokenFuel = tokenFuel.sub(_amount);
+        require(token.transferFrom(msg.sender, this, _amount), "An error ocurred when sending tokens");
+        tokenFuel = tokenFuel.add(_amount);
+        emit LogSupplied(owner, _amount, tokenFuel);
         return true;
     }
 
-    // Add investment interest in this asset and retain the funds within the smart contract
+    /**
+     * @dev Add investment interest and retain pending funds within the asset 
+     * @param _investor Pending Investor
+     * @return Success
+     */ 
     function invest(address _investor) payable
-         hasStatus(Status.AVAILABLE)
-         external
-         returns(bool)
+        isValidAddress(_investor)
+        hasStatus(Status.AVAILABLE)
+        external
+        returns(bool)
     {
         status = Status.PENDING_OWNER_AGREEMENT;
         investor = _investor;
         investedAt = now;
-        Invested(owner, investor, this.balance);
+        emit LogInvested(owner, investor, address(this).balance);
         return true;
     }
 
-    // Cancel the pending investment
+    /**
+     * @dev Cancel a pending investment made
+     * @return Success
+     */ 
     function cancelInvestment()
         protocolOrInvestor
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
         external
         returns(bool)
     {
-        var (currentInvestor, investedValue) = makeAvailable();
-        Canceled(owner, currentInvestor, investedValue);
+        address currentInvestor;
+        uint256 investedValue;
+        (currentInvestor, investedValue) = makeAvailable();
+        emit LogCanceled(owner, currentInvestor, investedValue);
+        return true;
+    }
+   
+    /**
+     * @dev Refuse a pending investment
+     * @return Success
+     */
+    function refuseInvestment()
+        protocolOrOwner
+        hasStatus(Status.PENDING_OWNER_AGREEMENT)
+        external
+        returns(bool)
+    {
+        address currentInvestor;
+        uint256 investedValue;
+        (currentInvestor, investedValue) = makeAvailable();
+        emit LogRefused(owner, currentInvestor, investedValue);
         return true;
     }
 
-    // Accept the investor as the asset buyer and withdraw funds
+    /**
+     * @dev Accept the investor as the asset buyer and withdraw funds
+     * @return Success
+     */ 
     function withdrawFunds()
         protocolOrOwner
         hasStatus(Status.PENDING_OWNER_AGREEMENT)
@@ -155,24 +178,17 @@ contract AssetLibrary is AssetEvents {
         returns(bool)
     {
         status = Status.INVESTED;
-        uint256 _value = this.balance;
+        uint256 _value = address(this).balance;
         owner.transfer(_value);
-        Withdrawal(owner, investor, _value);
+        emit LogWithdrawal(owner, investor, _value);
         return true;
     }
 
-    // Refuse the pending investment
-    function refuseInvestment()
-        protocolOrOwner
-        hasStatus(Status.PENDING_OWNER_AGREEMENT)
-        external
-        returns(bool)
-    {
-        var (currentInvestor, investedValue) = makeAvailable();
-        Refused(owner, currentInvestor, investedValue);
-        return true;
-    }
-
+    /**
+     * @dev Put this asset for sale.
+     * @param _sellValue Sale value
+     * @return Success
+     */ 
     function sell(uint256 _sellValue)
         protocolOrInvestor
         hasStatus(Status.INVESTED)
@@ -181,10 +197,14 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.FOR_SALE;
         sellData.value = _sellValue;
-        ForSale(msg.sender, _sellValue);
+        emit LogForSale(msg.sender, _sellValue);
         return true;
     }
 
+    /**
+     * @dev Remove the asset from market place
+     * @return Success
+     */
     function cancelSellOrder()
         protocolOrInvestor
         hasStatus(Status.FOR_SALE)
@@ -193,37 +213,50 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.INVESTED;
         sellData.value = uint256(0);
-        CanceledSell(investor, value);
+        emit LogCanceledSell(investor, value);
         return true;
     }
 
+    /**
+     * @dev Buy the asset on market place
+     * @param _buyer Address of pending buyer
+     * @return Success
+     */
     function buy(address _buyer) payable
+        isValidAddress(_buyer)
         hasStatus(Status.FOR_SALE)
         external
         returns(bool)
     {
         status = Status.PENDING_INVESTOR_AGREEMENT;
         sellData.buyer = _buyer;
-        Invested(investor, _buyer, msg.value);
+        emit LogInvested(investor, _buyer, msg.value);
         return true;
     }
 
+    /**
+     * @dev Cancel a purchase made
+     * @return Success
+     */
     function cancelSale()
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
         external
         returns(bool)
     {
-        require(msg.sender == protocol || msg.sender == sellData.buyer);
+        require(msg.sender == protocol || msg.sender == sellData.buyer, "The user isn't the protocol or buyer");
         status = Status.FOR_SALE;
         address buyer = sellData.buyer;
-        uint256 _value = this.balance;
-        buyer.transfer(_value);
+        uint256 _value = address(this).balance;
         sellData.buyer = address(0);
-        Canceled(investor, buyer, _value);
+        buyer.transfer(_value);
+        emit LogCanceled(investor, buyer, _value);
         return true;
     }
-
-    // Refunds asset's buyer and became available for sale again
+   
+    /**
+     * @dev Refuse purchase on market place and refunds the pending buyer
+     * @return Success
+     */
     function refuseSale()
         protocolOrInvestor
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
@@ -232,14 +265,17 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.FOR_SALE;
         address buyer = sellData.buyer;
-        uint256 _value = this.balance;
-        buyer.transfer(_value);
+        uint256 _value = address(this).balance;
         sellData.buyer = address(0);
-        Refused(investor, buyer, _value);
+        buyer.transfer(_value);
+        emit LogRefused(investor, buyer, _value);
         return true;
     }
 
-    // Withdraw funds, clear the sell data and change investor's address
+    /**
+     * @dev Accept purchase. Withdraw funds, clear the sell data and change investor
+     * @return Success
+     */
     function acceptSale()
         protocolOrInvestor
         hasStatus(Status.PENDING_INVESTOR_AGREEMENT)
@@ -248,16 +284,35 @@ contract AssetLibrary is AssetEvents {
     {
         status = Status.INVESTED;
         address currentInvestor = investor;
-        uint256 _value = this.balance;
-        currentInvestor.transfer(_value);
+        uint256 _value = address(this).balance;
         investor = sellData.buyer;
         boughtValue = sellData.value;
         sellData.buyer = address(0);
         sellData.value = uint256(0);
-        Withdrawal(currentInvestor, investor, _value);
+        currentInvestor.transfer(_value);
+        emit LogWithdrawal(currentInvestor, investor, _value);
         return true;
     }
 
+    /**
+     * @dev Require collateral tokens of the investment made
+     * @return Success
+     */
+    function requireTokenFuel()
+        protocolOrInvestor
+        hasStatus(Status.INVESTED)
+        onlyDelayed
+        external
+        returns(bool)
+    {
+        return withdrawTokens(investor, tokenFuel);
+    }
+
+    /**
+     * @dev Return investment. Refunds pending buyer if the asset is for sale and handle remaining collateral tokens according to 
+     * the period of return
+     * @return Success
+     */
     function returnInvestment() payable
         protocolOrOwner
         external
@@ -272,33 +327,57 @@ contract AssetLibrary is AssetEvents {
             withdrawTokens(recipient, tokenFuel);
         }
         if (currentStatus == Status.PENDING_INVESTOR_AGREEMENT) {
-            sellData.buyer.transfer(this.balance.sub(msg.value));
+            sellData.buyer.transfer(address(this).balance.sub(msg.value));
         }
         investor.transfer(msg.value);
-        Returned(owner, investor, msg.value, _isDelayed);
+        emit LogReturned(owner, investor, msg.value, _isDelayed);
         return true;
     }
 
-    function supplyFuel(uint256 _amount)
-        onlyOwner
-        hasStatus(Status.AVAILABLE)
-        external
+    /**
+     * @dev Refund investor, clear investment values and become available 
+     * @return A tuple with the old investor and the refunded value
+     */ 
+    function makeAvailable()
+        private
+        returns(address, uint256)
+    {
+        status = Status.AVAILABLE;
+        uint256 investedValue = address(this).balance;
+        address currentInvestor = investor;
+        investor = address(0);
+        investedAt = uint(0);
+        currentInvestor.transfer(investedValue);
+        return (currentInvestor, investedValue);
+    }
+
+    /**
+     * @dev Withdraw collateral tokens
+     * @param _recipient Address to send tokens
+     * @param _amount Tokens amount
+     * @return Success
+     */
+    function withdrawTokens(address _recipient, uint256 _amount)
+        private
         returns(bool)
     {
-        require(token.transferFrom(msg.sender, this, _amount));
-        tokenFuel = tokenFuel.add(_amount);
-        Supplied(owner, _amount, tokenFuel);
+        assert(tokenFuel >= _amount);
+        tokenFuel = tokenFuel.sub(_amount);
+        require(token.transfer(_recipient, _amount), "An error ocurred in tokens transfer");
+        emit LogTokenWithdrawal(_recipient, _amount);
         return true;
     }
 
-    function requireTokenFuel()
-        protocolOrInvestor
-        hasStatus(Status.INVESTED)
-        onlyDelayed
-        external
+    /**
+     * @dev Returns true if the return of investment is delayed according to the investment date and payback period 
+     * @return Delay verification
+     */ 
+    function isDelayed()
+        view
+        internal
         returns(bool)
     {
-        return withdrawTokens(investor, tokenFuel);
+        return now > investedAt + paybackDays * 1 days;
     }
-
 }
+

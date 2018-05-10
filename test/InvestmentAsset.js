@@ -69,18 +69,19 @@ contract('InvestmentAsset', accounts => {
         gasPrice = new BigNumber(gasPrice)
         const library = await AssetLibrary.new({ from: Swapy })
         token  = await Token.new({from: Swapy})
-        protocol = await SwapyExchange.new(library.address, token.address, { from: Swapy })
+        protocol = await SwapyExchange.new( token.address, "1.0.0", library.address, { from: Swapy })
         await token.mint(creditCompany, offerFuel, {from: Swapy})
         
         // Creating assets by the protocol
         const {logs} = await protocol.createOffer(
+            "1.0.0",
             payback,
             grossReturn,
             currency,
             assets,
-            {from: creditCompany}
+            { from: creditCompany }
         )
-        const event = logs.find(e => e.event === 'Offers')
+        const event = logs.find(e => e.event === 'LogOffers')
         const args = event.args
         assetsAddress = args._assets
 
@@ -107,7 +108,7 @@ contract('InvestmentAsset', accounts => {
                 assetFuel,
                 {from: creditCompany}
             )
-            const event = logs.find(e => e.event === 'Supplied')
+            const event = logs.find(e => e.event === 'LogSupplied')
             const args = event.args
             expect(args).to.include.all.keys([
                '_owner',
@@ -128,7 +129,7 @@ contract('InvestmentAsset', accounts => {
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentInvestorBalance = await getBalance(investor)
             const gasUsed = new BigNumber(receipt.gasUsed)
-            const event = logs.find(e => e.event === 'Invested')
+            const event = logs.find(e => e.event === 'LogInvested')
             const args = event.args
             expect(args).to.include.all.keys([
                 '_owner',
@@ -160,7 +161,7 @@ contract('InvestmentAsset', accounts => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousInvestorBalance = await getBalance(investor)
             const { logs, receipt } = await firstAsset.cancelInvestment({from: investor})
-            const event = logs.find(e => e.event === 'Canceled')
+            const event = logs.find(e => e.event === 'LogCanceled')
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
@@ -194,7 +195,7 @@ contract('InvestmentAsset', accounts => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousInvestorBalance = await getBalance(investor)
             const {logs} = await firstAsset.refuseInvestment({ from: creditCompany })
-            let event = logs.find(e => e.event === 'Refused')
+            let event = logs.find(e => e.event === 'LogRefused')
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
@@ -230,7 +231,7 @@ contract('InvestmentAsset', accounts => {
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentCreditCompanyBalance = await getBalance(creditCompany)
             const gasUsed = new BigNumber(receipt.gasUsed)
-            const event = logs.find(e => e.event === 'Withdrawal')
+            const event = logs.find(e => e.event === 'LogWithdrawal')
 
             expect(event.args).to.include.all.keys([
                 '_owner',
@@ -257,7 +258,7 @@ contract('InvestmentAsset', accounts => {
 
         it('should sell an asset', async() => {
             const {logs} = await firstAsset.sell(sellValue, { from: investor })
-            const event = logs.find(e => e.event === 'ForSale')
+            const event = logs.find(e => e.event === 'LogForSale')
 
             expect(event.args).to.include.all.keys([
                 '_investor',
@@ -276,7 +277,7 @@ contract('InvestmentAsset', accounts => {
 
         it("should cancel a sell", async () => {
             const {logs} = await firstAsset.cancelSellOrder({from: investor})
-            const event = logs.find(e => e.event === 'CanceledSell')
+            const event = logs.find(e => e.event === 'LogCanceledSell')
 
             expect(event.args).to.include.all.keys([
                 '_investor',
@@ -293,7 +294,7 @@ contract('InvestmentAsset', accounts => {
             const previousAssetBalance = await getBalance(assetsAddress[1])
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.buy(secondInvestor, { from: secondInvestor, value: sellValue })
-            const event = logs.find(e => e.event === 'Invested')
+            const event = logs.find(e => e.event === 'LogInvested')
             expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(assetsAddress[1])
             const currentBuyerBalance = await getBalance(secondInvestor)
@@ -319,7 +320,7 @@ contract('InvestmentAsset', accounts => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.cancelSale({from: secondInvestor})
-            const event = logs.find(e => e.event === 'Canceled')
+            const event = logs.find(e => e.event === 'LogCanceled')
             expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentBuyerBalance = await getBalance(secondInvestor)
@@ -340,7 +341,7 @@ contract('InvestmentAsset', accounts => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.buy(secondInvestor, { from: secondInvestor, value: sellValue })
-            const event = logs.find(e => e.event === 'Invested')
+            const event = logs.find(e => e.event === 'LogInvested')
             expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentBuyerBalance = await getBalance(secondInvestor)
@@ -363,7 +364,7 @@ contract('InvestmentAsset', accounts => {
             const previousAssetBalance = await getBalance(firstAsset.address)
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.refuseSale({from: investor})
-            const event = logs.find(e => e.event === 'Refused')
+            const event = logs.find(e => e.event === 'LogRefused')
             expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentBuyerBalance = await getBalance(secondInvestor)
@@ -392,7 +393,7 @@ contract('InvestmentAsset', accounts => {
             const assetValues = await asset.getAsset();
             const sellValue = assetValues[11];
             const { logs, receipt } = await firstAsset.acceptSale({from: investor})
-            const event = logs.find(e => e.event === 'Withdrawal')
+            const event = logs.find(e => e.event === 'LogWithdrawal')
             expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value' ])
             const currentAssetBalance = await getBalance(firstAsset.address)
             const currentSellerBalance = await getBalance(investor)
@@ -428,7 +429,7 @@ contract('InvestmentAsset', accounts => {
             const previousInvestorTokenBalance = await token.balanceOf(secondInvestor)
             const previousAssetTokenBalance = await token.balanceOf(firstAsset.address)
             const { logs, receipt } =  await firstAsset.requireTokenFuel({ from: secondInvestor })
-            const event = logs.find(e => e.event === 'TokenWithdrawal')
+            const event = logs.find(e => e.event === 'LogTokenWithdrawal')
             expect(event.args).to.include.all.keys([
                 '_to',
                 '_amount'
@@ -454,7 +455,7 @@ contract('InvestmentAsset', accounts => {
         it('should return the investment with delay', async () => {
             const previousInvestorBalance = await getBalance(secondInvestor)
             const { logs, receipt } = await firstAsset.returnInvestment({ from: creditCompany, value: returnValue })
-            const event = logs.find(e => e.event === 'Returned')
+            const event = logs.find(e => e.event === 'LogReturned')
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
@@ -494,7 +495,7 @@ contract('InvestmentAsset', accounts => {
             const previousInvestorTokenBalance = await token.balanceOf(investor)
             const previousAssetTokenBalance = await token.balanceOf(secondAsset.address)
             const { logs, receipt } = await secondAsset.returnInvestment({ from: creditCompany, value: returnValue })
-            const event = logs.find(e => e.event === 'Returned')
+            const event = logs.find(e => e.event === 'LogReturned')
             expect(event.args).to.include.all.keys([
                 '_owner',
                 '_investor',
@@ -532,7 +533,7 @@ contract('InvestmentAsset', accounts => {
             const previousCreditCompanyTokenBalance = await token.balanceOf(creditCompany)
             const previousAssetTokenBalance = await token.balanceOf(thirdAsset.address)
             const { logs } = await thirdAsset.returnInvestment({ from: creditCompany, value: returnValue })
-            const event = logs.find(e => e.event === 'Returned')
+            const event = logs.find(e => e.event === 'LogReturned')
             expect(event.args).to.include.all.keys([ '_owner', '_investor', '_value', '_delayed' ])
             assert.equal(event.args._delayed,false,"The investment must be returned without delay")
             const currentCreditCompanyTokenBalance = await token.balanceOf(creditCompany)
@@ -567,7 +568,7 @@ contract('InvestmentAsset', accounts => {
             const previousInvestorBalance = await getBalance(investor)
             const previousBuyerBalance = await getBalance(secondInvestor)
             const { logs } = await fourthAsset.returnInvestment({ from: creditCompany, value: returnValue })
-            const event = logs.find(e => e.event === 'Returned')
+            const event = logs.find(e => e.event === 'LogReturned')
             assert.equal(event.args._investor, investor, "The investment must be returned to the asset's investor")
             const currentInvestorBalance = await getBalance(investor)
             const currentBuyerBalance = await getBalance(secondInvestor)
